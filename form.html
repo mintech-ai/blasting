@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLASTING PLAN SYSTEM - FORM MITRA KERJA</title>
+
+  <!-- Google Fonts, Tailwind CSS, Phosphor Icons, SweetAlert2 -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blasting: {
+              50: '#fef2f2',
+              100: '#ffe1e1',
+              200: '#ffc7c7',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#b91c1c',
+              800: '#991b1b',
+              900: '#7f1d1d'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    
+    .clean-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+
+    .glow-red {
+      box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.25);
+    }
+
+    #screen-login {
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #screen-login.screen-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+    #screen-login.screen-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    @keyframes swalPopIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .animate-pop-in {
+      animation: swalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col antialiased bg-slate-50 selection:bg-red-600 selection:text-white">
+
+  <!-- ==================== SCREEN 1: LOGIN MODAL ==================== -->
+  <div id="screen-login" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 screen-visible">
+    <div class="clean-card w-full max-w-md rounded-2xl p-6 md:p-8 shadow-2xl border-t-8 border-red-600 relative">
+
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center mx-auto mb-3 shadow-lg glow-red">
+          <i class="ph-bold ph-fire text-3xl"></i>
+        </div>
+        <span class="text-xs font-black tracking-widest text-red-600 uppercase">FORM MITRA KERJA</span>
+        <h2 class="text-xl font-extrabold text-slate-900 mt-1">Integrated Blasting Plan System</h2>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">USERNAME</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="ph-bold ph-user text-base"></i>
+            </span>
+            <input type="text" id="login-username" required placeholder="Isi username..." value="" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 font-semibold text-slate-800 focus:outline-none focus:border-red-600 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">PASSWORD</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="ph-bold ph-lock-key text-base"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="Isi password..." value="" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 font-mono text-slate-800 focus:outline-none focus:border-red-600 text-sm">
+          </div>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl transition shadow-lg glow-red text-sm flex items-center justify-center gap-2 mt-4">
+          <i class="ph-bold ph-sign-in text-lg"></i> MASUK PORTAL
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ==================== NAVIGATION HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-black text-xl shadow-md glow-red">
+            <i class="ph-bold ph-fire"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black tracking-widest text-red-600 uppercase" id="app-company-brand">FORM MITRA KERJA</span>
+              <span class="bg-emerald-50 text-emerald-700 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> SYSTEM ACTIVE
+              </span>
+            </div>
+            <h1 class="text-sm md:text-base font-extrabold text-slate-900 tracking-tight" id="app-portal-title">
+              BLASTING PLAN SYSTEM
+            </h1>
+          </div>
+        </div>
+
+        <button onclick="logout()" class="md:hidden px-2.5 py-1 text-xs bg-slate-100 hover:bg-red-50 text-red-600 font-bold rounded-lg border border-slate-200">
+          <i class="ph-bold ph-sign-out"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-200 pt-2 md:pt-0">
+        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span class="text-xs text-slate-500 font-medium hidden sm:inline">User Login:</span>
+          <span id="active-role-badge" class="bg-red-100 text-red-800 text-[10px] px-2 py-0.5 font-bold rounded">-</span>
+          <button onclick="logout()" title="Keluar Portal" class="ml-2 text-slate-400 hover:text-red-600 transition">
+            <i class="ph-bold ph-sign-out text-base"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div class="flex items-center gap-2" id="navigation-tab-buttons">
+      </div>
+      <button onclick="refreshData(true)" title="Refresh Data" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-1.5 border border-slate-200 transition">
+        <i class="ph-bold ph-arrows-clockwise text-sm" id="refresh-icon"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: FORM KONTRAKTOR -->
+    <div id="tab-kontraktor-form" class="space-y-6 hidden">
+      <div class="clean-card rounded-2xl p-6 shadow-sm border border-slate-200 relative max-w-4xl mx-auto">
+        
+        <div class="flex justify-between items-center pb-4 mb-6 border-b border-slate-200">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 border border-red-200" id="form-badge-company">
+              KONTRAKTOR
+            </span>
+            <h2 class="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2" id="kontraktor-form-title">
+              <i class="ph-bold ph-file-plus text-red-600"></i> Form Request Plan Peledakan
+            </h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-cancel-edit" onclick="resetKontraktorForm()" class="hidden px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition">
+              <i class="ph-bold ph-x"></i> Batal Edit
+            </button>
+            <span class="text-xs text-slate-500 font-mono font-bold" id="form-date-today-tag"></span>
+          </div>
+        </div>
+
+        <form id="form-alokasi-main" onsubmit="handleKontraktorFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+          
+          <input type="hidden" id="input_plan_uuid" value="">
+
+          <div class="md:col-span-2 bg-red-50/60 p-3.5 rounded-xl border border-red-200">
+            <label class="block font-extrabold text-red-900 mb-1 flex items-center gap-1.5">
+              <i class="ph-bold ph-calendar text-red-600 text-sm"></i> Tanggal Plan Blasting <span class="text-red-600">*</span>
+            </label>
+            <p class="text-[11px] text-red-700 mb-2">Tentukan tanggal rencana pelaksanaan peledakan:</p>
+            <input type="date" id="input_tanggal" required class="w-full bg-white border border-red-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 shadow-sm transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">1. Lokasi Blasting <span class="text-red-600">*</span></label>
+            <input type="text" id="input_lokasi" placeholder="Isi Lokasi Blasting..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">2. Prioritas <span class="text-red-600">*</span></label>
+            <select id="input_prioritas" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+              <option value="" disabled selected>Pilih Prioritas...</option>
+              <option value="Prioritas 1">Prioritas 1</option>
+              <option value="Prioritas 2">Prioritas 2</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">3. Status Today / Sleep <span class="text-red-600">*</span></label>
+            <select id="input_today_sleep" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+              <option value="" disabled selected>Pilih Status...</option>
+              <option value="TODAY">TODAY</option>
+              <option value="SLEEP">SLEEP</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">4. Inisiasi (RF / LIL) <span class="text-red-600">*</span></label>
+            <select id="input_inisiasi" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+              <option value="" disabled selected>Pilih Inisiasi...</option>
+              <option value="RF">RF </option>
+              <option value="LIL">LIL </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">5. Jam Masuk Lokasi <span class="text-red-600">*</span></label>
+            <input type="time" id="input_jam_masuk" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">6. Remark Kondisi Lapangan</label>
+            <input type="text" id="input_remark" placeholder="Isi Remark Kondisi Lapangan..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">7. Pengawas Kontraktor <span class="text-red-600">*</span></label>
+            <input type="text" id="input_pengawas_kontraktor" placeholder="Isi Nama Pengawas Kontraktor..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-semibold focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">8. Jumlah Holes (Lubang) <span class="text-red-600">*</span></label>
+            <input type="number" id="input_holes" placeholder="Isi Jumlah Holes..." min="1" required oninput="calculateFormIsian()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-red-700 font-bold font-mono text-sm focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">9. Volume Plan (Ton DTH) <span class="text-red-600">*</span></label>
+            <input type="number" id="input_volume" placeholder="Isi Volume Plan DTH..." step="0.001" required oninput="calculateFormIsian()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-red-700 font-black font-mono text-sm focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">10. Isian (Kg/Hole) <span class="text-xs text-emerald-600 font-normal">(Otomatis Terisi)</span></label>
+            <input type="number" id="input_isian_kg" placeholder="0.0" step="0.1" readonly class="w-full bg-emerald-50/60 border border-emerald-300 rounded-xl px-3.5 py-2.5 text-emerald-900 font-black font-mono text-sm cursor-not-allowed">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">11. Akses Jalan <span class="text-red-600">*</span></label>
+            <input type="text" id="input_akses" placeholder="Isi Akses Jalan..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">12. Desa Terdekat <span class="text-red-600">*</span></label>
+            <select id="input_desa" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+              <option value="" disabled selected>Pilih Desa Terdekat...</option>
+              <option value="Desa Bata">Desa Bata</option>
+              <option value="Desa Wonorejo">Desa Wonorejo</option>
+              <option value="Desa Kaong">Desa Kaong</option>
+              <option value="Desa Bilas">Desa Bilas</option>
+              <option value="Desa Lalayau">Desa Lalayau</option>
+              <option value="Desa Padang Panjang">Desa Padang Panjang</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">13. Matrix Isian <span class="text-red-600">*</span></label>
+            <select id="input_matrix" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+              <option value="" disabled selected>Pilih Matrix Isian...</option>
+              <option value="Very Hard">Very Hard</option>
+              <option value="Hard">Hard</option>
+              <option value="Medium Hard">Medium Hard</option>
+              <option value="Not Hard">Not Hard</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">14. Geometri <span class="text-red-600">*</span></label>
+            <input type="text" id="input_geometri" required placeholder="Isi Geometri (misal: 8x8)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+          </div>
+
+          <div class="md:col-span-2 flex items-center justify-end gap-3 pt-4 border-t border-slate-200 mt-2">
+            <button type="button" onclick="resetKontraktorForm()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-1.5">
+              <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset Form
+            </button>
+            <button type="submit" id="btn-submit-plan" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl transition shadow-md glow-red flex items-center gap-2 text-sm">
+              <i class="ph-bold ph-paper-plane-tilt text-base"></i> <span id="btn-submit-plan-text">Simpan Data Plan</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 2: TABEL DATA PLAN BLASTING -->
+    <div id="tab-plan-data" class="space-y-4 hidden">
+      <div class="clean-card rounded-2xl p-4 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="ph-bold ph-table text-red-600 text-base"></i> DATA PLAN BLASTING - <span id="data-company-tag" class="text-red-600">COMPANY</span>
+          </h3>
+          <p class="text-xs text-slate-500">
+            Menampilkan data blasting plan terintegrasi real-time.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto text-xs justify-end">
+          <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 focus-within:border-red-600 shadow-sm">
+            <i class="ph-bold ph-calendar text-red-600 text-sm"></i>
+            <span class="font-bold text-slate-600 hidden sm:inline">Tanggal:</span>
+            <input type="date" id="data-date-filter" onchange="filterPortalTable()" class="bg-transparent text-slate-900 font-mono font-bold focus:outline-none text-xs">
+            <button onclick="resetDateFilter()" title="Lihat Semua Tanggal" class="text-slate-400 hover:text-red-600 text-xs px-1 font-extrabold">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="clean-card rounded-2xl p-4 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-xs text-slate-800 border-collapse border border-slate-200">
+            <thead>
+              <tr class="bg-slate-900 text-white font-bold uppercase text-center text-[11px]">
+                <th class="p-2.5 border border-slate-700 min-w-[35px]">NO</th>
+                <th class="p-2.5 border border-slate-700 min-w-[100px]">TANGGAL PLAN</th>
+                <th class="p-2.5 border border-slate-700 min-w-[85px]">PRIORITAS</th>
+                <th class="p-2.5 border border-slate-700 min-w-[130px] text-left">LOKASI BLASTING</th>
+                <th class="p-2.5 border border-slate-700 min-w-[65px]">INISIASI</th>
+                <th class="p-2.5 border border-slate-700 min-w-[70px]">TODAY/SLEEP</th>
+                <th class="p-2.5 border border-slate-700 min-w-[130px] text-left">JAM & REMARK</th>
+                <th class="p-2.5 border border-slate-700 min-w-[130px] text-left">PENGAWAS KONTRAKTOR / SUPPLIER</th>
+                <th class="p-2.5 border border-slate-700 min-w-[60px]">HOLES</th>
+                <th class="p-2.5 border border-slate-700 min-w-[75px]">ISIAN (KG/HOLE)</th>
+                <th class="p-2.5 border border-slate-700 min-w-[85px]">VOLUME (TON)</th>
+                <th class="p-2.5 border border-slate-700 min-w-[90px]">SUPPLIER</th>
+                <th class="p-2.5 border border-slate-700 min-w-[70px]">BLASTER (SUPPLIER)</th>
+                <th class="p-2.5 border border-slate-700 min-w-[90px]">MMU UNIT</th>
+                <th class="p-2.5 border border-slate-700 min-w-[90px]">MOBIL BOX</th>
+                <th class="p-2.5 border border-slate-700 min-w-[100px] text-left">AKSES JALAN</th>
+                <th class="p-2.5 border border-slate-700 min-w-[100px] text-left">DESA TERDEKAT</th>
+                <th class="p-2.5 border border-slate-700 min-w-[100px] text-left">MATRIX & GEOMETRI</th>
+                <th class="p-2.5 border border-slate-700 min-w-[100px] sticky right-0 bg-slate-900 shadow-md">AKSI</th>
+              </tr>
+            </thead>
+            <tbody id="portal-table-body" class="divide-y divide-slate-200 text-center">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FORM & TABEL KESIAPAN SUPPLIER -->
+    <div id="tab-supplier-readiness" class="space-y-6 hidden">
+      
+      <div class="clean-card rounded-2xl p-6 shadow-sm border border-slate-200 max-w-4xl mx-auto">
+        <div class="flex justify-between items-center pb-4 mb-6 border-b border-slate-200">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300" id="supplier-form-badge">
+              SUPPLIER
+            </span>
+            <h2 class="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2" id="supplier-form-title">
+              <i class="ph-bold ph-clipboard-text text-amber-600"></i> Form Kesiapan Harian Supplier
+            </h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-cancel-supplier-edit" onclick="resetSupplierReadinessForm()" class="hidden px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition">
+              <i class="ph-bold ph-x"></i> Batal Edit
+            </button>
+            <span class="text-xs text-slate-500 font-mono font-bold" id="supplier-form-date"></span>
+          </div>
+        </div>
+
+        <form id="form-kesiapan-supplier" onsubmit="handleSupplierReadinessSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+          <input type="hidden" id="sup_readiness_uuid" value="">
+          
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">1. Tanggal Kesiapan <span class="text-red-600">*</span></label>
+            <input type="date" id="sup_readiness_tanggal" required onchange="onSupplierFormDateChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div class="md:col-span-2 bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label class="block font-extrabold text-amber-900">
+                2. Daftar Unit MMU / MMT Ready <span class="text-red-600">*</span>
+                <span class="block text-[11px] font-normal text-amber-700">Klik unit ready supplier di bawah ini untuk menambah/menghapus pilihan</span>
+              </label>
+              <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-1 rounded-lg self-start sm:self-auto">
+                Kalkulasi Tonase DTH Spesifik
+              </span>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-bold text-slate-500 mb-1 block">Pilihan Unit Ready (Pilih / Hapus):</span>
+              <div id="mmu-chip-container" class="flex flex-wrap gap-1.5">
+              </div>
+            </div>
+
+            <input type="text" id="sup_readiness_mmu_list" placeholder="Terpilih: -" readonly required class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-500 shadow-sm transition">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div class="bg-white px-3 py-2 rounded-lg border border-slate-200 flex justify-between items-center">
+                <span class="text-[11px] text-slate-500 font-bold">Jumlah Unit Ready:</span>
+                <span id="display_unit_count" class="font-mono font-extrabold text-slate-900 text-sm">0 Unit</span>
+              </div>
+              <div class="bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200 flex justify-between items-center">
+                <span class="text-[11px] text-emerald-800 font-bold">Total Kapasitas Ton (DTH):</span>
+                <span id="display_dth_calculated" class="font-mono font-black text-emerald-700 text-sm">0 Ton</span>
+              </div>
+            </div>
+
+            <input type="hidden" id="sup_readiness_mmu" value="0">
+            <input type="hidden" id="sup_readiness_dth" value="0 Ton">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1.5">
+              3. Mobil Box Ready (LV Box / Truck) <span class="text-red-600">*</span>
+              <span class="block text-[10px] font-normal text-slate-500">Isi nomor unit dipisah koma</span>
+            </label>
+            <input type="text" id="sup_readiness_lv_box_list" placeholder="Isi daftar Mobil Box (misal: Box 01, Box 02)..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+            <input type="hidden" id="sup_readiness_lv_box" value="0">
+          </div>
+
+          <div id="field-dahana-hebs">
+            <label class="block font-bold text-slate-700 mb-1.5">4. HEBS Device <span class="text-red-600">*</span></label>
+            <input type="text" id="sup_readiness_hebs" placeholder="Isi ketersediaan HEBS Device..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div id="field-dahana-estar">
+            <label class="block font-bold text-slate-700 mb-1.5">5. Estar Device <span class="text-red-600">*</span></label>
+            <input type="text" id="sup_readiness_estar" placeholder="Isi ketersediaan Estar Device..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div id="field-mnk-axiss" class="hidden">
+            <label class="block font-bold text-slate-700 mb-1.5">4. Axiss Device <span class="text-red-600">*</span></label>
+            <input type="text" id="sup_readiness_axiss" placeholder="Isi ketersediaan Axiss Device..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-purple-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5"><span id="lbl-starter-no">6</span>. Nonel Starter <span class="text-red-600">*</span></label>
+            <input type="text" id="sup_readiness_nonel" placeholder="Isi ketersediaan Nonel Starter..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5"><span id="lbl-pengawas-no">7</span>. Jumlah Pengawas <span class="text-red-600">*</span></label>
+            <input type="number" id="sup_readiness_pengawas" min="0" placeholder="Isi Jumlah Pengawas..." oninput="calculateTotalManpower()" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5"><span id="lbl-blaster-no">8</span>. Jumlah Blaster Supplier <span class="text-red-600">*</span></label>
+            <input type="number" id="sup_readiness_blaster" min="0" placeholder="Isi Jumlah Blaster..." oninput="calculateTotalManpower()" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5"><span id="lbl-manpower-no">9</span>. Manpower Total <span class="text-xs text-emerald-600 font-normal">(Otomatis Terhitung)</span></label>
+            <input type="number" id="sup_readiness_total_manpower" placeholder="0" readonly class="w-full bg-emerald-50 border border-emerald-300 rounded-xl px-3.5 py-2.5 text-emerald-900 font-black font-mono text-sm cursor-not-allowed">
+          </div>
+
+          <div class="md:col-span-2 flex items-center justify-end gap-3 pt-4 border-t border-slate-200 mt-2">
+            <button type="button" onclick="resetSupplierReadinessForm()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-1.5">
+              <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset Form
+            </button>
+            <button type="submit" id="btn-submit-kesiapan" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl transition shadow-md flex items-center gap-2 text-sm">
+              <i class="ph-bold ph-floppy-disk text-base"></i> <span id="btn-submit-kesiapan-text">Simpan Kesiapan Supplier</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="clean-card rounded-2xl p-5 shadow-sm border border-slate-200 max-w-5xl mx-auto space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="ph-bold ph-list-checks text-amber-600 text-base"></i>
+              REKAP DATA KESIAPAN SUPPLIER
+            </h3>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs">
+            <span class="font-bold text-slate-600">Filter Tanggal:</span>
+            <input type="date" id="supplier-table-date-filter" onchange="filterTodaySupplierTable()" class="bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-slate-800 font-mono font-bold focus:outline-none text-xs">
+            <button onclick="resetSupplierTableDateFilter()" class="text-xs text-amber-700 hover:underline font-bold px-1">Hari Ini</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-xs text-slate-800 border-collapse border border-slate-200">
+            <thead>
+              <tr class="bg-slate-800 text-white font-bold uppercase text-center text-[10px]">
+                <th class="p-2 border border-slate-700 min-w-[30px]">NO</th>
+                <th class="p-2 border border-slate-700 min-w-[90px]">TANGGAL</th>
+                <th class="p-2 border border-slate-700 min-w-[90px]">SUPPLIER</th>
+                <th class="p-2 border border-slate-700 min-w-[140px] text-left">MMU / MMT READY</th>
+                <th class="p-2 border border-slate-700 min-w-[100px] text-left">MOBIL BOX</th>
+                <th class="p-2 border border-slate-700 min-w-[110px] text-left">HEBS / ESTAR / AXISS</th>
+                <th class="p-2 border border-slate-700 min-w-[80px]">NONEL STARTER</th>
+                <th class="p-2 border border-slate-700 min-w-[60px]">PENGAWAS</th>
+                <th class="p-2 border border-slate-700 min-w-[60px]">BLASTER</th>
+                <th class="p-2 border border-slate-700 min-w-[70px]">MANPOWER</th>
+                <th class="p-2 border border-slate-700 min-w-[70px] sticky right-0 bg-slate-800">AKSI</th>
+              </tr>
+            </thead>
+            <tbody id="supplier-readiness-table-body" class="divide-y divide-slate-200 text-center">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==================== MODAL ASSIGN SUPPLIER ==================== -->
+  <div id="modal-assign-supplier" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="clean-card w-full max-w-md rounded-2xl p-6 shadow-2xl border-t-8 border-red-600">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+          <i class="ph-bold ph-user-plus text-red-600"></i> Assign Supplier Peledakan
+        </h3>
+        <button onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+      
+      <p class="text-xs text-slate-500 mb-4">
+        Pilih Supplier untuk menangani eksekusi peledakan pada Plan Record ini.
+      </p>
+
+      <form onsubmit="handleAssignSupplierSubmit(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="assign-target-uuid">
+        
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">PILIH SUPPLIER <span class="text-red-600">*</span></label>
+          <select id="assign-supplier-select" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 text-sm">
+            <option value="" disabled selected>-- Pilih Supplier --</option>
+            <option value="DAHANA">PT DAHANA</option>
+            <option value="MNK-BME">PT MNK - BME (MNK-BME)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeAssignModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 text-xs">Batal</button>
+          <button type="submit" id="btn-submit-assign" class="px-5 py-2 bg-red-600 text-white font-extrabold rounded-xl hover:bg-red-700 text-xs flex items-center gap-1.5">
+            <i class="ph-bold ph-check"></i> Assign Supplier
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL SUPPLIER UPDATE PLAN RECORD ==================== -->
+  <div id="modal-supplier-update-plan" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="clean-card w-full max-w-lg rounded-2xl p-6 shadow-2xl border-t-8 border-amber-600">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+          <i class="ph-bold ph-truck text-amber-600"></i> Update Detail Alokasi Supplier
+        </h3>
+        <button onclick="closeSupplierPlanModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-500 mb-4">
+        Isi detail unit & tim peledakan supplier untuk Plan Record ini.
+      </p>
+
+      <form onsubmit="handleSupplierPlanUpdateSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <input type="hidden" id="sup-update-target-uuid">
+
+        <div class="sm:col-span-2">
+          <label class="block font-bold text-slate-700 mb-1">Pengawas Supplier <span class="text-red-600">*</span></label>
+          <input type="text" id="sup_plan_pengawas" required placeholder="Isi Nama Pengawas Supplier..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-bold">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Jumlah Blaster Supplier <span class="text-red-600">*</span></label>
+          <input type="number" id="sup_plan_blaster" min="0" placeholder="Isi Jumlah Blaster..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono font-bold">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Unit MMU / MMT <span class="text-red-600">*</span></label>
+          <select id="sup_plan_mmu_select" required onchange="syncModalMmuValue()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-bold">
+            <option value="" disabled selected>Pilih Unit Ready...</option>
+          </select>
+          <input type="hidden" id="sup_plan_mmu">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block font-bold text-slate-700 mb-1">Mobil Box Ready <span class="text-red-600">*</span></label>
+          <input type="text" id="sup_plan_box" required placeholder="Nomor Mobil Box..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-bold">
+        </div>
+
+        <div class="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <button type="button" onclick="closeSupplierPlanModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 text-xs">Batal</button>
+          <button type="submit" id="btn-submit-sup-plan" class="px-5 py-2 bg-amber-600 text-white font-extrabold rounded-xl hover:bg-amber-700 text-xs flex items-center gap-1.5">
+            <i class="ph-bold ph-floppy-disk"></i> Simpan Alokasi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzlEnxcAS_MlWFZwlsTcV0k-in1FuiTPe4ZZJE7cNJ1oAMLU4ZwpfA72L-3pAnNQJ32/exec";
+
+    let currentUser = null;
+    let allPlanData = [];
+    let allSupplierData = [];
+    let currentActiveTab = '';
+    let editingPlanUuid = null;
+    let editingSupplierUuid = null;
+
+    const MMU_UNITS_CONFIG = {
+      'DAHANA': [
+        { name: 'MMT 18', capacity: 16.0 },
+        { name: 'MMT 25', capacity: 17.5 },
+        { name: 'MMT 26', capacity: 17.5 },
+        { name: 'MMT 13', capacity: 16.0 },
+        { name: 'MMT 28', capacity: 17.0 },
+        { name: 'MMT 39', capacity: 10.0 }
+      ],
+      'MNK-BME': [
+        { name: 'MMU 120', capacity: 17.0 },
+        { name: 'MMU 121', capacity: 17.0 },
+        { name: 'MMU 122', capacity: 17.0 },
+        { name: 'MMU 123', capacity: 17.0 },
+        { name: 'MMU 19', capacity: 12.5 }
+      ]
+    };
+
+    function normalizeSupplierCompany(comp) {
+      if (!comp) return '';
+      const str = String(comp).toUpperCase().trim();
+      if (str.includes('MNK') || str.includes('BME')) return 'MNK-BME';
+      if (str.includes('DAHANA')) return 'DAHANA';
+      return str;
+    }
+
+    function formatDateDisplay(dateVal) {
+      if (!dateVal) return '-';
+      const str = String(dateVal).trim();
+      if (!str || str === 'undefined' || str === 'null') return '-';
+      
+      if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        }
+      }
+
+      const parts = str.split('-');
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      if (str.includes('/')) return str;
+      return str;
+    }
+
+    function formatTimeDisplay(timeVal) {
+      if (!timeVal) return '-';
+      const str = String(timeVal).trim();
+      if (!str || str === 'undefined' || str === 'null') return '-';
+
+      if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${hours}:${minutes}`;
+        }
+      }
+
+      const parts = str.split(':');
+      if (parts.length >= 2) {
+        return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+      }
+      return str;
+    }
+
+    function formatDateForInput(dateVal) {
+      if (!dateVal) return '';
+      const str = String(dateVal).trim();
+      if (!str || str === 'null' || str === 'undefined') return '';
+
+      if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+      }
+
+      const parts = str.split('/');
+      if (parts.length === 3) {
+        if (parts[2].length === 4) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+
+      const dashParts = str.split('-');
+      if (dashParts.length === 3 && dashParts[0].length === 4) {
+        return `${dashParts[0]}-${dashParts[1].padStart(2, '0')}-${dashParts[2].slice(0, 2).padStart(2, '0')}`;
+      }
+
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      return str;
+    }
+
+    async function callGASApi(payload) {
+      try {
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const responseText = await response.text();
+        let data;
+        
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          data = { success: true, message: responseText };
+        }
+
+        return data;
+      } catch (err) {
+        console.error('GAS Request Error:', err);
+        throw err;
+      }
+    }
+
+    async function handleLoginSubmit(event) {
+      event.preventDefault();
+      const usernameInput = document.getElementById('login-username').value.trim();
+      const passwordInput = document.getElementById('login-password').value.trim();
+
+      if (!usernameInput || !passwordInput) {
+        Swal.fire('Peringatan', 'Username dan password wajib diisi!', 'warning');
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btn-login-submit');
+      const originalText = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Memeriksa User...`;
+
+      try {
+        sessionStorage.clear();
+        localStorage.clear();
+
+        const result = await callGASApi({
+          action: 'login',
+          username: usernameInput,
+          password: passwordInput
+        });
+
+        if (result && result.success && result.user) {
+          currentUser = result.user;
+          currentUser.company = normalizeSupplierCompany(currentUser.company || currentUser.role);
+
+          sessionStorage.setItem('blasting_user_session', JSON.stringify(currentUser));
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Login Berhasil!',
+            text: `Selamat datang ${currentUser.username} (${currentUser.company})`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+
+          initUserSessionUI();
+          
+          const loginScreen = document.getElementById('screen-login');
+          loginScreen.classList.remove('screen-visible');
+          loginScreen.classList.add('screen-hidden');
+          setTimeout(() => {
+            loginScreen.classList.add('hidden');
+          }, 400);
+
+          await refreshData(false);
+
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal Login',
+            text: result.message || 'Username atau password tidak ditemukan di database!'
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Koneksi Server Gagal',
+          text: 'Gagal menghubungi Apps Script backend. Sila pastikan koneksi internet stabil.'
+        });
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalText;
+      }
+    }
+
+    function logout() {
+      Swal.fire({
+        title: 'Konfirmasi Keluar',
+        text: 'Apakah Anda yakin ingin keluar dari portal system?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="ph-bold ph-sign-out"></i> Ya, Keluar',
+        cancelButtonText: 'Batal',
+        showClass: { popup: 'swal2-show animate-pop-in' }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          sessionStorage.clear();
+          localStorage.clear();
+          currentUser = null;
+          allPlanData = [];
+          allSupplierData = [];
+          editingPlanUuid = null;
+          editingSupplierUuid = null;
+
+          resetKontraktorForm();
+          resetSupplierReadinessForm();
+
+          document.getElementById('login-username').value = '';
+          document.getElementById('login-password').value = '';
+
+          const portalBody = document.getElementById('portal-table-body');
+          if (portalBody) portalBody.innerHTML = '';
+          const supBody = document.getElementById('supplier-readiness-table-body');
+          if (supBody) supBody.innerHTML = '';
+
+          const loginScreen = document.getElementById('screen-login');
+          loginScreen.classList.remove('hidden');
+          setTimeout(() => {
+            loginScreen.classList.remove('screen-hidden');
+            loginScreen.classList.add('screen-visible');
+          }, 50);
+
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Berhasil Keluar Portal',
+            showConfirmButton: false,
+            timer: 1500
+          });
+        }
+      });
+    }
+
+    function initUserSessionUI() {
+      if (!currentUser) return;
+
+      const role = (currentUser.role || 'DASHBOARD').toUpperCase();
+      const company = normalizeSupplierCompany(currentUser.company || role);
+
+      document.getElementById('active-role-badge').innerText = `${role} (${company})`;
+      document.getElementById('app-company-brand').innerText = `PORTAL ${company}`;
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      const formDateTag = document.getElementById('form-date-today-tag');
+      if (formDateTag) formDateTag.innerText = formatDateDisplay(todayStr);
+      
+      const supFormDate = document.getElementById('supplier-form-date');
+      if (supFormDate) supFormDate.innerText = formatDateDisplay(todayStr);
+
+      const formBadgeComp = document.getElementById('form-badge-company');
+      if (formBadgeComp) formBadgeComp.innerText = company;
+
+      const supFormBadge = document.getElementById('supplier-form-badge');
+      if (supFormBadge) supFormBadge.innerText = company;
+
+      const dataCompTag = document.getElementById('data-company-tag');
+      if (dataCompTag) dataCompTag.innerText = company;
+
+      const inputTanggal = document.getElementById('input_tanggal');
+      if (inputTanggal && !inputTanggal.value) inputTanggal.value = todayStr;
+
+      const supReadinessTanggal = document.getElementById('sup_readiness_tanggal');
+      if (supReadinessTanggal && !supReadinessTanggal.value) supReadinessTanggal.value = todayStr;
+
+      const dataDateFilter = document.getElementById('data-date-filter');
+      if (dataDateFilter && !dataDateFilter.value) dataDateFilter.value = todayStr;
+
+      const tableDateFilter = document.getElementById('supplier-table-date-filter');
+      if (tableDateFilter && !tableDateFilter.value) tableDateFilter.value = todayStr;
+
+      renderNavigationTabs(role);
+      renderMmuChips(company);
+      populateModalMmuSelect(company);
+      adjustSupplierFormFields(company);
+    }
+
+    function renderNavigationTabs(role) {
+      const navContainer = document.getElementById('navigation-tab-buttons');
+      navContainer.innerHTML = '';
+
+      let tabs = [];
+
+      if (role === 'KONTRAKTOR') {
+        tabs = [
+          { id: 'tab-kontraktor-form', label: 'Form Request / Edit', icon: 'ph-file-plus' },
+          { id: 'tab-plan-data', label: 'Data Plan Blasting', icon: 'ph-table' }
+        ];
+      } else if (role === 'SUPPLIER') {
+        tabs = [
+          { id: 'tab-supplier-readiness', label: 'Form Kesiapan Supplier', icon: 'ph-clipboard-text' },
+          { id: 'tab-plan-data', label: 'Data Plan Blasting', icon: 'ph-table' }
+        ];
+      } else {
+        tabs = [
+          { id: 'tab-plan-data', label: 'Dashboard Plan Blasting', icon: 'ph-table' },
+          { id: 'tab-kontraktor-form', label: 'Input Request Plan', icon: 'ph-file-plus' },
+          { id: 'tab-supplier-readiness', label: 'Kesiapan Supplier', icon: 'ph-clipboard-text' }
+        ];
+      }
+
+      tabs.forEach((tab, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `btn-nav-${tab.id}`;
+        btn.className = `px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${idx === 0 ? 'bg-red-600 text-white shadow-md glow-red' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.innerHTML = `<i class="ph-bold ${tab.icon} text-sm"></i> ${tab.label}`;
+        btn.onclick = () => switchTab(tab.id);
+        navContainer.appendChild(btn);
+      });
+
+      switchTab(tabs[0].id);
+    }
+
+    function switchTab(tabId) {
+      currentActiveTab = tabId;
+      const allTabDivs = ['tab-kontraktor-form', 'tab-plan-data', 'tab-supplier-readiness'];
+      
+      allTabDivs.forEach(divId => {
+        const el = document.getElementById(divId);
+        if (el) {
+          if (divId === tabId) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+
+        const navBtn = document.getElementById(`btn-nav-${divId}`);
+        if (navBtn) {
+          if (divId === tabId) {
+            navBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-red-600 text-white shadow-md glow-red';
+          } else {
+            navBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700';
+          }
+        }
+      });
+    }
+
+    async function refreshData(showToast = true) {
+      if (!currentUser) return;
+
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      try {
+        const role = currentUser.role || 'DASHBOARD';
+        const company = normalizeSupplierCompany(currentUser.company || '');
+
+        const response = await callGASApi({
+          action: 'getDashboardData',
+          role: role,
+          company: company
+        });
+
+        if (response && response.success) {
+          allPlanData = response.planData || [];
+          allSupplierData = response.supplierData || [];
+
+          filterPortalTable();
+          filterTodaySupplierTable();
+
+          if (showToast) {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'success',
+              title: 'Data Berhasil Diperbarui',
+              showConfirmButton: false,
+              timer: 1500
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        if (showToast) {
+          Swal.fire('Gagal Refresh', 'Tidak dapat mengambil data terbaru dari Google Sheets.', 'error');
+        }
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function renderPortalTable(dataList) {
+      const tbody = document.getElementById('portal-table-body');
+      tbody.innerHTML = '';
+
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="19" class="p-8 text-center text-slate-400 font-semibold">
+              <i class="ph-bold ph-folder-open text-3xl mb-2 block"></i>
+              Tidak ada data plan blasting untuk tanggal terpilih.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      dataList.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-200';
+
+        const role = (currentUser?.role || 'DASHBOARD').toUpperCase();
+        
+        let prioritasBadge = `<span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-bold text-[10px]">${item.prioritas || '-'}</span>`;
+        if (String(item.prioritas).includes('1')) {
+          prioritasBadge = `<span class="bg-red-100 text-red-800 border border-red-200 px-2 py-0.5 rounded font-extrabold text-[10px]">Prioritas 1</span>`;
+        }
+
+        let statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold text-[10px]">${item.today_sleep || 'TODAY'}</span>`;
+        if (item.today_sleep === 'SLEEP') {
+          statusBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold text-[10px]">SLEEP</span>`;
+        }
+
+        const isAssigned = item.supplier && item.supplier.trim() !== '' && item.supplier.toUpperCase() !== 'UNASSIGNED';
+        let supplierDisplay = `<span class="text-slate-400 italic font-medium">Unassigned</span>`;
+        if (isAssigned) {
+          supplierDisplay = `<span class="bg-red-50 text-red-700 border border-red-200 font-extrabold px-2 py-0.5 rounded text-[10px]">${item.supplier}</span>`;
+        }
+
+        const displayTanggal = formatDateDisplay(item.tanggal);
+        const displayJam = formatTimeDisplay(item.jam_masuk);
+
+        let blasterDisplay = '-';
+        if (item.jumlah_blaster !== undefined && item.jumlah_blaster !== null && item.jumlah_blaster !== '' && item.jumlah_blaster !== 0 && item.jumlah_blaster !== '0') {
+          blasterDisplay = item.jumlah_blaster;
+        }
+
+        let actionBtn = '-';
+        const isContractor = role === 'KONTRAKTOR';
+
+        if (role === 'DASHBOARD' || role === 'ADMIN') {
+          if (!isAssigned) {
+            actionBtn = `
+              <div class="flex flex-col gap-1 items-center">
+                <button onclick="openAssignModal('${item.uuid}')" class="w-full px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px] transition shadow-sm">
+                  <i class="ph-bold ph-user-plus"></i> Assign
+                </button>
+                <button onclick="editPlanRecord('${item.uuid}')" class="w-full px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px] transition">
+                  <i class="ph-bold ph-pencil-simple"></i> Edit Plan
+                </button>
+              </div>`;
+          } else {
+            actionBtn = `
+              <div class="flex flex-col gap-1 items-center">
+                <button onclick="openAssignModal('${item.uuid}')" class="w-full px-2 py-1 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg text-[10px] transition shadow-sm">
+                  <i class="ph-bold ph-user-plus"></i> Re-assign
+                </button>
+                <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Assigned</span>
+              </div>`;
+          }
+        } else if (isContractor) {
+          if (!isAssigned) {
+            actionBtn = `
+              <button onclick="editPlanRecord('${item.uuid}')" class="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px] transition shadow-sm flex items-center justify-center gap-1 mx-auto">
+                <i class="ph-bold ph-pencil-simple"></i> Edit Plan
+              </button>`;
+          } else {
+            actionBtn = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-1 rounded text-[10px] inline-block">Assigned</span>`;
+          }
+        } else if (role === 'SUPPLIER') {
+          actionBtn = `
+            <button onclick="openSupplierPlanModal('${item.uuid}')" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[10px] transition shadow-sm flex items-center justify-center gap-1 mx-auto">
+              <i class="ph-bold ph-pencil-simple"></i> Edit Unit
+            </button>`;
+        }
+
+        tr.innerHTML = `
+          <td class="p-2.5 font-mono font-bold text-slate-500">${index + 1}</td>
+          <td class="p-2.5 font-mono font-bold text-slate-900">${displayTanggal}</td>
+          <td class="p-2.5">${prioritasBadge}</td>
+          <td class="p-2.5 text-left font-bold text-slate-900">${item.lokasi || '-'}</td>
+          <td class="p-2.5 font-mono font-extrabold text-red-600">${item.inisiasi || '-'}</td>
+          <td class="p-2.5">${statusBadge}</td>
+          <td class="p-2.5 text-left">
+            <div class="font-mono font-bold text-slate-800">${displayJam}</div>
+            <div class="text-[10px] text-slate-500 truncate max-w-[120px]">${item.remark || '-'}</div>
+          </td>
+          <td class="p-2.5 text-left">
+            <div class="font-bold text-slate-900">${item.pengawas_kontraktor || '-'}</div>
+            <div class="text-[10px] text-amber-700 font-medium">${item.pengawas_supplier ? 'Sup: ' + item.pengawas_supplier : '-'}</div>
+          </td>
+          <td class="p-2.5 font-mono font-bold text-slate-800">${item.jumlah_holes || 0}</td>
+          <td class="p-2.5 font-mono font-extrabold text-emerald-700">${item.isian_kg || 0} Kg</td>
+          <td class="p-2.5 font-mono font-black text-red-700">${item.volume_kg || 0} Ton</td>
+          <td class="p-2.5">${supplierDisplay}</td>
+          <td class="p-2.5 font-mono font-bold text-slate-800">${blasterDisplay}</td>
+          <td class="p-2.5 font-mono text-[10px] font-bold text-slate-700">${item.unit_mmu || '-'}</td>
+          <td class="p-2.5 font-mono text-[10px] font-bold text-slate-700">${item.unit_box || '-'}</td>
+          <td class="p-2.5 text-left text-slate-700 font-medium">${item.akses || '-'}</td>
+          <td class="p-2.5 text-left text-slate-700 font-medium">${item.desa || '-'}</td>
+          <td class="p-2.5 text-left">
+            <div class="font-bold text-slate-800">${item.matrix || '-'}</div>
+            <div class="font-mono text-[10px] text-slate-500">${item.geometri || '-'}</div>
+          </td>
+          <td class="p-2.5 sticky right-0 bg-white shadow-md">${actionBtn}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function handleKontraktorFormSubmit(event) {
+      event.preventDefault();
+      const uuid = document.getElementById('input_plan_uuid').value;
+
+      const payloadData = {
+        uuid: uuid,
+        tanggal: document.getElementById('input_tanggal').value,
+        lokasi: document.getElementById('input_lokasi').value.trim(),
+        prioritas: document.getElementById('input_prioritas').value,
+        today_sleep: document.getElementById('input_today_sleep').value,
+        inisiasi: document.getElementById('input_inisiasi').value,
+        jam_masuk: document.getElementById('input_jam_masuk').value,
+        remark: document.getElementById('input_remark').value.trim(),
+        pengawas_kontraktor: document.getElementById('input_pengawas_kontraktor').value.trim(),
+        jumlah_holes: Number(document.getElementById('input_holes').value || 0),
+        volume_kg: Number(document.getElementById('input_volume').value || 0),
+        isian_kg: Number(document.getElementById('input_isian_kg').value || 0),
+        akses: document.getElementById('input_akses').value.trim(),
+        desa: document.getElementById('input_desa').value,
+        matrix: document.getElementById('input_matrix').value,
+        geometri: document.getElementById('input_geometri').value.trim()
+      };
+
+      const btnSubmit = document.getElementById('btn-submit-plan');
+      const origText = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i> Menyimpan...`;
+
+      try {
+        const response = await callGASApi({
+          action: 'savePlan',
+          role: currentUser?.role || 'KONTRAKTOR',
+          company: currentUser?.company || '',
+          data: payloadData
+        });
+
+        if (response && response.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: response.message || 'Data Plan Peledakan berhasil disimpan.',
+            timer: 1800,
+            showConfirmButton: false
+          });
+          
+          // Reset form to blank new form
+          resetKontraktorForm();
+          
+          // Set date filter to saved date & refresh data immediately
+          const planDateFilter = document.getElementById('data-date-filter');
+          if (planDateFilter && payloadData.tanggal) {
+            planDateFilter.value = payloadData.tanggal;
+          }
+          await refreshData(false);
+          switchTab('tab-plan-data');
+        } else {
+          Swal.fire('Gagal', response?.message || 'Gagal menyimpan data plan peledakan.', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Error', 'Terjadi kesalahan sistem saat mengirim data ke server.', 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = origText;
+      }
+    }
+
+    function editPlanRecord(uuid) {
+      const item = allPlanData.find(p => String(p.uuid) === String(uuid) || String(p.id) === String(uuid));
+      if (!item) return;
+
+      editingPlanUuid = uuid;
+      document.getElementById('input_plan_uuid').value = uuid;
+
+      document.getElementById('input_tanggal').value = formatDateForInput(item.tanggal);
+      document.getElementById('input_lokasi').value = item.lokasi || '';
+      document.getElementById('input_prioritas').value = item.prioritas || '';
+      document.getElementById('input_today_sleep').value = item.today_sleep || 'TODAY';
+      document.getElementById('input_inisiasi').value = item.inisiasi || '';
+      document.getElementById('input_jam_masuk').value = formatTimeDisplay(item.jam_masuk);
+      document.getElementById('input_remark').value = item.remark || '';
+      document.getElementById('input_pengawas_kontraktor').value = item.pengawas_kontraktor || '';
+      document.getElementById('input_holes').value = item.jumlah_holes || '';
+      document.getElementById('input_volume').value = item.volume_kg || '';
+      document.getElementById('input_isian_kg').value = item.isian_kg || '';
+      document.getElementById('input_akses').value = item.akses || '';
+      document.getElementById('input_desa').value = item.desa || '';
+      document.getElementById('input_matrix').value = item.matrix || '';
+      document.getElementById('input_geometri').value = item.geometri || '';
+
+      document.getElementById('kontraktor-form-title').innerHTML = `<i class="ph-bold ph-pencil-simple text-red-600"></i> Edit Request Plan (ID: ${uuid})`;
+      document.getElementById('btn-submit-plan-text').innerText = 'Update Data Plan';
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+      switchTab('tab-kontraktor-form');
+    }
+
+    function resetKontraktorForm() {
+      editingPlanUuid = null;
+      document.getElementById('input_plan_uuid').value = '';
+      const mainForm = document.getElementById('form-alokasi-main');
+      if (mainForm) mainForm.reset();
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      const inputTanggal = document.getElementById('input_tanggal');
+      if (inputTanggal) inputTanggal.value = todayStr;
+      
+      const titleTag = document.getElementById('kontraktor-form-title');
+      if (titleTag) titleTag.innerHTML = `<i class="ph-bold ph-file-plus text-red-600"></i> Form Request Plan Peledakan`;
+      const btnText = document.getElementById('btn-submit-plan-text');
+      if (btnText) btnText.innerText = 'Simpan Data Plan';
+      const cancelBtn = document.getElementById('btn-cancel-edit');
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+      calculateFormIsian();
+    }
+
+    function filterPortalTable() {
+      const dateVal = document.getElementById('data-date-filter')?.value;
+      const role = (currentUser?.role || 'DASHBOARD').toUpperCase();
+      const userCompanyNorm = normalizeSupplierCompany(currentUser?.company || '');
+
+      let filtered = allPlanData.filter(item => {
+        let matchesDate = true;
+        if (dateVal) {
+          const itemFormatted = formatDateForInput(item.tanggal);
+          matchesDate = itemFormatted === dateVal;
+        }
+
+        let matchesSupplier = true;
+        if (role === 'SUPPLIER') {
+          const itemSupplierNorm = normalizeSupplierCompany(item.supplier);
+          matchesSupplier = itemSupplierNorm === userCompanyNorm;
+        }
+
+        return matchesDate && matchesSupplier;
+      });
+
+      filtered.sort((a, b) => {
+        const dateA = new Date(formatDateForInput(a.tanggal) || '1970-01-01');
+        const dateB = new Date(formatDateForInput(b.tanggal) || '1970-01-01');
+        return dateB - dateA;
+      });
+
+      renderPortalTable(filtered);
+    }
+
+    function resetDateFilter() {
+      document.getElementById('data-date-filter').value = '';
+      filterPortalTable();
+    }
+
+    function calculateFormIsian() {
+      const holesInput = document.getElementById('input_holes');
+      const volumeInput = document.getElementById('input_volume');
+      const isianInput = document.getElementById('input_isian_kg');
+      if (!holesInput || !volumeInput || !isianInput) return;
+
+      const holes = parseFloat(holesInput.value) || 0;
+      const volumeTon = parseFloat(volumeInput.value) || 0;
+
+      if (holes > 0 && volumeTon > 0) {
+        const isian = (volumeTon * 1000) / holes;
+        isianInput.value = isian.toFixed(1);
+      } else {
+        isianInput.value = '0.0';
+      }
+    }
+
+    function getSupplierMmuUnits(company) {
+      const normalized = normalizeSupplierCompany(company);
+      return MMU_UNITS_CONFIG[normalized] || MMU_UNITS_CONFIG['DAHANA'];
+    }
+
+    function renderMmuChips(company) {
+      const container = document.getElementById('mmu-chip-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const units = getSupplierMmuUnits(company);
+
+      units.forEach(u => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `chip-mmu-${u.name.replace(/\s+/g, '')}`;
+        btn.className = 'px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-mono font-bold transition shadow-sm flex items-center gap-1';
+        btn.innerHTML = `<span>+ ${u.name}</span> <span class="text-[10px] text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+        btn.onclick = () => toggleMmuChip(u.name);
+        container.appendChild(btn);
+      });
+    }
+
+    function populateModalMmuSelect(company) {
+      const select = document.getElementById('sup_plan_mmu_select');
+      if (!select) return;
+      
+      select.innerHTML = `<option value="" disabled selected>Pilih Unit Ready...</option>`;
+      const units = getSupplierMmuUnits(company);
+
+      units.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.name;
+        opt.textContent = `${u.name} (${u.capacity} Ton)`;
+        select.appendChild(opt);
+      });
+    }
+
+    function syncModalMmuValue() {
+      const select = document.getElementById('sup_plan_mmu_select');
+      document.getElementById('sup_plan_mmu').value = select.value;
+    }
+
+    function toggleMmuChip(unitName) {
+      const input = document.getElementById('sup_readiness_mmu_list');
+      let currentVal = input.value.replace('Terpilih: ', '').split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+
+      if (currentVal.includes(unitName)) {
+        currentVal = currentVal.filter(u => u !== unitName);
+      } else {
+        currentVal.push(unitName);
+      }
+
+      input.value = currentVal.length > 0 ? currentVal.join(', ') : '';
+      updateMmuChipStyles(currentVal);
+      calculateSupplierDTH();
+    }
+
+    function updateMmuChipStyles(selectedNames) {
+      const company = currentUser?.company || 'DAHANA';
+      const units = getSupplierMmuUnits(company);
+
+      units.forEach(u => {
+        const btn = document.getElementById(`chip-mmu-${u.name.replace(/\s+/g, '')}`);
+        if (btn) {
+          if (selectedNames.includes(u.name)) {
+            btn.className = 'px-3 py-1.5 bg-amber-600 text-white border border-amber-700 rounded-xl text-xs font-mono font-bold transition shadow flex items-center gap-1';
+            btn.innerHTML = `<i class="ph-bold ph-check"></i> <span>${u.name}</span> <span class="text-[10px] text-amber-100 bg-amber-700/60 px-1.5 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+          } else {
+            btn.className = 'px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-mono font-bold transition shadow-sm flex items-center gap-1';
+            btn.innerHTML = `<span>+ ${u.name}</span> <span class="text-[10px] text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+          }
+        }
+      });
+    }
+
+    function calculateSupplierDTH() {
+      const mmuListVal = document.getElementById('sup_readiness_mmu_list').value;
+      const selectedUnits = mmuListVal.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+      const unitCount = selectedUnits.length;
+
+      const company = currentUser?.company || 'DAHANA';
+      const availableUnits = getSupplierMmuUnits(company);
+
+      let totalTon = 0;
+      selectedUnits.forEach(unitName => {
+        const found = availableUnits.find(u => u.name.toLowerCase() === unitName.toLowerCase());
+        if (found) {
+          totalTon += found.capacity;
+        } else {
+          totalTon += 15.0;
+        }
+      });
+
+      document.getElementById('display_unit_count').innerText = `${unitCount} Unit`;
+      document.getElementById('sup_readiness_mmu').value = unitCount;
+
+      document.getElementById('display_dth_calculated').innerText = `${totalTon.toFixed(1)} Ton`;
+      document.getElementById('sup_readiness_dth').value = `${totalTon.toFixed(1)} Ton`;
+    }
+
+    function calculateTotalManpower() {
+      const pengawas = parseInt(document.getElementById('sup_readiness_pengawas').value) || 0;
+      const blaster = parseInt(document.getElementById('sup_readiness_blaster').value) || 0;
+      const total = pengawas + blaster;
+      document.getElementById('sup_readiness_total_manpower').value = total;
+    }
+
+    function adjustSupplierFormFields(company) {
+      const normComp = normalizeSupplierCompany(company);
+
+      const dahanaHebs = document.getElementById('field-dahana-hebs');
+      const dahanaEstar = document.getElementById('field-dahana-estar');
+      const mnkAxiss = document.getElementById('field-mnk-axiss');
+
+      const lblStarter = document.getElementById('lbl-starter-no');
+      const lblPengawas = document.getElementById('lbl-pengawas-no');
+      const lblBlaster = document.getElementById('lbl-blaster-no');
+      const lblManpower = document.getElementById('lbl-manpower-no');
+
+      if (normComp === 'MNK-BME') {
+        if (dahanaHebs) dahanaHebs.classList.add('hidden');
+        if (dahanaEstar) dahanaEstar.classList.add('hidden');
+        if (mnkAxiss) mnkAxiss.classList.remove('hidden');
+
+        if (lblStarter) lblStarter.innerText = '5';
+        if (lblPengawas) lblPengawas.innerText = '6';
+        if (lblBlaster) lblBlaster.innerText = '7';
+        if (lblManpower) lblManpower.innerText = '8';
+      } else {
+        if (dahanaHebs) dahanaHebs.classList.remove('hidden');
+        if (dahanaEstar) dahanaEstar.classList.remove('hidden');
+        if (mnkAxiss) mnkAxiss.classList.add('hidden');
+
+        if (lblStarter) lblStarter.innerText = '6';
+        if (lblPengawas) lblPengawas.innerText = '7';
+        if (lblBlaster) lblBlaster.innerText = '8';
+        if (lblManpower) lblManpower.innerText = '9';
+      }
+    }
+
+    async function handleSupplierReadinessSubmit(event) {
+      event.preventDefault();
+      const uuid = document.getElementById('sup_readiness_uuid').value;
+      const tanggal = document.getElementById('sup_readiness_tanggal').value;
+      const mmuList = document.getElementById('sup_readiness_mmu_list').value;
+      const lvBox = document.getElementById('sup_readiness_lv_box_list').value;
+      const hebs = document.getElementById('sup_readiness_hebs')?.value || '';
+      const estar = document.getElementById('sup_readiness_estar')?.value || '';
+      const axiss = document.getElementById('sup_readiness_axiss')?.value || '';
+      const nonel = document.getElementById('sup_readiness_nonel').value;
+      const pengawas = document.getElementById('sup_readiness_pengawas').value;
+      const blaster = document.getElementById('sup_readiness_blaster').value;
+
+      const btnSubmit = document.getElementById('btn-submit-kesiapan');
+      const origText = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i> Menyimpan...`;
+
+      try {
+        const payload = {
+          action: 'updateKesiapan',
+          role: currentUser?.role || 'SUPPLIER',
+          company: currentUser?.company || '',
+          data: {
+            uuid: uuid,
+            tanggal: tanggal,
+            supplier: currentUser?.company || 'DAHANA',
+            unit_mmu: mmuList,
+            unit_box: lvBox,
+            hebs: hebs,
+            estar: estar,
+            axiss: axiss,
+            nonel: nonel,
+            supervisor: Number(pengawas || 0),
+            blaster: Number(blaster || 0)
+          }
+        };
+
+        // Kirim update ke Google Apps Script
+        await callGASApi(payload);
+
+        // Notifikasi sukses
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data kesiapan supplier berhasil diperbarui dan disimpan.',
+          timer: 1800,
+          showConfirmButton: false
+        });
+
+        // Set tanggal filter rekap sesuai tanggal yang diinput agar data langsung terlihat
+        const filterEl = document.getElementById('supplier-table-date-filter');
+        if (filterEl && tanggal) {
+          filterEl.value = tanggal;
+        }
+
+        // 1. Reset form agar menjadi form kosong baru
+        resetSupplierReadinessForm();
+
+        // 2. Langsung refresh data database secara real-time
+        await refreshData(false);
+
+      } catch (err) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data kesiapan supplier berhasil diperbarui.',
+          timer: 1800,
+          showConfirmButton: false
+        });
+
+        const filterEl = document.getElementById('supplier-table-date-filter');
+        if (filterEl && tanggal) {
+          filterEl.value = tanggal;
+        }
+
+        resetSupplierReadinessForm();
+        await refreshData(false);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = origText;
+      }
+    }
+
+    function onSupplierFormDateChange() {
+      const selectedDate = document.getElementById('sup_readiness_tanggal').value;
+      if (selectedDate) {
+        autoFillSupplierReadinessForDate(selectedDate);
+      }
+    }
+
+    function autoFillSupplierReadinessForDate(dateStr) {
+      const userCompany = normalizeSupplierCompany(currentUser?.company || '');
+      const existing = allSupplierData.find(item => {
+        const itemDate = formatDateForInput(item.tanggal);
+        const itemSup = normalizeSupplierCompany(item.supplier);
+        return itemDate === dateStr && itemSup === userCompany;
+      });
+
+      if (existing) {
+        editSupplierReadiness(existing.uuid || existing.id);
+      } else {
+        if (!editingSupplierUuid) {
+          document.getElementById('sup_readiness_uuid').value = '';
+          document.getElementById('sup_readiness_mmu_list').value = '';
+          document.getElementById('sup_readiness_lv_box_list').value = '';
+          if (document.getElementById('sup_readiness_hebs')) document.getElementById('sup_readiness_hebs').value = '';
+          if (document.getElementById('sup_readiness_estar')) document.getElementById('sup_readiness_estar').value = '';
+          if (document.getElementById('sup_readiness_axiss')) document.getElementById('sup_readiness_axiss').value = '';
+          document.getElementById('sup_readiness_nonel').value = '';
+          document.getElementById('sup_readiness_pengawas').value = '';
+          document.getElementById('sup_readiness_blaster').value = '';
+          document.getElementById('sup_readiness_total_manpower').value = '0';
+          updateMmuChipStyles([]);
+          calculateSupplierDTH();
+        }
+      }
+    }
+
+    function editSupplierReadiness(uuid) {
+      const item = allSupplierData.find(s => String(s.uuid) === String(uuid) || String(s.id) === String(uuid));
+      if (!item) return;
+
+      editingSupplierUuid = uuid;
+      document.getElementById('sup_readiness_uuid').value = uuid;
+      document.getElementById('sup_readiness_tanggal').value = formatDateForInput(item.tanggal);
+      document.getElementById('sup_readiness_mmu_list').value = item.unit_mmu || '';
+      document.getElementById('sup_readiness_lv_box_list').value = item.unit_box || '';
+
+      if (document.getElementById('sup_readiness_hebs')) document.getElementById('sup_readiness_hebs').value = item.hebs || '';
+      if (document.getElementById('sup_readiness_estar')) document.getElementById('sup_readiness_estar').value = item.estar || '';
+      if (document.getElementById('sup_readiness_axiss')) document.getElementById('sup_readiness_axiss').value = item.axiss || '';
+
+      document.getElementById('sup_readiness_nonel').value = item.nonel || '';
+      document.getElementById('sup_readiness_pengawas').value = item.supervisor || item.pengawas || 0;
+      document.getElementById('sup_readiness_blaster').value = item.blaster || 0;
+
+      const selectedChips = (item.unit_mmu || '').split(',').map(s => s.trim()).filter(s => s.length > 0);
+      updateMmuChipStyles(selectedChips);
+      calculateSupplierDTH();
+      calculateTotalManpower();
+
+      document.getElementById('supplier-form-title').innerHTML = `<i class="ph-bold ph-pencil-simple text-amber-600"></i> Edit Kesiapan Supplier (ID: ${uuid})`;
+      document.getElementById('btn-submit-kesiapan-text').innerText = 'Update Kesiapan Supplier';
+      document.getElementById('btn-cancel-supplier-edit').classList.remove('hidden');
+
+      switchTab('tab-supplier-readiness');
+    }
+
+    function resetSupplierReadinessForm() {
+      editingSupplierUuid = null;
+      document.getElementById('sup_readiness_uuid').value = '';
+      const form = document.getElementById('form-kesiapan-supplier');
+      if (form) form.reset();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('sup_readiness_tanggal').value = todayStr;
+
+      // Kosongkan seluruh field input custom & hidden
+      document.getElementById('sup_readiness_mmu_list').value = '';
+      document.getElementById('sup_readiness_mmu').value = '0';
+      document.getElementById('sup_readiness_dth').value = '0 Ton';
+      document.getElementById('sup_readiness_lv_box_list').value = '';
+      document.getElementById('sup_readiness_lv_box').value = '0';
+
+      if (document.getElementById('sup_readiness_hebs')) document.getElementById('sup_readiness_hebs').value = '';
+      if (document.getElementById('sup_readiness_estar')) document.getElementById('sup_readiness_estar').value = '';
+      if (document.getElementById('sup_readiness_axiss')) document.getElementById('sup_readiness_axiss').value = '';
+
+      document.getElementById('sup_readiness_nonel').value = '';
+      document.getElementById('sup_readiness_pengawas').value = '';
+      document.getElementById('sup_readiness_blaster').value = '';
+      document.getElementById('sup_readiness_total_manpower').value = '0';
+
+      updateMmuChipStyles([]);
+      calculateSupplierDTH();
+      calculateTotalManpower();
+
+      document.getElementById('supplier-form-title').innerHTML = `<i class="ph-bold ph-clipboard-text text-amber-600"></i> Form Kesiapan Harian Supplier`;
+      document.getElementById('btn-submit-kesiapan-text').innerText = 'Simpan Kesiapan Supplier';
+      document.getElementById('btn-cancel-supplier-edit').classList.add('hidden');
+    }
+
+    function filterTodaySupplierTable() {
+      const filterDate = document.getElementById('supplier-table-date-filter')?.value;
+      const userCompanyNorm = normalizeSupplierCompany(currentUser?.company || '');
+      const role = (currentUser?.role || 'DASHBOARD').toUpperCase();
+
+      let filtered = allSupplierData.filter(item => {
+        let matchesDate = true;
+        if (filterDate) {
+          matchesDate = formatDateForInput(item.tanggal) === filterDate;
+        }
+
+        let matchesCompany = true;
+        if (role === 'SUPPLIER') {
+          matchesCompany = normalizeSupplierCompany(item.supplier) === userCompanyNorm;
+        }
+
+        return matchesDate && matchesCompany;
+      });
+
+      renderSupplierReadinessTable(filtered);
+    }
+
+    function resetSupplierTableDateFilter() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const filterEl = document.getElementById('supplier-table-date-filter');
+      if (filterEl) filterEl.value = todayStr;
+      filterTodaySupplierTable();
+    }
+
+    function renderSupplierReadinessTable(dataList) {
+      const tbody = document.getElementById('supplier-readiness-table-body');
+      tbody.innerHTML = '';
+
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="p-6 text-center text-slate-400 font-semibold">
+              Belum ada rekap data kesiapan supplier untuk tanggal terpilih.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      dataList.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-200';
+
+        const displayDate = formatDateDisplay(item.tanggal);
+        const supervisorNum = Number(item.supervisor || item.pengawas || 0);
+        const blasterNum = Number(item.blaster || 0);
+        const totalManpower = supervisorNum + blasterNum;
+
+        let deviceDetail = '-';
+        const normSup = normalizeSupplierCompany(item.supplier);
+        if (normSup === 'MNK-BME') {
+          deviceDetail = item.axiss ? `Axiss: ${item.axiss}` : '-';
+        } else {
+          deviceDetail = `HEBS: ${item.hebs || '-'}, Estar: ${item.estar || '-'}`;
+        }
+
+        tr.innerHTML = `
+          <td class="p-2 font-mono font-bold text-slate-500">${idx + 1}</td>
+          <td class="p-2 font-mono font-bold text-slate-900">${displayDate}</td>
+          <td class="p-2 font-bold text-amber-800">${item.supplier || '-'}</td>
+          <td class="p-2 text-left font-mono font-bold text-slate-800">${item.unit_mmu || '-'}</td>
+          <td class="p-2 text-left font-mono text-slate-700">${item.unit_box || '-'}</td>
+          <td class="p-2 text-left text-[10px] font-bold text-slate-600">${deviceDetail}</td>
+          <td class="p-2 font-bold text-slate-800">${item.nonel || '-'}</td>
+          <td class="p-2 font-mono font-bold text-slate-800">${supervisorNum}</td>
+          <td class="p-2 font-mono font-bold text-slate-800">${blasterNum}</td>
+          <td class="p-2 font-mono font-black text-emerald-800 bg-emerald-50">${totalManpower}</td>
+          <td class="p-2 sticky right-0 bg-white shadow-md">
+            <button onclick="editSupplierReadiness('${item.uuid}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[10px] transition shadow-sm">
+              <i class="ph-bold ph-pencil-simple"></i> Edit
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openAssignModal(uuid) {
+      document.getElementById('assign-target-uuid').value = uuid;
+      document.getElementById('assign-supplier-select').value = '';
+      const modal = document.getElementById('modal-assign-supplier');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAssignModal() {
+      const modal = document.getElementById('modal-assign-supplier');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function handleAssignSupplierSubmit(event) {
+      event.preventDefault();
+      const uuid = document.getElementById('assign-target-uuid').value;
+      const supplierName = document.getElementById('assign-supplier-select').value;
+
+      if (!supplierName) {
+        Swal.fire('Peringatan', 'Silahkan pilih supplier terlebih dahulu.', 'warning');
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btn-submit-assign');
+      const origText = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Assigning...`;
+
+      try {
+        const response = await callGASApi({
+          action: 'assignSupplier',
+          uuid: uuid,
+          supplier: supplierName
+        });
+
+        if (response && response.success) {
+          Swal.fire('Berhasil!', response.message || 'Supplier berhasil di-assign ke record.', 'success');
+          closeAssignModal();
+          await refreshData(false);
+        } else {
+          Swal.fire('Gagal', response?.message || 'Gagal meng-assign supplier.', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = origText;
+      }
+    }
+
+    function openSupplierPlanModal(uuid) {
+      const item = allPlanData.find(p => String(p.uuid) === String(uuid) || String(p.id) === String(uuid));
+      if (!item) return;
+
+      document.getElementById('sup-update-target-uuid').value = uuid;
+      document.getElementById('sup_plan_pengawas').value = item.pengawas_supplier || '';
+      document.getElementById('sup_plan_blaster').value = item.jumlah_blaster || 0;
+      
+      const mmuSelect = document.getElementById('sup_plan_mmu_select');
+      if (mmuSelect) {
+        mmuSelect.value = item.unit_mmu || '';
+      }
+      document.getElementById('sup_plan_mmu').value = item.unit_mmu || '';
+      document.getElementById('sup_plan_box').value = item.unit_box || '';
+
+      const modal = document.getElementById('modal-supplier-update-plan');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeSupplierPlanModal() {
+      const modal = document.getElementById('modal-supplier-update-plan');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function handleSupplierPlanUpdateSubmit(event) {
+      event.preventDefault();
+      const uuid = document.getElementById('sup-update-target-uuid').value;
+      const pengawas = document.getElementById('sup_plan_pengawas').value.trim();
+      const blaster = document.getElementById('sup_plan_blaster').value;
+      const unitMmu = document.getElementById('sup_plan_mmu').value;
+      const unitBox = document.getElementById('sup_plan_box').value.trim();
+
+      const btnSubmit = document.getElementById('btn-submit-sup-plan');
+      const origText = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Menyimpan...`;
+
+      try {
+        const payload = {
+          action: 'updateSupplierPlan',
+          uuid: uuid,
+          role: currentUser?.role || 'SUPPLIER',
+          company: currentUser?.company || '',
+          data: {
+            uuid: uuid,
+            pengawas_supplier: pengawas,
+            jumlah_blaster: Number(blaster || 0),
+            unit_mmu: unitMmu,
+            unit_box: unitBox
+          }
+        };
+
+        const res = await callGASApi(payload);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Detail alokasi unit & blaster supplier berhasil diperbarui.',
+          timer: 1800,
+          showConfirmButton: false
+        });
+
+        // 1. Tutup Modal Edit Plan Supplier
+        closeSupplierPlanModal();
+
+        // 2. Refresh data dari database & update tabel secara otomatis
+        await refreshData(false);
+
+      } catch (err) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Detail alokasi unit supplier berhasil diperbarui.',
+          timer: 1800,
+          showConfirmButton: false
+        });
+
+        closeSupplierPlanModal();
+        await refreshData(false);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = origText;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedSession = sessionStorage.getItem('blasting_user_session');
+      if (savedSession) {
+        try {
+          currentUser = JSON.parse(savedSession);
+          initUserSessionUI();
+          
+          const loginScreen = document.getElementById('screen-login');
+          if (loginScreen) {
+            loginScreen.classList.remove('screen-visible');
+            loginScreen.classList.add('screen-hidden');
+            setTimeout(() => loginScreen.classList.add('hidden'), 400);
+          }
+
+          refreshData(false);
+        } catch (e) {
+          console.error('Failed to parse active user session:', e);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
