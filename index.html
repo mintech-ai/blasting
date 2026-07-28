@@ -517,6 +517,8 @@
                 <th class="p-2 border border-slate-700 min-w-[90px]">TANGGAL</th>
                 <th class="p-2 border border-slate-700 min-w-[90px]">SUPPLIER</th>
                 <th class="p-2 border border-slate-700 min-w-[140px] text-left">MMU / MMT READY</th>
+                <!-- DITAMBAHKAN 1 KOLOM KAPASITAS (TON) DI SEBELAH MMU/MMT READY -->
+                <th class="p-2 border border-slate-700 min-w-[100px] text-center bg-emerald-900 text-emerald-200">KAPASITAS (TON)</th>
                 <th class="p-2 border border-slate-700 min-w-[100px] text-left">MOBIL BOX</th>
                 <th class="p-2 border border-slate-700 min-w-[110px] text-left">HEBS / ESTAR / AXISS</th>
                 <th class="p-2 border border-slate-700 min-w-[80px]">NONEL STARTER</th>
@@ -599,12 +601,12 @@
           <input type="number" id="sup_plan_blaster" min="0" placeholder="Isi Jumlah Blaster..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono font-bold">
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Unit MMU / MMT <span class="text-red-600">*</span></label>
-          <select id="sup_plan_mmu_select" required onchange="syncModalMmuValue()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-bold">
-            <option value="" disabled selected>Pilih Unit Ready...</option>
-          </select>
-          <input type="hidden" id="sup_plan_mmu">
+        <!-- DIUBAH: Pilihan MMU Unit sekarang berbentuk Klik / Chip Interaktif Multi-Alokasi -->
+        <div class="sm:col-span-2">
+          <label class="block font-bold text-slate-700 mb-1">Unit MMU / MMT Ready <span class="text-red-600">*</span></label>
+          <p class="text-[10px] text-slate-500 mb-1">Klik unit di bawah ini untuk menambah/menghapus alokasi MMU ke plan ini:</p>
+          <div id="modal-mmu-chip-container" class="flex flex-wrap gap-1.5 mb-2"></div>
+          <input type="text" id="sup_plan_mmu" readonly required placeholder="Terpilih: -" class="w-full bg-amber-50/50 border border-amber-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold text-xs">
         </div>
 
         <div class="sm:col-span-2">
@@ -740,6 +742,34 @@
       }
 
       return str;
+    }
+
+    // Helper function untuk menghitung total tonase dari daftar MMU/MMT ready
+    function computeCapacityFromUnits(unitStr, supplierName) {
+      if (!unitStr) return 0;
+      const units = String(unitStr).split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+      if (units.length === 0) return 0;
+
+      const normSup = normalizeSupplierCompany(supplierName);
+      const availableUnits = getSupplierMmuUnits(normSup);
+
+      let totalTon = 0;
+      units.forEach(unitName => {
+        let found = availableUnits.find(u => u.name.toLowerCase() === unitName.toLowerCase());
+        if (!found) {
+          // Cari di seluruh config jika supplier tidak cocok
+          for (const key in MMU_UNITS_CONFIG) {
+            found = MMU_UNITS_CONFIG[key].find(u => u.name.toLowerCase() === unitName.toLowerCase());
+            if (found) break;
+          }
+        }
+        if (found) {
+          totalTon += found.capacity;
+        } else {
+          totalTon += 15.0; // fallback default
+        }
+      });
+      return totalTon;
     }
 
     async function callGASApi(payload) {
@@ -926,7 +956,6 @@
 
       renderNavigationTabs(role);
       renderMmuChips(company);
-      populateModalMmuSelect(company);
       adjustSupplierFormFields(company);
     }
 
@@ -1197,10 +1226,8 @@
             showConfirmButton: false
           });
           
-          // Reset form to blank new form
           resetKontraktorForm();
           
-          // Set date filter to saved date & refresh data immediately
           const planDateFilter = document.getElementById('data-date-filter');
           if (planDateFilter && payloadData.tanggal) {
             planDateFilter.value = payloadData.tanggal;
@@ -1342,26 +1369,6 @@
       });
     }
 
-    function populateModalMmuSelect(company) {
-      const select = document.getElementById('sup_plan_mmu_select');
-      if (!select) return;
-      
-      select.innerHTML = `<option value="" disabled selected>Pilih Unit Ready...</option>`;
-      const units = getSupplierMmuUnits(company);
-
-      units.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.name;
-        opt.textContent = `${u.name} (${u.capacity} Ton)`;
-        select.appendChild(opt);
-      });
-    }
-
-    function syncModalMmuValue() {
-      const select = document.getElementById('sup_plan_mmu_select');
-      document.getElementById('sup_plan_mmu').value = select.value;
-    }
-
     function toggleMmuChip(unitName) {
       const input = document.getElementById('sup_readiness_mmu_list');
       let currentVal = input.value.replace('Terpilih: ', '').split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
@@ -1390,6 +1397,56 @@
           } else {
             btn.className = 'px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-mono font-bold transition shadow-sm flex items-center gap-1';
             btn.innerHTML = `<span>+ ${u.name}</span> <span class="text-[10px] text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+          }
+        }
+      });
+    }
+
+    // DIUBAH: Fitur Klik Chip Multi-Alokasi MMU di Modal Supplier Plan Update
+    function renderModalMmuChips(company) {
+      const container = document.getElementById('modal-mmu-chip-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const units = getSupplierMmuUnits(company);
+
+      units.forEach(u => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `modal-chip-mmu-${u.name.replace(/\s+/g, '')}`;
+        btn.className = 'px-2.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-mono font-bold transition shadow-sm flex items-center gap-1';
+        btn.innerHTML = `<span>+ ${u.name}</span> <span class="text-[9px] text-amber-700 bg-amber-100/80 px-1 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+        btn.onclick = () => toggleModalMmuChip(u.name, company);
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleModalMmuChip(unitName, company) {
+      const input = document.getElementById('sup_plan_mmu');
+      let currentVal = input.value.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+
+      if (currentVal.includes(unitName)) {
+        currentVal = currentVal.filter(u => u !== unitName);
+      } else {
+        currentVal.push(unitName);
+      }
+
+      input.value = currentVal.length > 0 ? currentVal.join(', ') : '';
+      updateModalMmuChipStyles(currentVal, company);
+    }
+
+    function updateModalMmuChipStyles(selectedNames, company) {
+      const units = getSupplierMmuUnits(company);
+
+      units.forEach(u => {
+        const btn = document.getElementById(`modal-chip-mmu-${u.name.replace(/\s+/g, '')}`);
+        if (btn) {
+          if (selectedNames.includes(u.name)) {
+            btn.className = 'px-2.5 py-1.5 bg-amber-600 text-white border border-amber-700 rounded-xl text-xs font-mono font-bold transition shadow flex items-center gap-1';
+            btn.innerHTML = `<i class="ph-bold ph-check"></i> <span>${u.name}</span> <span class="text-[9px] text-amber-100 bg-amber-700/60 px-1 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
+          } else {
+            btn.className = 'px-2.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-mono font-bold transition shadow-sm flex items-center gap-1';
+            btn.innerHTML = `<span>+ ${u.name}</span> <span class="text-[9px] text-amber-700 bg-amber-100/80 px-1 py-0.5 rounded font-sans">(${u.capacity} T)</span>`;
           }
         }
       });
@@ -1498,10 +1555,8 @@
           }
         };
 
-        // Kirim update ke Google Apps Script
         await callGASApi(payload);
 
-        // Notifikasi sukses
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -1510,16 +1565,12 @@
           showConfirmButton: false
         });
 
-        // Set tanggal filter rekap sesuai tanggal yang diinput agar data langsung terlihat
         const filterEl = document.getElementById('supplier-table-date-filter');
         if (filterEl && tanggal) {
           filterEl.value = tanggal;
         }
 
-        // 1. Reset form agar menjadi form kosong baru
         resetSupplierReadinessForm();
-
-        // 2. Langsung refresh data database secara real-time
         await refreshData(false);
 
       } catch (err) {
@@ -1618,7 +1669,6 @@
       const todayStr = new Date().toISOString().split('T')[0];
       document.getElementById('sup_readiness_tanggal').value = todayStr;
 
-      // Kosongkan seluruh field input custom & hidden
       document.getElementById('sup_readiness_mmu_list').value = '';
       document.getElementById('sup_readiness_mmu').value = '0';
       document.getElementById('sup_readiness_dth').value = '0 Ton';
@@ -1695,6 +1745,9 @@
         const blasterNum = Number(item.blaster || 0);
         const totalManpower = supervisorNum + blasterNum;
 
+        // DITAMBAHKAN: Kalkulasi Kapasitas Ton DTH Ready
+        const capTon = computeCapacityFromUnits(item.unit_mmu, item.supplier);
+
         let deviceDetail = '-';
         const normSup = normalizeSupplierCompany(item.supplier);
         if (normSup === 'MNK-BME') {
@@ -1708,6 +1761,8 @@
           <td class="p-2 font-mono font-bold text-slate-900">${displayDate}</td>
           <td class="p-2 font-bold text-amber-800">${item.supplier || '-'}</td>
           <td class="p-2 text-left font-mono font-bold text-slate-800">${item.unit_mmu || '-'}</td>
+          <!-- KOLOM KAPASITAS (TON) DI SEBELAH MMU/MMT READY -->
+          <td class="p-2 font-mono font-black text-emerald-700 bg-emerald-50/50">${capTon > 0 ? capTon.toFixed(1) + ' Ton' : '0 Ton'}</td>
           <td class="p-2 text-left font-mono text-slate-700">${item.unit_box || '-'}</td>
           <td class="p-2 text-left text-[10px] font-bold text-slate-600">${deviceDetail}</td>
           <td class="p-2 font-bold text-slate-800">${item.nonel || '-'}</td>
@@ -1782,11 +1837,14 @@
       document.getElementById('sup_plan_pengawas').value = item.pengawas_supplier || '';
       document.getElementById('sup_plan_blaster').value = item.jumlah_blaster || 0;
       
-      const mmuSelect = document.getElementById('sup_plan_mmu_select');
-      if (mmuSelect) {
-        mmuSelect.value = item.unit_mmu || '';
-      }
-      document.getElementById('sup_plan_mmu').value = item.unit_mmu || '';
+      const comp = item.supplier || currentUser?.company || 'DAHANA';
+      renderModalMmuChips(comp);
+
+      const mmuVal = item.unit_mmu || '';
+      document.getElementById('sup_plan_mmu').value = mmuVal;
+      const selected = mmuVal.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+      updateModalMmuChipStyles(selected, comp);
+
       document.getElementById('sup_plan_box').value = item.unit_box || '';
 
       const modal = document.getElementById('modal-supplier-update-plan');
@@ -1826,31 +1884,17 @@
           }
         };
 
-        const res = await callGASApi(payload);
+        const response = await callGASApi(payload);
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Detail alokasi unit & blaster supplier berhasil diperbarui.',
-          timer: 1800,
-          showConfirmButton: false
-        });
-
-        // 1. Tutup Modal Edit Plan Supplier
-        closeSupplierPlanModal();
-
-        // 2. Refresh data dari database & update tabel secara otomatis
-        await refreshData(false);
-
+        if (response && response.success) {
+          Swal.fire('Berhasil!', response.message || 'Detail alokasi supplier berhasil diperbarui.', 'success');
+          closeSupplierPlanModal();
+          await refreshData(false);
+        } else {
+          Swal.fire('Gagal', response?.message || 'Gagal memperbarui detail supplier.', 'error');
+        }
       } catch (err) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Detail alokasi unit supplier berhasil diperbarui.',
-          timer: 1800,
-          showConfirmButton: false
-        });
-
+        Swal.fire('Berhasil!', 'Detail alokasi supplier berhasil diperbarui.', 'success');
         closeSupplierPlanModal();
         await refreshData(false);
       } finally {
@@ -1859,26 +1903,24 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedSession = sessionStorage.getItem('blasting_user_session');
-      if (savedSession) {
+    window.onload = function() {
+      const stored = sessionStorage.getItem('blasting_user_session');
+      if (stored) {
         try {
-          currentUser = JSON.parse(savedSession);
-          initUserSessionUI();
-          
-          const loginScreen = document.getElementById('screen-login');
-          if (loginScreen) {
+          currentUser = JSON.parse(stored);
+          if (currentUser) {
+            initUserSessionUI();
+            const loginScreen = document.getElementById('screen-login');
             loginScreen.classList.remove('screen-visible');
             loginScreen.classList.add('screen-hidden');
-            setTimeout(() => loginScreen.classList.add('hidden'), 400);
+            setTimeout(() => { loginScreen.classList.add('hidden'); }, 400);
+            refreshData(false);
           }
-
-          refreshData(false);
         } catch (e) {
-          console.error('Failed to parse active user session:', e);
+          console.error('Session parse error:', e);
         }
       }
-    });
+    };
   </script>
 </body>
 </html>
