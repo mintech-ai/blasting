@@ -292,13 +292,7 @@
 
           <div>
             <label class="block font-bold text-slate-700 mb-1.5">13. Matrix Isian <span class="text-red-600">*</span></label>
-            <select id="input_matrix" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
-              <option value="" disabled selected>Pilih Matrix Isian...</option>
-              <option value="Very Hard">Very Hard</option>
-              <option value="Hard">Hard</option>
-              <option value="Medium Hard">Medium Hard</option>
-              <option value="Not Hard">Not Hard</option>
-            </select>
+            <input type="text" id="input_matrix" placeholder="Isi Matrix Isian..." required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-red-600 focus:bg-white transition">
           </div>
 
           <div>
@@ -517,7 +511,6 @@
                 <th class="p-2 border border-slate-700 min-w-[90px]">TANGGAL</th>
                 <th class="p-2 border border-slate-700 min-w-[90px]">SUPPLIER</th>
                 <th class="p-2 border border-slate-700 min-w-[140px] text-left">MMU / MMT READY</th>
-                <!-- DITAMBAHKAN 1 KOLOM KAPASITAS (TON) DI SEBELAH MMU/MMT READY -->
                 <th class="p-2 border border-slate-700 min-w-[100px] text-center bg-emerald-900 text-emerald-200">KAPASITAS (TON)</th>
                 <th class="p-2 border border-slate-700 min-w-[100px] text-left">MOBIL BOX</th>
                 <th class="p-2 border border-slate-700 min-w-[110px] text-left">HEBS / ESTAR / AXISS</th>
@@ -601,7 +594,6 @@
           <input type="number" id="sup_plan_blaster" min="0" placeholder="Isi Jumlah Blaster..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono font-bold">
         </div>
 
-        <!-- DIUBAH: Pilihan MMU Unit sekarang berbentuk Klik / Chip Interaktif Multi-Alokasi -->
         <div class="sm:col-span-2">
           <label class="block font-bold text-slate-700 mb-1">Unit MMU / MMT Ready <span class="text-red-600">*</span></label>
           <p class="text-[10px] text-slate-500 mb-1">Klik unit di bawah ini untuk menambah/menghapus alokasi MMU ke plan ini:</p>
@@ -747,7 +739,8 @@
     // Helper function untuk menghitung total tonase dari daftar MMU/MMT ready
     function computeCapacityFromUnits(unitStr, supplierName) {
       if (!unitStr) return 0;
-      const units = String(unitStr).split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+      const cleanStr = String(unitStr).replace('Terpilih: ', '').trim();
+      const units = cleanStr.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
       if (units.length === 0) return 0;
 
       const normSup = normalizeSupplierCompany(supplierName);
@@ -765,8 +758,6 @@
         }
         if (found) {
           totalTon += found.capacity;
-        } else {
-          totalTon += 15.0; // fallback default
         }
       });
       return totalTon;
@@ -1402,7 +1393,6 @@
       });
     }
 
-    // DIUBAH: Fitur Klik Chip Multi-Alokasi MMU di Modal Supplier Plan Update
     function renderModalMmuChips(company) {
       const container = document.getElementById('modal-mmu-chip-container');
       if (!container) return;
@@ -1454,27 +1444,17 @@
 
     function calculateSupplierDTH() {
       const mmuListVal = document.getElementById('sup_readiness_mmu_list').value;
-      const selectedUnits = mmuListVal.split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
+      const selectedUnits = mmuListVal.replace('Terpilih: ', '').split(',').map(s => s.trim()).filter(s => s.length > 0 && s !== '-');
       const unitCount = selectedUnits.length;
 
       const company = currentUser?.company || 'DAHANA';
-      const availableUnits = getSupplierMmuUnits(company);
-
-      let totalTon = 0;
-      selectedUnits.forEach(unitName => {
-        const found = availableUnits.find(u => u.name.toLowerCase() === unitName.toLowerCase());
-        if (found) {
-          totalTon += found.capacity;
-        } else {
-          totalTon += 15.0;
-        }
-      });
+      const totalTon = computeCapacityFromUnits(mmuListVal, company);
 
       document.getElementById('display_unit_count').innerText = `${unitCount} Unit`;
       document.getElementById('sup_readiness_mmu').value = unitCount;
 
       document.getElementById('display_dth_calculated').innerText = `${totalTon.toFixed(1)} Ton`;
-      document.getElementById('sup_readiness_dth').value = `${totalTon.toFixed(1)} Ton`;
+      document.getElementById('sup_readiness_dth').value = totalTon;
     }
 
     function calculateTotalManpower() {
@@ -1530,6 +1510,9 @@
       const pengawas = document.getElementById('sup_readiness_pengawas').value;
       const blaster = document.getElementById('sup_readiness_blaster').value;
 
+      const userCompany = currentUser?.company || 'DAHANA';
+      const calculatedDthCapacity = computeCapacityFromUnits(mmuList, userCompany);
+
       const btnSubmit = document.getElementById('btn-submit-kesiapan');
       const origText = btnSubmit.innerHTML;
       btnSubmit.disabled = true;
@@ -1539,12 +1522,15 @@
         const payload = {
           action: 'updateKesiapan',
           role: currentUser?.role || 'SUPPLIER',
-          company: currentUser?.company || '',
+          company: userCompany,
           data: {
             uuid: uuid,
             tanggal: tanggal,
-            supplier: currentUser?.company || 'DAHANA',
+            supplier: userCompany,
             unit_mmu: mmuList,
+            dth_ready: calculatedDthCapacity,
+            dth: calculatedDthCapacity,
+            dth_capacity: calculatedDthCapacity,
             unit_box: lvBox,
             hebs: hebs,
             estar: estar,
@@ -1745,7 +1731,7 @@
         const blasterNum = Number(item.blaster || 0);
         const totalManpower = supervisorNum + blasterNum;
 
-        // DITAMBAHKAN: Kalkulasi Kapasitas Ton DTH Ready
+        // Kalkulasi Kapasitas Ton DTH Ready berdasarkan daftar unit terpilih
         const capTon = computeCapacityFromUnits(item.unit_mmu, item.supplier);
 
         let deviceDetail = '-';
@@ -1761,7 +1747,6 @@
           <td class="p-2 font-mono font-bold text-slate-900">${displayDate}</td>
           <td class="p-2 font-bold text-amber-800">${item.supplier || '-'}</td>
           <td class="p-2 text-left font-mono font-bold text-slate-800">${item.unit_mmu || '-'}</td>
-          <!-- KOLOM KAPASITAS (TON) DI SEBELAH MMU/MMT READY -->
           <td class="p-2 font-mono font-black text-emerald-700 bg-emerald-50/50">${capTon > 0 ? capTon.toFixed(1) + ' Ton' : '0 Ton'}</td>
           <td class="p-2 text-left font-mono text-slate-700">${item.unit_box || '-'}</td>
           <td class="p-2 text-left text-[10px] font-bold text-slate-600">${deviceDetail}</td>
