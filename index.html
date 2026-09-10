@@ -94,10 +94,12 @@
       box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
       border: 1px solid #e2e8f0;
     }
+
     .blasting-popup .leaflet-popup-content {
       margin: 10px 12px;
       line-height: 1.4;
     }
+
     .blasting-popup .leaflet-popup-tip {
       background: #ffffff;
     }
@@ -232,7 +234,8 @@
         </div>
 
         <!-- Toggle Dashboard Tables Button -->
-        <button id="btn-toggle-dashboard-tables" onclick="toggleDashboardTables()" title="Tampilkan / Sembunyikan Tabel Data"
+        <button id="btn-toggle-dashboard-tables" onclick="toggleDashboardTables()"
+          title="Tampilkan / Sembunyikan Tabel Data"
           class="px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <i id="icon-toggle-tables" class="ph-bold ph-table text-sm"></i>
           <span id="label-toggle-tables" class="hidden sm:inline">Tampilkan Tabel Data</span>
@@ -338,7 +341,7 @@
               </thead>
               <tbody id="tbody-plan-blasting" class="divide-y divide-slate-100 font-medium bg-white">
                 <tr>
-                  <td colspan="18" class="px-4 py-8 text-center text-slate-400 italic">
+                  <td colspan="20" class="px-4 py-8 text-center text-slate-400 italic">
                     <i class="ph-bold ph-spinner animate-spin text-2xl text-red-600 mb-2 block mx-auto"></i>
                     Memuat data plan blasting...
                   </td>
@@ -419,17 +422,19 @@
     </div>
 
     <!-- ==================== VIEW 3: MAP PLOTTING ==================== -->
-    <div id="view-map" class="flex-1 h-[calc(100dvh-130px)] sm:h-[calc(100vh-140px)] lg:h-full min-h-[520px] lg:min-h-0 relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm hidden flex flex-col bg-slate-100">
+    <div id="view-map"
+      class="flex-1 h-[calc(100dvh-130px)] sm:h-[calc(100vh-140px)] lg:h-full min-h-[520px] lg:min-h-0 relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm hidden flex flex-col bg-slate-100">
 
       <!-- MAP CANVAS -->
       <div id="blastingMapContainer" class="w-full h-full flex-1 min-h-[520px] lg:min-h-0 z-0"></div>
 
       <!-- FLOATING CONTROLS: TOP LEFT -->
       <div class="absolute top-3 left-3 z-[400] flex flex-col gap-2 max-w-[calc(100vw-30px)] md:max-w-none">
-        
-        <!-- Filter & Control Card -->
-        <div class="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-wrap items-center gap-2 sm:gap-2.5">
-          
+
+        <!-- Filter & Control Card with Inline Legend -->
+        <div
+          class="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-wrap items-center gap-2 sm:gap-2.5">
+
           <!-- Mode Pewarnaan (Color By Indicator) -->
           <div class="flex flex-col gap-0.5">
             <span class="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1">
@@ -463,36 +468,35 @@
             <i class="ph-bold ph-arrows-out-simple text-sm"></i>
           </button>
 
+          <div class="hidden sm:block w-[1px] h-8 bg-slate-200"></div>
+
+          <!-- Legenda Peta (Samping Kanan Warna Titik & Cari Titik) -->
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1">
+              <i class="ph-bold ph-info text-red-600"></i> Legenda: <span id="map-legend-subtitle"
+                class="text-slate-800 font-extrabold">Kontraktor</span>
+            </span>
+            <div id="blastingMapLegendContent" class="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
         </div>
 
         <!-- Info Badges Bar -->
         <div class="flex items-center gap-2 text-[11px] font-bold">
-          <div id="map-plotted-count-badge" class="bg-slate-900/85 backdrop-blur-md text-white px-3 py-1 rounded-xl shadow-lg border border-white/10 flex items-center gap-1.5">
+          <div id="map-plotted-count-badge"
+            class="bg-slate-900/85 backdrop-blur-md text-white px-3 py-1 rounded-xl shadow-lg border border-white/10 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span id="map-plotted-count-text">0 Titik Terplot</span>
           </div>
-          <div id="map-unplotted-badge" class="hidden bg-amber-500/95 backdrop-blur-md text-slate-900 px-3 py-1 rounded-xl shadow-lg border border-amber-300 font-extrabold items-center gap-1.5">
+          <div id="map-unplotted-badge"
+            class="hidden bg-amber-500/95 backdrop-blur-md text-slate-900 px-3 py-1 rounded-xl shadow-lg border border-amber-300 font-extrabold items-center gap-1.5">
             <i class="ph-bold ph-warning text-xs"></i>
             <span id="map-unplotted-count-text">0 titik tanpa koordinat</span>
           </div>
         </div>
 
-      </div>
-
-      <!-- DYNAMIC LEGEND CARD: LAPTOP TOP-RIGHT / MOBILE BOTTOM-LEFT -->
-      <div id="map-legend-card" class="absolute bottom-3 left-3 md:bottom-auto md:top-3 md:right-3 z-[400] bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-col gap-1.5 sm:gap-2 max-w-[190px] transition-all">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 cursor-pointer md:cursor-default select-none" onclick="toggleMapLegend()">
-          <h5 class="font-extrabold text-slate-900 text-xs flex items-center gap-1">
-            <i class="ph-bold ph-info text-red-600"></i> Legenda
-          </h5>
-          <div class="flex items-center gap-1">
-            <span class="text-[9px] font-mono text-slate-400" id="map-legend-subtitle">Kontraktor</span>
-            <i id="map-legend-chevron" class="ph-bold ph-caret-up md:hidden text-slate-400 text-xs"></i>
-          </div>
-        </div>
-        <div id="blastingMapLegendContent" class="space-y-1.5 text-[11px]">
-          <!-- Rendered dynamically -->
-        </div>
       </div>
 
     </div>
@@ -548,7 +552,7 @@
               <i class="ph-bold ph-calendar text-red-600 text-sm"></i> Tanggal Plan Blasting <span
                 class="text-red-600">*</span>
             </label>
-            <input type="date" id="input_tanggal" required
+            <input type="date" id="input_tanggal" required onchange="renderPlanNeedMmuChips()"
               class="w-full bg-white border border-red-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 shadow-sm transition">
           </div>
 
@@ -681,12 +685,46 @@
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
           </div>
 
-          <!-- 15. Koordinat Lokasi Blasting (Latitude & Longitude) -->
+          <!-- 15. Need MMU / MMT -->
+          <div class="md:col-span-2 bg-amber-50/60 p-4 rounded-xl border border-amber-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+              <label class="block font-bold text-amber-950 flex items-center gap-1.5">
+                <i class="ph-bold ph-truck text-amber-700 text-base"></i>
+                <span>15. Need MMU / MMT (Alokasi Unit MMU/MMT Per Plan)</span>
+              </label>
+              <div class="flex items-center gap-2">
+                <span id="display-plan-need-mmu-dth"
+                  class="font-mono font-black text-xs text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                  Total DTH: 0.00 Ton
+                </span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-2">
+              Klik unit MMU/MMT di bawah ini untuk memilih. Unit yang sudah dialokasikan ke plan lain pada tanggal yang
+              sama otomatis terkunci untuk menghindari duplikasi.
+            </p>
+            <div id="plan-need-mmu-chips" class="flex flex-wrap gap-1.5 mb-2.5">
+              <!-- Chips di-render otomatis via JS -->
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="input_need_mmu"
+                placeholder="Terpilih: (Pilih chip unit MMU/MMT di atas atau ketik e.g. MMU 23, MMU 19)"
+                onchange="handleManualNeedMmuChange(this.value)"
+                class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 transition text-xs">
+              <input type="hidden" id="input_dth_supplier" value="0">
+              <button type="button" onclick="clearPlanNeedMmuSelection()"
+                class="px-3 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-slate-300 hover:border-rose-300 rounded-xl text-xs font-bold transition flex-shrink-0">
+                Reset Unit
+              </button>
+            </div>
+          </div>
+
+          <!-- 16. Koordinat Lokasi Blasting (Latitude & Longitude) -->
           <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
               <label class="block font-bold text-slate-800 flex items-center gap-1.5">
                 <i class="ph-bold ph-map-pin text-red-600 text-base"></i>
-                <span>15. Koordinat Titik Blasting (Latitude & Longitude)</span>
+                <span>16. Koordinat Titik Blasting (Latitude & Longitude)</span>
                 <span class="text-xs font-normal text-slate-500">(Untuk plotting peta harian)</span>
               </label>
               <button type="button" onclick="openMapPickerModal('input_latitude', 'input_longitude')"
@@ -875,7 +913,8 @@
             <label class="block font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
               <i class="ph-bold ph-notepad text-amber-600 text-sm"></i> Catatan Kesiapan / Note Supplier (Opsional)
             </label>
-            <textarea id="sup_readiness_note" rows="2" placeholder="Catatan operasional / kendala unit / status lapangan..."
+            <textarea id="sup_readiness_note" rows="2"
+              placeholder="Catatan operasional / kendala unit / status lapangan..."
               class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-slate-800 font-medium focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-500 shadow-xs transition text-xs"></textarea>
           </div>
 
@@ -941,6 +980,7 @@
               <th class="p-2 border">Geometri</th>
               <th class="p-2 border bg-red-50 text-red-900">Pengawas Kont.</th>
               <th class="p-2 border">Remark</th>
+              <th class="p-2 border bg-amber-50 text-amber-900">Need MMU/MMT</th>
               <th class="p-2 border bg-cyan-50 text-cyan-900">Latitude</th>
               <th class="p-2 border bg-cyan-50 text-cyan-900">Longitude</th>
               <th class="p-2 border text-center">Aksi</th>
@@ -991,10 +1031,16 @@
         </div>
 
         <div class="flex items-center justify-between pt-4 border-t border-slate-200">
-          <button type="button" id="btn-modal-clear-supplier" onclick="handleClearSupplierClaim()"
-            class="px-3.5 py-2 bg-red-50 text-red-700 hover:bg-red-100 font-bold rounded-xl border border-red-200 hidden items-center gap-1.5">
-            <i class="ph-bold ph-trash"></i> Lepas Slot Supplier
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-modal-clear-supplier" onclick="handleClearSupplierClaim()"
+              class="px-3 py-2 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold rounded-xl border border-amber-200 hidden items-center gap-1.5 text-xs transition">
+              <i class="ph-bold ph-x-circle"></i> Lepas Slot Supplier
+            </button>
+            <button type="button" id="btn-modal-delete-plan" onclick="handleDeletePlanFromModal()"
+              class="px-3 py-2 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white font-bold rounded-xl border border-rose-200 hidden items-center gap-1.5 text-xs transition">
+              <i class="ph-bold ph-trash"></i> Hapus Plan
+            </button>
+          </div>
 
           <div class="flex items-center gap-2 ml-auto">
             <button type="button" onclick="closeEditModal()"
@@ -1127,15 +1173,22 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
-          <button type="button" onclick="closeEditSupplierModal()"
-            class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">
-            Batal
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+          <button type="button" id="btn-modal-delete-supplier" onclick="handleDeleteSupplierFromModal()"
+            class="px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white font-bold rounded-xl border border-rose-200 hidden items-center gap-1.5 text-xs transition">
+            <i class="ph-bold ph-trash"></i> Hapus Kesiapan
           </button>
-          <button type="submit" id="btn-save-edit-supplier"
-            class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl shadow-md glow-amber transition flex items-center gap-1.5">
-            <i class="ph-bold ph-check"></i> Simpan Perubahan Kesiapan
-          </button>
+
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="closeEditSupplierModal()"
+              class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">
+              Batal
+            </button>
+            <button type="submit" id="btn-save-edit-supplier"
+              class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl shadow-md glow-amber transition flex items-center gap-1.5">
+              <i class="ph-bold ph-check"></i> Simpan Perubahan Kesiapan
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -1146,7 +1199,7 @@
     class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div
       class="clean-card w-full max-w-3xl rounded-2xl p-4 md:p-6 shadow-2xl border border-slate-200 flex flex-col h-[85vh] max-h-[700px]">
-      
+
       <!-- Header -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
         <div class="flex items-center gap-2.5">
@@ -1155,7 +1208,8 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-slate-900">Pilih Koordinat Titik Blasting</h3>
-            <p class="text-[11px] text-slate-500">Klik di peta tambang atau geser pin untuk menentukan titik peledakan</p>
+            <p class="text-[11px] text-slate-500">Klik di peta tambang atau geser pin untuk menentukan titik peledakan
+            </p>
           </div>
         </div>
         <button type="button" onclick="closeMapPickerModal()"
@@ -1169,7 +1223,8 @@
         <div id="pickerMapContainer" class="w-full h-full z-0"></div>
 
         <!-- Float Coordinates Readout -->
-        <div class="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-slate-200/90 text-xs font-mono font-bold text-slate-800 flex items-center gap-2">
+        <div
+          class="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-slate-200/90 text-xs font-mono font-bold text-slate-800 flex items-center gap-2">
           <i class="ph-bold ph-crosshair text-red-600"></i>
           <span id="pickerCoordsDisplay">Klik pada peta tambang...</span>
         </div>
@@ -1177,7 +1232,8 @@
 
       <!-- Footer Buttons -->
       <div class="flex items-center justify-between pt-3 border-t border-slate-200 mt-3">
-        <span class="text-[11px] text-slate-400 hidden sm:inline">Latitude & Longitude akan otomatis terisi ke form input.</span>
+        <span class="text-[11px] text-slate-400 hidden sm:inline">Latitude & Longitude akan otomatis terisi ke form
+          input.</span>
         <div class="flex items-center gap-2 ml-auto">
           <button type="button" onclick="closeMapPickerModal()"
             class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
@@ -1296,13 +1352,246 @@
         { code: 'MMT 39', cap: 10 }
       ],
       'MNK-KMB': [
+        { code: 'MMU 19', cap: 12.5 },
+        { code: 'MMU 23', cap: 15 },
         { code: 'MMU 120', cap: 17 },
         { code: 'MMU 121', cap: 17 },
         { code: 'MMU 122', cap: 17 },
-        { code: 'MMU 123', cap: 17 },
-        { code: 'MMU 19', cap: 12.5 }
+        { code: 'MMU 123', cap: 17 }
       ]
     };
+
+    let selectedPlanNeedMmus = [];
+
+    function getAllPresetMmus() {
+      const list = [];
+      for (const [sup, items] of Object.entries(SUPPLIER_MMU_PRESETS)) {
+        items.forEach(it => {
+          list.push({ ...it, supplier: sup });
+        });
+      }
+      return list;
+    }
+
+    function calculateMmuTotalDth(mmuString) {
+      if (!mmuString || typeof mmuString !== 'string') return 0;
+      const items = mmuString.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+      let total = 0;
+      items.forEach(itemCode => {
+        total += getMmuCapacity(itemCode);
+      });
+      return total;
+    }
+
+    // HELPER NORMALISASI KEY MMU/MMT (Case-Insensitive & Space-Insensitive)
+    // MMU19, MMU 19, mmu19, mmu 19 -> MMU19
+    function cleanMmuKey(str) {
+      if (!str) return '';
+      return String(str).toUpperCase().replace(/\s+/g, '');
+    }
+
+    // HELPER NUMERIC PARSER (Kompatibel dengan koma desimal excel "25,50" atau string)
+    function parseNumeric(val) {
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      if (!val) return 0;
+      const str = String(val).replace(/,/g, '.').replace(/[^\d.-]/g, '');
+      const n = parseFloat(str);
+      return isNaN(n) ? 0 : n;
+    }
+
+    // Helper: Ambil peta MMU yang sudah dipakai pada tanggal tertentu (menghindari duplikasi - case & space insensitive)
+    function getUsedMmuMapForDate(targetDate, excludePlanUuid = null) {
+      const usedMap = {};
+      if (!targetDate) return usedMap;
+      const normTarget = normalizeDateToYYYYMMDD(targetDate);
+
+      (rawGlobalPlanData || []).forEach(plan => {
+        const planUuid = String(plan.uuid || plan.id || '').trim();
+        if (excludePlanUuid && planUuid === String(excludePlanUuid).trim()) return;
+
+        const rawDate = getValFlexible(plan, 'tanggal', 'date', 'tgl') || plan.tanggal;
+        const planDate = normalizeDateToYYYYMMDD(rawDate);
+        if (planDate === normTarget) {
+          const mmuSources = [plan.unit_mmu, plan.need_mmu, plan.mmu].filter(Boolean).join(', ');
+          if (mmuSources) {
+            const units = mmuSources.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+            units.forEach(u => {
+              const key = cleanMmuKey(u);
+              if (key) {
+                usedMap[key] = { plan: plan, code: u, lokasi: plan.lokasi || '-' };
+              }
+            });
+          }
+        }
+      });
+
+      return usedMap;
+    }
+
+    function notifyMmuAlreadyUsed(code) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'MMU/MMT Sudah Dipilih',
+        text: `MMU/MMT ${code} sudah dipilih oleh plan lain pada tanggal ini!`,
+        timer: 2500,
+        showConfirmButton: true,
+        confirmButtonColor: '#dc2626'
+      });
+    }
+
+    function renderPlanNeedMmuChips() {
+      const container = document.getElementById('plan-need-mmu-chips');
+      if (!container) return;
+
+      const targetDate = document.getElementById('input_tanggal') ? document.getElementById('input_tanggal').value : getWitaDateString();
+      const usedMap = getUsedMmuMapForDate(targetDate);
+      const presets = getAllPresetMmus();
+
+      let html = '';
+      presets.forEach(p => {
+        const cleanKey = cleanMmuKey(p.code);
+        const isUsed = !!usedMap[cleanKey];
+        const isSelected = selectedPlanNeedMmus.some(x => cleanMmuKey(x) === cleanKey);
+
+        if (isUsed) {
+          const planUser = usedMap[cleanKey];
+          const usedByText = planUser && planUser.lokasi ? `${p.code} sudah dipilih di ${planUser.lokasi}` : `${p.code} sudah dipilih`;
+          html += `
+            <button type="button" onclick="notifyMmuAlreadyUsed('${p.code}')"
+              title="${usedByText}"
+              class="px-2.5 py-1 text-xs rounded-xl font-bold bg-slate-200 text-slate-400 line-through border border-slate-300 cursor-not-allowed flex items-center gap-1 opacity-60">
+              <i class="ph-bold ph-lock-key text-slate-400"></i>
+              <span>${p.code}</span>
+              <span class="text-[9px] font-mono">(${p.cap}T)</span>
+            </button>
+          `;
+        } else if (isSelected) {
+          html += `
+            <button type="button" onclick="togglePlanNeedMmuChip('${p.code}')"
+              class="px-2.5 py-1 text-xs rounded-xl font-extrabold bg-red-600 text-white border border-red-700 shadow-sm flex items-center gap-1">
+              <i class="ph-bold ph-check text-white"></i>
+              <span>${p.code}</span>
+              <span class="text-[9px] opacity-80 font-mono">(${p.cap}T)</span>
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="togglePlanNeedMmuChip('${p.code}')"
+              class="px-2.5 py-1 text-xs rounded-xl font-semibold bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-300 hover:border-red-300 transition flex items-center gap-1 shadow-2xs">
+              <i class="ph-bold ph-truck text-slate-400"></i>
+              <span>${p.code}</span>
+              <span class="text-[9px] text-slate-400 font-mono">(${p.cap}T)</span>
+            </button>
+          `;
+        }
+      });
+
+      container.innerHTML = html;
+      updatePlanNeedMmuDisplay();
+    }
+
+    function togglePlanNeedMmuChip(code) {
+      const clean = code.trim();
+      const targetDate = document.getElementById('input_tanggal') ? document.getElementById('input_tanggal').value : getWitaDateString();
+      const usedMap = getUsedMmuMapForDate(targetDate);
+      if (usedMap[cleanMmuKey(clean)]) {
+        notifyMmuAlreadyUsed(clean);
+        return;
+      }
+
+      const idx = selectedPlanNeedMmus.findIndex(x => cleanMmuKey(x) === cleanMmuKey(clean));
+      if (idx >= 0) {
+        selectedPlanNeedMmus.splice(idx, 1);
+      } else {
+        selectedPlanNeedMmus.push(clean);
+      }
+
+      renderPlanNeedMmuChips();
+    }
+
+    function updatePlanNeedMmuDisplay() {
+      const input = document.getElementById('input_need_mmu');
+      const dthDisp = document.getElementById('display-plan-need-mmu-dth');
+      const dthHidden = document.getElementById('input_dth_supplier');
+
+      const valStr = selectedPlanNeedMmus.join(', ');
+      if (input) input.value = valStr;
+
+      const totalDth = calculateMmuTotalDth(valStr);
+      if (dthDisp) dthDisp.innerText = `Total DTH: ${totalDth.toFixed(2)} Ton`;
+      if (dthHidden) dthHidden.value = totalDth;
+    }
+
+    function handleManualNeedMmuChange(rawVal) {
+      const targetDate = document.getElementById('input_tanggal') ? document.getElementById('input_tanggal').value : getWitaDateString();
+      const usedMap = getUsedMmuMapForDate(targetDate);
+      const units = String(rawVal || '').split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+
+      const validUnits = [];
+      for (const u of units) {
+        const key = cleanMmuKey(u);
+        if (usedMap[key]) {
+          notifyMmuAlreadyUsed(u);
+        } else {
+          validUnits.push(u);
+        }
+      }
+
+      selectedPlanNeedMmus = validUnits;
+      renderPlanNeedMmuChips();
+    }
+
+    function clearPlanNeedMmuSelection() {
+      selectedPlanNeedMmus = [];
+      renderPlanNeedMmuChips();
+    }
+
+    function handleEditNeedMmuInput(val) {
+      const dth = calculateMmuTotalDth(val);
+      const disp = document.getElementById('edit-display-need-mmu-dth');
+      const hidden = document.getElementById('edit_dth_supplier');
+      if (disp) disp.innerText = `Total DTH: ${dth.toFixed(2)} Ton`;
+      if (hidden) hidden.value = dth;
+    }
+
+    // HELPER OTORISASI: Security PIN 8080 untuk Input, Edit, dan Delete di Semua Akun
+    async function requestSecurityPin(actionDescription = 'melanjutkan tindakan ini') {
+      const { value: pin } = await Swal.fire({
+        title: 'Verifikasi PIN Keamanan',
+        html: `<p class="text-xs text-slate-500 mb-2">Masukkan PIN otorisasi (4 digit) untuk <b>${actionDescription}</b>:</p>`,
+        input: 'password',
+        inputPlaceholder: 'PIN...',
+        inputAttributes: {
+          maxlength: '10',
+          autocapitalize: 'off',
+          autocorrect: 'off',
+          style: 'text-align: center; letter-spacing: 0.3em; font-size: 1.25rem; font-family: monospace;'
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="ph-bold ph-shield-check"></i> Konfirmasi',
+        cancelButtonText: 'Batal',
+        customClass: {
+          popup: 'rounded-2xl',
+          confirmButton: 'rounded-xl text-xs font-extrabold px-4 py-2.5',
+          cancelButton: 'rounded-xl text-xs font-bold px-4 py-2.5'
+        },
+        preConfirm: (inputPin) => {
+          if (!inputPin) {
+            Swal.showValidationMessage('PIN tidak boleh kosong!');
+            return false;
+          }
+          if (inputPin.trim() !== '8080') {
+            Swal.showValidationMessage('PIN salah! Akses ditolak.');
+            return false;
+          }
+          return true;
+        }
+      });
+
+      return !!pin;
+    }
 
     function cleanCompanyName(name) {
       if (!name) return '';
@@ -1697,6 +1986,7 @@
       document.getElementById('supplier-form-date').innerText = 'Tanggal: ' + todayWita;
 
       initTableSplitResizer();
+      renderPlanNeedMmuChips();
 
       const savedUser = sessionStorage.getItem('blasting_user');
       if (savedUser) {
@@ -2000,19 +2290,7 @@
 
 
     async function fetchDashboardData() {
-      // 1. Coba request via GET dengan role DASHBOARD agar mengambil semua data untuk dashboard
-      try {
-        const getUrl = `${SCRIPT_URL}?action=getDashboardData&tanggal=&role=DASHBOARD&company=`;
-        const res = await fetch(getUrl);
-        const data = await res.json();
-        if (data && data.success) {
-          return data;
-        }
-      } catch (e) {
-        console.warn('GET getDashboardData failed, trying fallback POST:', e);
-      }
-
-      // 2. Fallback via POST (parameter tanggal dikosongkan agar menarik seluruh data)
+      // Direct fast POST call (menghilangkan delay kegagalan GET yang memakan waktu 3-8 detik)
       return await apiCall('getDashboardData', {
         role: 'DASHBOARD',
         company: '',
@@ -2020,12 +2298,29 @@
       });
     }
 
-    async function refreshData(showToast = true) {
+    async function refreshData(showToast = true, useCacheFirst = true) {
+      const filterDate = document.getElementById('global-date-filter').value || getWitaDateString();
+
+      // Stale-While-Revalidate: Tampilkan data dari cache secara instan jika ada (0ms perceived latency)
+      if (useCacheFirst && (!rawGlobalPlanData || rawGlobalPlanData.length === 0)) {
+        try {
+          const cached = sessionStorage.getItem('blasting_dashboard_cache');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.planData) && parsed.planData.length > 0) {
+              rawGlobalPlanData = parsed.planData;
+              rawGlobalSupplierData = parsed.supplierData || [];
+              filterAndRenderDashboard(filterDate);
+            }
+          }
+        } catch (e) {
+          console.warn('Cache read error:', e);
+        }
+      }
+
       showGlobalLoading();
       const icon = document.getElementById('refresh-icon');
       if (icon) icon.classList.add('animate-spin');
-
-      const filterDate = document.getElementById('global-date-filter').value || getWitaDateString();
 
       try {
         const res = await fetchDashboardData();
@@ -2035,6 +2330,15 @@
         if (res && res.success) {
           rawGlobalPlanData = res.planData || [];
           rawGlobalSupplierData = res.supplierData || [];
+
+          // Simpan ke cache untuk percepatan load berikutnya
+          try {
+            sessionStorage.setItem('blasting_dashboard_cache', JSON.stringify({
+              planData: rawGlobalPlanData,
+              supplierData: rawGlobalSupplierData,
+              time: Date.now()
+            }));
+          } catch (e) { }
 
           filterAndRenderDashboard(filterDate);
 
@@ -2067,14 +2371,16 @@
       // Filter data sesuai tanggal yang dipilih
       globalPlanData = rawGlobalPlanData.filter(item => {
         if (!filterDate) return true;
-        const itemDate = normalizeDateToYYYYMMDD(item.tanggal);
+        const rawDate = getValFlexible(item, 'tanggal', 'date', 'tgl') || item.tanggal;
+        const itemDate = normalizeDateToYYYYMMDD(rawDate);
         return itemDate === filterDate;
       });
 
       // Urutkan berdasarkan kontraktor: SIS dulu, baru BUMA, lalu lainnya
       globalPlanData.sort((a, b) => {
         const getRank = (item) => {
-          const k = String(item.kontraktor || '').toUpperCase();
+          const rawK = getValFlexible(item, 'kontraktor', 'mitra', 'company', 'perusahaan') || item.kontraktor || '';
+          const k = String(rawK).toUpperCase();
           if (k.includes('SIS')) return 1;
           if (k.includes('BUMA')) return 2;
           return 99;
@@ -2087,7 +2393,8 @@
 
       globalSupplierData = rawGlobalSupplierData.filter(item => {
         if (!filterDate) return true;
-        const itemDate = normalizeDateToYYYYMMDD(item.tanggal);
+        const rawDate = getValFlexible(item, 'tanggal', 'date', 'tgl') || item.tanggal;
+        const itemDate = normalizeDateToYYYYMMDD(rawDate);
         return itemDate === filterDate;
       });
 
@@ -2095,11 +2402,20 @@
       if (typeof renderBlastingMapMarkers === 'function' && blastingMap) {
         renderBlastingMapMarkers();
       }
+      if (typeof renderPlanNeedMmuChips === 'function') {
+        renderPlanNeedMmuChips();
+      }
     }
 
     function renderContractorSummaryCard(companyKey, config) {
       const plans = globalPlanData.filter(p => {
-        const k = cleanCompanyName(p.kontraktor).toUpperCase();
+        const rawK = getValFlexible(p, 'kontraktor', 'mitra', 'company', 'perusahaan', 'kontraktor_nama') || p.kontraktor || '';
+        const k = String(rawK).toUpperCase();
+        if (companyKey === 'SIS') {
+          return k.includes('SIS') || (!k.includes('BUMA'));
+        } else if (companyKey === 'BUMA') {
+          return k.includes('BUMA');
+        }
         return k.includes(companyKey);
       });
 
@@ -2111,9 +2427,13 @@
       const allocatedUnitMap = new Map(); // key: unitCode, value: totalQty
 
       plans.forEach(p => {
-        let vol = Number(p.volume_ton || p.volume || 0);
-        if (vol === 0 && p.jumlah_holes && p.isian_kg) {
-          vol = (Number(p.jumlah_holes) * Number(p.isian_kg)) / 1000;
+        let vol = parseNumeric(getValFlexible(p, 'volume_ton', 'volume', 'volumeton', 'vol') || p.volume_ton || p.volume || 0);
+        if (vol === 0) {
+          const holes = parseNumeric(getValFlexible(p, 'jumlah_holes', 'holes', 'jumlahholes') || p.jumlah_holes || 0);
+          const isian = parseNumeric(getValFlexible(p, 'isian_kg', 'isian', 'isiankg') || p.isian_kg || 0);
+          if (holes > 0 && isian > 0) {
+            vol = (holes * isian) / 1000;
+          }
         }
 
         const mode = getPlanTodaySleepStatus(p);
@@ -2125,19 +2445,23 @@
           blastTodayCount += 1;
         }
 
-        if (p.unit_mmu && String(p.unit_mmu).trim() !== '' && String(p.unit_mmu).trim() !== '-') {
-          const parsed = parseAllocatedMmuInfo(p.unit_mmu);
-          totalAllocatedDth += Number(parsed.totalDth || 0);
+        const mmuRaw = getValFlexible(p, 'unit_mmu', 'need_mmu', 'mmu', 'unitmmu', 'needmmu') || p.unit_mmu || p.need_mmu || '';
+        let planAllocatedDth = 0;
+
+        if (mmuRaw && String(mmuRaw).trim() !== '' && String(mmuRaw).trim() !== '-') {
+          const parsed = parseAllocatedMmuInfo(mmuRaw);
+          planAllocatedDth = Number(parsed.totalDth || 0);
 
           if (parsed.items && parsed.items.length > 0) {
             parsed.items.forEach(it => {
               if (it.code && it.code !== '-') {
-                const prev = allocatedUnitMap.get(it.code) || 0;
-                allocatedUnitMap.set(it.code, prev + (Number(it.qty) || 1));
+                const cleanCode = it.code.trim();
+                const prev = allocatedUnitMap.get(cleanCode) || 0;
+                allocatedUnitMap.set(cleanCode, prev + (Number(it.qty) || 1));
               }
             });
           } else {
-            const rawParts = String(p.unit_mmu).replace(/\([^)]*Ton\)/gi, '').replace(/\([^)]*\)/g, '').split(/[,;/]+/).map(x => x.trim()).filter(Boolean);
+            const rawParts = String(mmuRaw).replace(/\([^)]*Ton\)/gi, '').replace(/\([^)]*\)/g, '').split(/[,;/]+/).map(x => x.trim()).filter(Boolean);
             rawParts.forEach(u => {
               const cleanCode = u.replace(/^[\d.]+\s+/, '').trim();
               if (cleanCode && cleanCode !== '-') {
@@ -2147,6 +2471,12 @@
             });
           }
         }
+
+        if (planAllocatedDth === 0) {
+          const dthRaw = parseNumeric(getValFlexible(p, 'dth_supplier', 'dth', 'dthsupplier') || p.dth_supplier || 0);
+          if (dthRaw > 0) planAllocatedDth = dthRaw;
+        }
+        totalAllocatedDth += planAllocatedDth;
       });
 
       const unitBadges = [];
@@ -2575,13 +2905,252 @@
       return false;
     }
 
+    // Aturan Otoritas Hapus Plan Blasting:
+    // 1. SIS hanya bs hapus pny SIS
+    // 2. BUMA hny bs hapus pny BUMA
+    // 5. ADARO bs hapus semua
+    function checkCanDeletePlan(item) {
+      if (!currentUser || !item) return false;
+      // 5. Adaro bs hapus semua
+      if (isUserOwner()) return true;
+
+      // Supplier (DAHANA, MNK-KMB) tidak berhak hapus Plan Blasting
+      if (isUserSupplier()) return false;
+
+      if (isUserKontraktor()) {
+        const userComp = (currentUser.company || '').toUpperCase().replace(/^PT\.?\s+/i, '').trim();
+        const planKont = String(item.kontraktor || '').toUpperCase().replace(/^PT\.?\s+/i, '').trim();
+
+        // 1. SIS hanya bs hapus pny SIS
+        if (userComp.includes('SIS') && planKont.includes('SIS')) return true;
+        // 2. BUMA hny bs hapus pny BUMA
+        if (userComp.includes('BUMA') && planKont.includes('BUMA')) return true;
+
+        return userComp !== '' && userComp === planKont;
+      }
+
+      return false;
+    }
+
+    // Aturan Otoritas Hapus Kesiapan Supplier:
+    // 3. DAHANA hny bs hapus KESIAPAN SUPPLIER DAHANA
+    // 4. MNK KMB hny bs hapus KESIAPAN SUPPLIER MNK-KMB
+    // 5. ADARO bs hapus semua
+    function checkCanDeleteSupplier(item) {
+      if (!currentUser || !item) return false;
+      // 5. Adaro bs hapus semua
+      if (isUserOwner()) return true;
+
+      // Kontraktor (SIS, BUMA) tidak berhak hapus Kesiapan Supplier
+      if (isUserKontraktor()) return false;
+
+      if (isUserSupplier()) {
+        const userComp = (currentUser.company || '').toUpperCase().replace(/^PT\.?\s+/i, '').trim();
+        const supName = String(item.supplier || '').toUpperCase().replace(/^PT\.?\s+/i, '').trim();
+
+        // 3. DAHANA hny bs hapus KESIAPAN SUPPLIER DAHANA
+        if (userComp.includes('DAHANA') && supName.includes('DAHANA')) return true;
+        // 4. MNK KMB hny bs hapus KESIAPAN SUPPLIER MNK-KMB
+        if ((userComp.includes('MNK') || userComp.includes('KMB')) && (supName.includes('MNK') || supName.includes('KMB'))) return true;
+
+        return userComp !== '' && userComp === supName;
+      }
+
+      return false;
+    }
+
+    // Handler Hapus Plan Blasting
+    async function handleDeletePlan(uuid) {
+      if (!uuid) return;
+      const item = globalPlanData.find(x => String(x.uuid || x.id).trim() === String(uuid).trim());
+      if (!item) {
+        Swal.fire({ icon: 'error', title: 'Data Tidak Ditemukan', text: 'UUID Plan Blasting tidak ditemukan' });
+        return;
+      }
+
+      if (!checkCanDeletePlan(item)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Akses Ditolak',
+          text: 'Anda tidak memiliki hak akses untuk menghapus plan peledakan ini.'
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: 'Hapus Plan Blasting?',
+        html: `Apakah Anda yakin ingin menghapus data plan peledakan di area <b>${item.lokasi || '-'}</b> (${cleanCompanyName(item.kontraktor)}) tanggal <b>${item.tanggal || '-'}</b>?<br><span class="text-xs text-rose-600 font-bold mt-1 block">Tindakan ini tidak dapat dibatalkan.</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="ph-bold ph-trash"></i> Ya, Hapus Plan',
+        cancelButtonText: 'Batal'
+      });
+
+      if (!result.isConfirmed) return;
+
+      const pinOk = await requestSecurityPin(`menghapus data plan peledakan #${uuid}`);
+      if (!pinOk) return;
+
+      Swal.fire({
+        title: 'Menghapus Data...',
+        text: 'Sedang memproses penghapusan plan...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const res = await apiCall('deletePlan', {
+          uuid: uuid,
+          data: { uuid: uuid },
+          role: isUserOwner() ? 'ADMIN' : currentUser.role,
+          company: currentUser ? currentUser.company : ''
+        });
+
+        if (res && res.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil Dihapus',
+            text: res.message || 'Plan blasting berhasil dihapus.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          closeEditModal();
+          refreshData(false);
+        } else {
+          // Jika Apps Script backend belum menambahkan router deletePlan
+          if (res && res.message && res.message.includes('not supported')) {
+            rawGlobalPlanData = rawGlobalPlanData.filter(x => String(x.uuid || x.id).trim() !== String(uuid).trim());
+            globalPlanData = globalPlanData.filter(x => String(x.uuid || x.id).trim() !== String(uuid).trim());
+            applyGlobalDateFilter();
+            closeEditModal();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Hapus Lokal Selesai',
+              html: 'Data telah dihapus dari tampilan saat ini.<br><br><span class="text-xs text-slate-600">Catatan: Backend Google Apps Script Anda memerlukan penambahan handler <code>deletePlan</code> agar terhapus permanen dari Google Sheets.</span>'
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal Menghapus',
+              text: (res && res.message) || 'Gagal menghapus plan, coba lagi nanti.'
+            });
+          }
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Kesalahan Jaringan',
+          text: err.toString()
+        });
+      }
+    }
+
+    function handleDeletePlanFromModal() {
+      const uuid = document.getElementById('edit_uuid').value;
+      if (uuid) handleDeletePlan(uuid);
+    }
+
+    // Handler Hapus Kesiapan Supplier
+    async function handleDeleteSupplier(uuid) {
+      if (!uuid) return;
+      const item = globalSupplierData.find(x => String(x.uuid || x.id).trim() === String(uuid).trim());
+      if (!item) {
+        Swal.fire({ icon: 'error', title: 'Data Tidak Ditemukan', text: 'UUID Kesiapan Supplier tidak ditemukan' });
+        return;
+      }
+
+      if (!checkCanDeleteSupplier(item)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Akses Ditolak',
+          text: 'Anda tidak memiliki hak akses untuk menghapus data kesiapan supplier ini.'
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: 'Hapus Kesiapan Supplier?',
+        html: `Apakah Anda yakin ingin menghapus data kesiapan supplier <b>${cleanCompanyName(item.supplier)}</b> tanggal <b>${item.tanggal || '-'}</b>?<br><span class="text-xs text-rose-600 font-bold mt-1 block">Tindakan ini tidak dapat dibatalkan.</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="ph-bold ph-trash"></i> Ya, Hapus Kesiapan',
+        cancelButtonText: 'Batal'
+      });
+
+      if (!result.isConfirmed) return;
+
+      const pinOk = await requestSecurityPin(`menghapus data kesiapan supplier #${uuid}`);
+      if (!pinOk) return;
+
+      Swal.fire({
+        title: 'Menghapus Data...',
+        text: 'Sedang memproses penghapusan data kesiapan...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const res = await apiCall('deleteKesiapan', {
+          uuid: uuid,
+          data: { uuid: uuid },
+          role: isUserOwner() ? 'ADMIN' : currentUser.role,
+          company: currentUser ? currentUser.company : ''
+        });
+
+        if (res && res.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil Dihapus',
+            text: res.message || 'Data kesiapan supplier berhasil dihapus.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          closeEditSupplierModal();
+          refreshData(false);
+        } else {
+          if (res && res.message && res.message.includes('not supported')) {
+            rawGlobalSupplierData = rawGlobalSupplierData.filter(x => String(x.uuid || x.id).trim() !== String(uuid).trim());
+            globalSupplierData = globalSupplierData.filter(x => String(x.uuid || x.id).trim() !== String(uuid).trim());
+            applyGlobalDateFilter();
+            closeEditSupplierModal();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Hapus Lokal Selesai',
+              html: 'Data telah dihapus dari tampilan saat ini.<br><br><span class="text-xs text-slate-600">Catatan: Backend Google Apps Script Anda memerlukan penambahan handler <code>deleteKesiapan</code> agar terhapus permanen dari Google Sheets.</span>'
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal Menghapus',
+              text: (res && res.message) || 'Gagal menghapus data kesiapan supplier, coba lagi nanti.'
+            });
+          }
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Kesalahan Jaringan',
+          text: err.toString()
+        });
+      }
+    }
+
+    function handleDeleteSupplierFromModal() {
+      const uuid = document.getElementById('edit_sup_uuid').value;
+      if (uuid) handleDeleteSupplier(uuid);
+    }
+
     function renderPlanBlastingTable() {
       const tbody = document.getElementById('tbody-plan-blasting');
 
       if (globalPlanData.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="18" class="px-4 py-8 text-center text-slate-400 italic">
+            <td colspan="20" class="px-4 py-8 text-center text-slate-400 italic">
               Tidak ada data plan blasting untuk tanggal ini.
             </td>
           </tr>
@@ -2622,6 +3191,8 @@
         const desa = item.desa || '-';
         const akses = item.akses || '-';
         const pengawasKont = item.pengawas_kontraktor || '-';
+        const needMmuVal = item.need_mmu || '';
+        const dthSupVal = Number(item.dth_supplier || 0) || calculateMmuTotalDth(needMmuVal);
         const sup = item.supplier ? cleanCompanyName(item.supplier) : '';
         const unitMmu = item.unit_mmu || '-';
         const unitBox = item.unit_box || '-';
@@ -2633,6 +3204,7 @@
         const cleanBlaster = cleanManpowerString(rawBlaster);
 
         const canEdit = checkCanEditPlan(item);
+        const canDelete = checkCanDeletePlan(item);
 
         let supBadge = '';
         if (sup) {
@@ -2642,18 +3214,32 @@
           supBadge = `<span class="text-slate-400 italic text-[10px]">-</span>`;
         }
 
+
         const isSleep = todaySleep === 'SLEEP';
         const statusBadge = isSleep
           ? `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wide">SLEEP</span>`
           : `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wide">TODAY</span>`;
 
         const editBtn = canEdit
-          ? `<button onclick="openEditPlanModal('${id}')" class="px-2 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded-md transition text-[10px] flex items-center gap-1 mx-auto shadow-2xs">
+          ? `<button onclick="openEditPlanModal('${id}')" class="px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Plan">
                <i class="ph-bold ph-pencil-simple"></i> Edit
              </button>`
-          : `<button disabled title="Anda tidak memiliki hak akses mengedit plan ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded-md text-[10px] flex items-center gap-1 mx-auto cursor-not-allowed border border-slate-100">
+          : '';
+
+        const deleteBtn = canDelete
+          ? `<button onclick="handleDeletePlan('${id}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Plan">
+               <i class="ph-bold ph-trash"></i> Hapus
+             </button>`
+          : '';
+
+        let actionBtns = '';
+        if (editBtn || deleteBtn) {
+          actionBtns = `<div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div>`;
+        } else {
+          actionBtns = `<button disabled title="Anda tidak memiliki hak akses mengubah/menghapus baris ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded text-[10px] flex items-center gap-0.5 mx-auto cursor-not-allowed border border-slate-100">
                <i class="ph-bold ph-lock-key"></i> Kunci
              </button>`;
+        }
 
         html += `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-[10.5px]">
@@ -2719,8 +3305,8 @@
                 </div>
               </div>
             </td>
-            <td class="px-1.5 py-1 text-center">
-              ${editBtn}
+            <td class="px-1.5 py-1 text-center whitespace-nowrap">
+              ${actionBtns}
             </td>
           </tr>
         `;
@@ -2775,13 +3361,28 @@
         const note = item.note || '-';
 
         const canEdit = checkCanEditSupplier(item);
+        const canDelete = checkCanDeleteSupplier(item);
+
         const editBtn = canEdit
-          ? `<button onclick="openEditSupplierModal('${uuid}')" class="px-2 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded-md transition text-[10px] flex items-center gap-1 mx-auto shadow-2xs">
+          ? `<button onclick="openEditSupplierModal('${uuid}')" class="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Kesiapan">
                <i class="ph-bold ph-pencil-simple"></i> Edit
              </button>`
-          : `<button disabled title="Anda tidak memiliki hak akses mengedit supplier ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded-md text-[10px] flex items-center gap-1 mx-auto cursor-not-allowed border border-slate-100">
+          : '';
+
+        const deleteBtn = canDelete
+          ? `<button onclick="handleDeleteSupplier('${uuid}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Kesiapan">
+               <i class="ph-bold ph-trash"></i> Hapus
+             </button>`
+          : '';
+
+        let actionBtns = '';
+        if (editBtn || deleteBtn) {
+          actionBtns = `<div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div>`;
+        } else {
+          actionBtns = `<button disabled title="Anda tidak memiliki hak akses mengubah/menghapus baris ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded text-[10px] flex items-center gap-0.5 mx-auto cursor-not-allowed border border-slate-100">
                <i class="ph-bold ph-lock-key"></i> Kunci
              </button>`;
+        }
 
         html += `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-[10.5px]">
@@ -2798,8 +3399,8 @@
             <td class="px-1.5 py-1 text-[10px] font-semibold text-purple-900">${namaBlaster}</td>
             <td class="px-1.5 py-1 text-center font-mono font-black text-purple-800">${numBlaster}</td>
             <td class="px-1.5 py-1 text-[10px] text-slate-700 italic truncate max-w-[140px]" title="${note}">${note}</td>
-            <td class="px-1.5 py-1 text-center">
-              ${editBtn}
+            <td class="px-1.5 py-1 text-center whitespace-nowrap">
+              ${actionBtns}
             </td>
           </tr>
         `;
@@ -2822,19 +3423,53 @@
       const isian = Number(document.getElementById('input_isian_kg').value) || 0;
       const volTon = (holes * isian) / 1000;
 
-      let planKontraktor = currentUser ? currentUser.company : 'SIS';
+      let planKontraktor = 'PT SIS';
       if (isUserOwner()) {
         const kSel = document.getElementById('input_kontraktor_select');
         if (kSel && kSel.value) {
           planKontraktor = kSel.value;
         }
+      } else if (currentUser && currentUser.company) {
+        const comp = currentUser.company.toUpperCase();
+        if (comp.includes('BUMA')) {
+          planKontraktor = 'PT BUMA';
+        } else if (comp.includes('SIS')) {
+          planKontraktor = 'PT SIS';
+        } else {
+          planKontraktor = currentUser.company;
+        }
       }
+
+      const needMmuInput = document.getElementById('input_need_mmu') ? document.getElementById('input_need_mmu').value.trim() : '';
+      const targetDate = document.getElementById('input_tanggal').value;
+      const dthSupCalculated = Number(document.getElementById('input_dth_supplier') ? document.getElementById('input_dth_supplier').value : 0) || calculateMmuTotalDth(needMmuInput);
+
+      if (needMmuInput) {
+        const units = needMmuInput.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+        const usedMap = getUsedMmuMapForDate(targetDate);
+        for (const u of units) {
+          const key = cleanMmuKey(u);
+          if (usedMap[key]) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'MMU/MMT Sudah Dipilih',
+              text: `MMU/MMT ${u} sudah dipilih oleh plan lain pada tanggal ini!`
+            });
+            return;
+          }
+        }
+      }
+
+      // Validasi PIN Keamanan 8080
+      const pinOk = await requestSecurityPin('menyimpan data plan peledakan baru');
+      if (!pinOk) return;
 
       const formData = {
         tanggal: document.getElementById('input_tanggal').value,
         kontraktor: planKontraktor,
         lokasi: document.getElementById('input_lokasi').value,
         prioritas: document.getElementById('input_prioritas').value,
+        'today/sleep': document.getElementById('input_today_sleep').value,
         today_sleep: document.getElementById('input_today_sleep').value,
         inisiasi: document.getElementById('input_inisiasi').value,
         jam_masuk: document.getElementById('input_jam_masuk').value,
@@ -2847,6 +3482,9 @@
         desa: document.getElementById('input_desa').value,
         matrix: document.getElementById('input_matrix').value,
         geometri: document.getElementById('input_geometri').value,
+        unit_mmu: needMmuInput,
+        need_mmu: needMmuInput,
+        dth_supplier: dthSupCalculated,
         latitude: document.getElementById('input_latitude') ? document.getElementById('input_latitude').value : '',
         longitude: document.getElementById('input_longitude') ? document.getElementById('input_longitude').value : ''
       };
@@ -2867,6 +3505,15 @@
         btn.innerHTML = `<i class="ph-bold ph-paper-plane-tilt text-base"></i> <span>Simpan Data Plan</span>`;
 
         if (res && res.success) {
+          // Optimistic local update agar langsung muncul seketika di dashboard
+          const newLocalItem = {
+            ...formData,
+            uuid: res.uuid || ('PB-' + Date.now()),
+            id: res.uuid || ('PB-' + Date.now())
+          };
+          rawGlobalPlanData.unshift(newLocalItem);
+          filterAndRenderDashboard(targetDate);
+
           Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
@@ -2875,7 +3522,7 @@
             showConfirmButton: false
           });
           resetKontraktorForm();
-          refreshData(false);
+          refreshData(false, false);
           switchView('dashboard');
         } else {
           Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: (res && res.message) || 'Gagal terhubung ke server, coba lagi' });
@@ -2895,6 +3542,8 @@
       document.getElementById('input_volume').value = '0.00';
       if (document.getElementById('input_latitude')) document.getElementById('input_latitude').value = '';
       if (document.getElementById('input_longitude')) document.getElementById('input_longitude').value = '';
+      selectedPlanNeedMmus = [];
+      renderPlanNeedMmuChips();
     }
 
     function renderMmuChips() {
@@ -3021,6 +3670,10 @@
         note: document.getElementById('sup_readiness_note') ? document.getElementById('sup_readiness_note').value.trim() : ''
       };
 
+      // Validasi PIN Keamanan 8080
+      const pinOk = await requestSecurityPin('menyimpan kesiapan supplier');
+      if (!pinOk) return;
+
       const btn = document.getElementById('btn-submit-kesiapan') || document.getElementById('btn-submit-supplier-readiness');
       if (btn) {
         btn.disabled = true;
@@ -3131,6 +3784,15 @@
               <i class="ph-bold ph-file-text text-red-600 text-sm"></i> 1. Isian Data Plan Blasting (Kontraktor)
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              ${isUserOwner() ? `
+              <div class="md:col-span-2">
+                <label class="block font-bold text-slate-700 mb-1">Kontraktor Mitra Kerja</label>
+                <select id="edit_kontraktor" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
+                  <option value="PT SIS" ${String(item.kontraktor || '').toUpperCase().includes('SIS') || !String(item.kontraktor || '').toUpperCase().includes('BUMA') ? 'selected' : ''}>PT SIS</option>
+                  <option value="PT BUMA" ${String(item.kontraktor || '').toUpperCase().includes('BUMA') ? 'selected' : ''}>PT BUMA</option>
+                </select>
+              </div>
+              ` : ''}
               <div>
                 <label class="block font-bold text-slate-700 mb-1">Lokasi Blasting</label>
                 <input type="text" id="edit_lokasi" value="${item.lokasi || ''}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
@@ -3212,6 +3874,23 @@
               <div>
                 <label class="block font-bold text-slate-700 mb-1">Remark Lapangan</label>
                 <input type="text" id="edit_remark" value="${item.remark || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
+              </div>
+
+              <!-- Need MMU / MMT -->
+              <div class="col-span-1 md:col-span-2 bg-amber-50/50 p-3 rounded-xl border border-amber-200">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="block font-bold text-amber-950 text-xs flex items-center gap-1">
+                    <i class="ph-bold ph-truck text-amber-700"></i> Need MMU / MMT (Alokasi Unit)
+                  </label>
+                  <span id="edit-display-need-mmu-dth" class="font-mono font-bold text-[11px] text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                    Total DTH: ${(item.dth_supplier ? Number(item.dth_supplier) : calculateMmuTotalDth(item.need_mmu)).toFixed(2)} Ton
+                  </span>
+                </div>
+                <input type="text" id="edit_need_mmu" value="${item.need_mmu || ''}"
+                  oninput="handleEditNeedMmuInput(this.value)"
+                  placeholder="Contoh: MMU 23, MMU 19 (Pisahkan koma jika > 1)" class="w-full bg-white border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600">
+                <input type="hidden" id="edit_dth_supplier" value="${item.dth_supplier || calculateMmuTotalDth(item.need_mmu)}">
+                <p class="text-[10px] text-slate-500 mt-1">Unit yang dipilih di sini otomatis diproteksi agar tidak bisa dipilih oleh plan lain pada tanggal yang sama.</p>
               </div>
 
               <!-- Koordinat Blasting -->
@@ -3532,19 +4211,19 @@
         `;
       } else {
         availableMmus.forEach(unit => {
-        const cap = getMmuCapacity(unit);
-        const cleanUnitCode = unit.toUpperCase().replace(/\s+/g, '');
-        const existingItem = parsedExistingMmu.items.find(x => x.code.toUpperCase().replace(/\s+/g, '') === cleanUnitCode);
-        const activeQty = existingItem ? existingItem.qty : 0;
-        const isChecked = activeQty > 0;
+          const cap = getMmuCapacity(unit);
+          const cleanUnitCode = unit.toUpperCase().replace(/\s+/g, '');
+          const existingItem = parsedExistingMmu.items.find(x => x.code.toUpperCase().replace(/\s+/g, '') === cleanUnitCode);
+          const activeQty = existingItem ? existingItem.qty : 0;
+          const isChecked = activeQty > 0;
 
-        // Check if fully used by other plans (capacity <= total allocated in others)
-        const qtyUsedElsewhere = allocatedOtherMmus.get(cleanUnitCode) || 0;
-        const isFullyUsedElsewhere = qtyUsedElsewhere >= 1 && !isChecked;
-        const remainingCapacityRatio = Math.max(0, 1 - qtyUsedElsewhere);
+          // Check if fully used by other plans (capacity <= total allocated in others)
+          const qtyUsedElsewhere = allocatedOtherMmus.get(cleanUnitCode) || 0;
+          const isFullyUsedElsewhere = qtyUsedElsewhere >= 1 && !isChecked;
+          const remainingCapacityRatio = Math.max(0, 1 - qtyUsedElsewhere);
 
-        if (isFullyUsedElsewhere) {
-          dynamicHtml += `
+          if (isFullyUsedElsewhere) {
+            dynamicHtml += `
             <div class="flex items-center justify-between p-2 rounded-xl border bg-slate-100/70 border-slate-200 opacity-60" id="row-alloc-mmu-${unit.replace(/[^A-Z0-9]/gi, '')}">
               <label class="flex items-center gap-2 cursor-not-allowed">
                 <input type="checkbox" disabled class="rounded text-slate-400 focus:ring-0 cursor-not-allowed">
@@ -3555,8 +4234,8 @@
               <span class="text-[10px] font-mono text-slate-400 font-bold">Terpakai di plan lain</span>
             </div>
           `;
-        } else {
-          dynamicHtml += `
+          } else {
+            dynamicHtml += `
             <div class="flex items-center justify-between p-2 rounded-xl border ${isChecked ? 'bg-amber-50/70 border-amber-300' : 'bg-slate-50 border-slate-200'} transition" id="row-alloc-mmu-${unit.replace(/[^A-Z0-9]/gi, '')}">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="alloc_mmu_chk" value="${unit}" data-cap="${cap}" ${isChecked ? 'checked' : ''} onchange="handleAllocMmuRowToggle('${unit}')" class="rounded text-amber-600 focus:ring-0">
@@ -3572,8 +4251,8 @@
               </div>
             </div>
           `;
-        }
-      });
+          }
+        });
       }
 
       dynamicHtml += `
@@ -3764,8 +4443,12 @@
         const h = Number(grab('edit_jumlah_holes')) || 0;
         const i = Number(grab('edit_isian_kg')) || 0;
 
+        if (grab('edit_kontraktor')) {
+          updateData.kontraktor = grab('edit_kontraktor');
+        }
         updateData.lokasi = grab('edit_lokasi');
         updateData.prioritas = grab('edit_prioritas');
+        updateData['today/sleep'] = grab('edit_today_sleep');
         updateData.today_sleep = grab('edit_today_sleep');
         updateData.inisiasi = grab('edit_inisiasi');
         updateData.jam_masuk = grab('edit_jam_masuk');
@@ -3778,6 +4461,29 @@
         updateData.desa = grab('edit_desa');
         updateData.matrix = grab('edit_matrix');
         updateData.geometri = grab('edit_geometri');
+
+        if (grab('edit_need_mmu') !== undefined) {
+          const editNeedMmuVal = grab('edit_need_mmu').trim();
+          const itemDateNorm = normalizeDateToYYYYMMDD(currentEditingItem ? currentEditingItem.tanggal : '');
+          if (editNeedMmuVal) {
+            const units = editNeedMmuVal.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+            const usedMap = getUsedMmuMapForDate(itemDateNorm, currentEditingItem ? currentEditingItem.uuid : null);
+            for (const u of units) {
+              const key = cleanMmuKey(u);
+              if (usedMap[key]) {
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'MMU/MMT Sudah Dipilih',
+                  text: `MMU/MMT ${u} sudah dipilih oleh plan lain pada tanggal tersebut!`
+                });
+                return;
+              }
+            }
+          }
+          updateData.unit_mmu = editNeedMmuVal;
+          updateData.need_mmu = editNeedMmuVal;
+          updateData.dth_supplier = Number(grab('edit_dth_supplier')) || calculateMmuTotalDth(editNeedMmuVal);
+        }
       }
 
       // Koordinat Lokasi Blasting (jika tersedia di modal)
@@ -3833,6 +4539,10 @@
           updateData.unit_box = boxVal;
         }
       }
+
+      // Validasi PIN Keamanan 8080
+      const pinOk = await requestSecurityPin('menyimpan perubahan data plan peledakan');
+      if (!pinOk) return;
 
       const btn = document.getElementById('btn-submit-edit-plan');
       btn.disabled = true;
@@ -4075,6 +4785,10 @@
         note: document.getElementById('edit_sup_note') ? document.getElementById('edit_sup_note').value.trim() : ''
       };
 
+      // Validasi PIN Keamanan 8080
+      const pinOk = await requestSecurityPin('menyimpan perubahan kesiapan operasional supplier');
+      if (!pinOk) return;
+
       const btn = document.getElementById('btn-save-edit-supplier');
       btn.disabled = true;
       btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Menyimpan...`;
@@ -4165,6 +4879,9 @@
 
             const prioritasVal = getValFlexible(row, 'PRIORITAS', 'prioritas') || 'Prioritas 1';
 
+            const needMmuVal = getValFlexible(row, 'NEED MMU/MMT', 'need_mmu_mmt', 'need_mmu', 'needmmu', 'needmmt', 'mmu') || '';
+            const dthSupVal = calculateMmuTotalDth(needMmuVal);
+
             const latVal = getValFlexible(row, 'LATITUDE', 'latitude', 'lat');
             const longVal = getValFlexible(row, 'LONGITUDE', 'longitude', 'long', 'lng');
 
@@ -4173,6 +4890,7 @@
               kontraktor: kontraktorVal,
               lokasi: lokasiVal,
               prioritas: prioritasVal,
+              'today/sleep': statusBlastingVal,
               today_sleep: statusBlastingVal,
               inisiasi: inisiasiVal,
               jam_masuk: jamMasukVal,
@@ -4185,6 +4903,9 @@
               geometri: geometriVal,
               pengawas_kontraktor: pengawasKontraktorVal,
               remark: remarkVal,
+              unit_mmu: needMmuVal,
+              need_mmu: needMmuVal,
+              dth_supplier: dthSupVal,
               latitude: latVal,
               longitude: longVal
             });
@@ -4221,7 +4942,7 @@
       if (countTag) countTag.innerText = `${bulkPreviewRows.length} Baris Data`;
 
       if (!bulkPreviewRows || bulkPreviewRows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-slate-400 italic">Tidak ada data preview.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="20" class="p-4 text-center text-slate-400 italic">Tidak ada data preview.</td></tr>`;
         return;
       }
 
@@ -4260,6 +4981,7 @@
             <td class="p-1.5"><input type="text" value="${row.geometri}" onchange="updateBulkRow(${idx}, 'geometri', this.value)" class="w-20 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs font-mono"></td>
             <td class="p-1.5 bg-red-50/50"><input type="text" value="${row.pengawas_kontraktor || ''}" onchange="updateBulkRow(${idx}, 'pengawas_kontraktor', this.value)" class="w-32 bg-white border border-red-300 rounded px-1.5 py-1 text-xs font-semibold text-slate-900" placeholder="Pengawas..."></td>
             <td class="p-1.5"><input type="text" value="${row.remark || ''}" onchange="updateBulkRow(${idx}, 'remark', this.value)" class="w-32 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs" placeholder="Remark..."></td>
+            <td class="p-1.5 bg-amber-50/40"><input type="text" value="${row.need_mmu || ''}" onchange="updateBulkRowMmu(${idx}, this.value)" placeholder="MMU 23, MMU 19" class="w-28 bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-amber-950"></td>
             <td class="p-1.5 bg-cyan-50/30"><input type="number" step="any" value="${row.latitude || ''}" onchange="updateBulkRow(${idx}, 'latitude', this.value)" class="w-24 bg-white border border-cyan-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-slate-800" placeholder="-2.12345"></td>
             <td class="p-1.5 bg-cyan-50/30"><input type="number" step="any" value="${row.longitude || ''}" onchange="updateBulkRow(${idx}, 'longitude', this.value)" class="w-24 bg-white border border-cyan-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-slate-800" placeholder="115.54321"></td>
             <td class="p-1.5 text-center">
@@ -4274,6 +4996,13 @@
     function updateBulkRow(index, field, value) {
       if (bulkPreviewRows[index]) {
         bulkPreviewRows[index][field] = value;
+      }
+    }
+
+    function updateBulkRowMmu(index, value) {
+      if (bulkPreviewRows[index]) {
+        bulkPreviewRows[index].need_mmu = value.trim();
+        bulkPreviewRows[index].dth_supplier = calculateMmuTotalDth(value);
       }
     }
 
@@ -4308,6 +5037,8 @@
         geometri: '8x8',
         pengawas_kontraktor: '',
         remark: '',
+        need_mmu: '',
+        dth_supplier: 0,
         latitude: '',
         longitude: ''
       });
@@ -4324,6 +5055,53 @@
         Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Tidak ada data untuk disimpan!' });
         return;
       }
+
+      // Validasi duplikasi Need MMU/MMT pada bulk import (Case- & Space-Insensitive)
+      for (let i = 0; i < bulkPreviewRows.length; i++) {
+        const row = bulkPreviewRows[i];
+        const rowDate = normalizeDateToYYYYMMDD(row.tanggal);
+        const mmuStr = (row.unit_mmu || row.need_mmu || '').trim();
+        if (mmuStr) {
+          const units = mmuStr.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+          const usedMap = getUsedMmuMapForDate(rowDate);
+
+          for (const u of units) {
+            const uKey = cleanMmuKey(u);
+            // 1. Cek terhadap data existing di database
+            if (usedMap[uKey]) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'MMU/MMT Sudah Dipilih',
+                text: `${u} sudah dipilih oleh plan lain untuk tanggal ${rowDate}!`
+              });
+              return;
+            }
+
+            // 2. Cek terhadap baris-baris sebelumnya di batch yang sama
+            for (let j = 0; j < i; j++) {
+              const prevRow = bulkPreviewRows[j];
+              if (normalizeDateToYYYYMMDD(prevRow.tanggal) === rowDate) {
+                const prevMmuStr = (prevRow.unit_mmu || prevRow.need_mmu || '').trim();
+                if (prevMmuStr) {
+                  const prevUnits = prevMmuStr.split(/[,;/]+/).map(s => cleanMmuKey(s)).filter(Boolean);
+                  if (prevUnits.includes(uKey)) {
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'MMU/MMT Duplikat di Bulk Data',
+                      text: `${u} sudah dipilih lebih dari satu kali untuk tanggal ${rowDate} pada baris preview!`
+                    });
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Validasi PIN Keamanan 8080
+      const pinOk = await requestSecurityPin('menyimpan data bulk plan peledakan');
+      if (!pinOk) return;
 
       const btn = document.getElementById('btn-confirm-bulk-upload');
       btn.disabled = true;
@@ -4395,31 +5173,21 @@
         attributionControl: false
       }).setView(defaultCenter, defaultZoom);
 
-      // Base Layers (Google Hybrid default untuk tampilan area pit tambang)
-      const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-      });
-
+      // Base Layers (Hanya Esri Satellite dan Google Satellite)
       const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 18
       });
 
-      const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+      const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
       });
 
-      const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-      });
-
-      googleHybrid.addTo(blastingMap);
+      googleSatellite.addTo(blastingMap);
 
       const baseMaps = {
-        "Google Satellite": googleHybrid,
-        "Esri Satellite": esriSatellite,
-        "OpenStreetMap": openStreetMap,
-        "Carto Dark": cartoDark
+        "Google Satellite": googleSatellite,
+        "Esri Satellite": esriSatellite
       };
 
       L.control.layers(baseMaps, null, { position: 'topright' }).addTo(blastingMap);
@@ -4758,12 +5526,10 @@
       items.forEach(it => {
         const count = counts[it.label] || 0;
         html += `
-          <div class="flex items-center justify-between gap-1.5">
-            <div class="flex items-center gap-1.5 truncate">
-              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${it.color};"></span>
-              <span class="truncate text-slate-700 font-bold">${it.label}</span>
-            </div>
-            <span class="font-mono font-black text-slate-900 text-[10px] bg-slate-100 px-1.5 py-0.2 rounded">${count}</span>
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-lg shadow-2xs">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${it.color};"></span>
+            <span class="text-slate-800 font-bold text-[11px] whitespace-nowrap">${it.label}</span>
+            <span class="font-mono font-black text-slate-900 text-[10px] bg-white border border-slate-200 px-1 py-0.2 rounded">${count}</span>
           </div>
         `;
       });
