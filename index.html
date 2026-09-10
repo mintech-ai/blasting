@@ -419,16 +419,16 @@
     </div>
 
     <!-- ==================== VIEW 3: MAP PLOTTING ==================== -->
-    <div id="view-map" class="flex-1 h-full min-h-0 relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm hidden flex flex-col bg-slate-100">
+    <div id="view-map" class="flex-1 h-[calc(100dvh-130px)] sm:h-[calc(100vh-140px)] lg:h-full min-h-[520px] lg:min-h-0 relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm hidden flex flex-col bg-slate-100">
 
       <!-- MAP CANVAS -->
-      <div id="blastingMapContainer" class="w-full h-full z-0"></div>
+      <div id="blastingMapContainer" class="w-full h-full flex-1 min-h-[520px] lg:min-h-0 z-0"></div>
 
       <!-- FLOATING CONTROLS: TOP LEFT -->
       <div class="absolute top-3 left-3 z-[400] flex flex-col gap-2 max-w-[calc(100vw-30px)] md:max-w-none">
         
         <!-- Filter & Control Card -->
-        <div class="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-wrap items-center gap-2.5">
+        <div class="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-wrap items-center gap-2 sm:gap-2.5">
           
           <!-- Mode Pewarnaan (Color By Indicator) -->
           <div class="flex flex-col gap-0.5">
@@ -479,13 +479,16 @@
 
       </div>
 
-      <!-- DYNAMIC LEGEND CARD: TOP RIGHT -->
-      <div class="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-col gap-2 max-w-[190px]">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+      <!-- DYNAMIC LEGEND CARD: LAPTOP TOP-RIGHT / MOBILE BOTTOM-LEFT -->
+      <div id="map-legend-card" class="absolute bottom-3 left-3 md:bottom-auto md:top-3 md:right-3 z-[400] bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-col gap-1.5 sm:gap-2 max-w-[190px] transition-all">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 cursor-pointer md:cursor-default select-none" onclick="toggleMapLegend()">
           <h5 class="font-extrabold text-slate-900 text-xs flex items-center gap-1">
             <i class="ph-bold ph-info text-red-600"></i> Legenda
           </h5>
-          <span class="text-[9px] font-mono text-slate-400" id="map-legend-subtitle">Kontraktor</span>
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] font-mono text-slate-400" id="map-legend-subtitle">Kontraktor</span>
+            <i id="map-legend-chevron" class="ph-bold ph-caret-up md:hidden text-slate-400 text-xs"></i>
+          </div>
         </div>
         <div id="blastingMapLegendContent" class="space-y-1.5 text-[11px]">
           <!-- Rendered dynamically -->
@@ -1951,7 +1954,11 @@
             setTimeout(() => {
               initBlastingMap();
               renderBlastingMapMarkers();
+              if (blastingMap) blastingMap.invalidateSize();
             }, 60);
+            setTimeout(() => {
+              if (blastingMap) blastingMap.invalidateSize();
+            }, 250);
           }
         } else {
           if (vForm) vForm.classList.remove('hidden');
@@ -4420,15 +4427,45 @@
 
       blastingMarkersGroup = L.featureGroup().addTo(blastingMap);
 
+      // Pastikan invalidateSize dipanggil setelah render awal agar tile peta langsung aktif di HP
+      setTimeout(() => {
+        if (blastingMap) blastingMap.invalidateSize();
+      }, 150);
+      setTimeout(() => {
+        if (blastingMap) blastingMap.invalidateSize();
+      }, 350);
+
       window.addEventListener('resize', () => {
         if (blastingMap) blastingMap.invalidateSize();
       });
+
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+          if (blastingMap) blastingMap.invalidateSize();
+        }, 300);
+      });
+    }
+
+    // Toggle tampilan legenda khusus di layar HP (tidak mempengaruhi laptop)
+    function toggleMapLegend() {
+      if (window.innerWidth >= 768) return;
+      const content = document.getElementById('blastingMapLegendContent');
+      const chevron = document.getElementById('map-legend-chevron');
+      if (content) {
+        content.classList.toggle('hidden');
+        if (chevron) {
+          chevron.className = content.classList.contains('hidden')
+            ? 'ph-bold ph-caret-down md:hidden text-slate-400 text-xs'
+            : 'ph-bold ph-caret-up md:hidden text-slate-400 text-xs';
+        }
+      }
     }
 
     function fitBlastingMapBounds() {
       if (!blastingMap) return;
+      const pad = window.innerWidth < 768 ? [24, 24] : [60, 60];
       if (blastingMarkersGroup && blastingMarkersGroup.getLayers().length > 0) {
-        blastingMap.fitBounds(blastingMarkersGroup.getBounds(), { padding: [60, 60], maxZoom: 15 });
+        blastingMap.fitBounds(blastingMarkersGroup.getBounds(), { padding: pad, maxZoom: 15 });
       } else {
         blastingMap.setView([-2.1700, 115.5500], 12);
       }
