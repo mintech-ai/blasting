@@ -440,6 +440,20 @@
         <div
           class="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-slate-200/80 text-xs font-semibold flex flex-wrap items-center gap-2 sm:gap-2.5">
 
+          <!-- Pilihan Jenis Peta (Satelit / Orthophoto) -->
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1">
+              <i class="ph-bold ph-map-trifold text-red-600"></i> Pilihan Peta
+            </span>
+            <select id="mapBasemapSelector" onchange="switchBlastingBasemap(this.value)"
+              class="bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600 cursor-pointer shadow-2xs">
+              <option value="default" selected>Peta Satelit</option>
+              <option value="ortho">Orthophoto</option>
+            </select>
+          </div>
+
+          <div class="hidden sm:block w-[1px] h-8 bg-slate-200"></div>
+
           <!-- Mode Pewarnaan (Color By Indicator) -->
           <div class="flex flex-col gap-0.5">
             <span class="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1">
@@ -5764,6 +5778,8 @@
     let blastingMap = null;
     let blastingMarkersGroup = null;
     let blastingMarkerList = [];
+    let blastingDefaultTileLayer = null;
+    let blastingOrthoTileLayer = null;
     let pickerMap = null;
     let pickerMarker = null;
     let pickerTargetLatId = null;
@@ -5801,24 +5817,34 @@
       // Base Layers (Peta Satelit & Orthophoto Intranet)
       const TILE_URL_ORTHOPHOTO = "http://10.165.1.14:9090/service?layer=basemap-image&style=&tilematrixset=grid_merc&Service=WMTS&Request=GetTile&Version=1.3.0&Format=png&TileMatrix={z}&TileCol={x}&TileRow={y}";
 
-      const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      blastingDefaultTileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
       });
 
-      const orthoPhoto = L.tileLayer(TILE_URL_ORTHOPHOTO, {
-        maxZoom: 22
+      blastingOrthoTileLayer = L.tileLayer(TILE_URL_ORTHOPHOTO, {
+        attribution: '&copy; PT Adaro Indonesia - Orthophoto (Intranet)',
+        maxZoom: 22,
+        maxNativeZoom: 20
       });
 
-      googleSatellite.addTo(blastingMap);
+      blastingDefaultTileLayer.addTo(blastingMap);
 
       const baseMaps = {
-        "Peta Satelit": googleSatellite,
-        "Orthophoto (Intranet)": orthoPhoto
+        "Peta Satelit": blastingDefaultTileLayer,
+        "Orthophoto (Intranet)": blastingOrthoTileLayer
       };
 
       L.control.layers(baseMaps, null, { position: 'topright' }).addTo(blastingMap);
       L.control.zoom({ position: 'bottomright' }).addTo(blastingMap);
+
+      // Sinkronisasi dropdown jika user memilih lewat menu kontrol Leaflet
+      blastingMap.on('baselayerchange', function (e) {
+        const sel = document.getElementById('mapBasemapSelector');
+        if (sel) {
+          sel.value = (e.layer === blastingOrthoTileLayer) ? 'ortho' : 'default';
+        }
+      });
 
       blastingMarkersGroup = L.featureGroup().addTo(blastingMap);
 
@@ -5840,6 +5866,20 @@
         }, 300);
       });
     }
+
+    function switchBlastingBasemap(type) {
+      if (!blastingMap || !blastingDefaultTileLayer || !blastingOrthoTileLayer) return;
+      if (type === 'ortho') {
+        if (blastingMap.hasLayer(blastingDefaultTileLayer)) blastingMap.removeLayer(blastingDefaultTileLayer);
+        if (!blastingMap.hasLayer(blastingOrthoTileLayer)) blastingMap.addLayer(blastingOrthoTileLayer);
+      } else {
+        if (blastingMap.hasLayer(blastingOrthoTileLayer)) blastingMap.removeLayer(blastingOrthoTileLayer);
+        if (!blastingMap.hasLayer(blastingDefaultTileLayer)) blastingMap.addLayer(blastingDefaultTileLayer);
+      }
+      const sel = document.getElementById('mapBasemapSelector');
+      if (sel) sel.value = type;
+    }
+    window.switchBlastingBasemap = switchBlastingBasemap;
 
     // Toggle tampilan legenda khusus di layar HP (tidak mempengaruhi laptop)
     function toggleMapLegend() {
