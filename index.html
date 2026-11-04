@@ -301,6 +301,11 @@
             </div>
 
             <div class="flex items-center gap-1.5">
+              <button type="button" onclick="openExportModal()"
+                class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs"
+                title="Export Data ke Excel (.xlsx) atau Format WhatsApp">
+                <i class="ph-bold ph-microsoft-excel-logo text-sm"></i> Export Data
+              </button>
               <button onclick="switchView('form')"
                 class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs">
                 <i class="ph-bold ph-plus"></i> Tambah Plan
@@ -596,6 +601,10 @@
               <option value="" disabled selected>Pilih Status...</option>
               <option value="TODAY">TODAY</option>
               <option value="SLEEP">SLEEP</option>
+              <option value="TIE UP">TIE UP</option>
+              <option value="TIE UP + TODAY">TIE UP + TODAY</option>
+              <option value="TODAY/SLEEP">TODAY/SLEEP</option>
+              <option value="CANCEL/HOLD">CANCEL/HOLD</option>
             </select>
           </div>
 
@@ -790,7 +799,8 @@
           <div>
             <label class="block font-bold text-slate-700 mb-1.5">Supplier Company <span
                 class="text-red-600">*</span></label>
-            <select id="sup_readiness_supplier" required onchange="renderMmuChips()"
+            <select id="sup_readiness_supplier" required
+              onchange="renderMmuChips(); handleSupplierCompanyRosterChange();"
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
               <option value="DAHANA">PT DAHANA</option>
               <option value="MNK-KMB">PT MNK-KMB</option>
@@ -868,44 +878,89 @@
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
           </div>
 
+          <!-- DAFTAR PENGAWAS & BLASTER ONSITE (ROSTER CHECKLIST DENGAN STATUS HADIR / TIDAK HADIR) -->
           <div
-            class="md:col-span-2 bg-blue-50/70 p-4 rounded-xl border border-blue-200 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="md:col-span-2">
-              <label class="block font-extrabold text-blue-900 mb-1 flex items-center gap-1.5">
-                <i class="ph-bold ph-user-gear text-blue-600"></i> Daftar Nama Pengawas Onsite <span
-                  class="text-red-600">*</span>
-              </label>
-              <span class="block text-[11px] text-blue-700 font-medium mb-1.5">Pisahkan nama dengan koma (Contoh: Agus,
-                Budi, Rian)</span>
-              <input type="text" id="sup_readiness_nama_spv" placeholder="Agus, Budi, Rian..."
-                oninput="calculateManpowerFromNames()" required
-                class="w-full bg-white border border-blue-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-500 shadow-sm transition">
+            class="md:col-span-2 bg-gradient-to-br from-slate-50 via-emerald-50/30 to-blue-50/40 p-4 sm:p-5 rounded-2xl border border-emerald-200/90 shadow-sm space-y-3.5">
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-emerald-200/60 gap-2">
+              <div>
+                <h3 class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                  <i class="ph-bold ph-users-three text-emerald-700 text-lg"></i>
+                  <span id="roster-header-supplier-title">Pengawas dan Blaster Dahana</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 font-medium">Checklist status <b>"Hadir"</b> atau <b>"Tidak
+                    Hadir"</b> untuk merekap jumlah hadir secara otomatis.</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="setAllSupplierManpowerStatus('HADIR')"
+                  class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10.5px] font-bold rounded-lg transition flex items-center gap-1 shadow-2xs">
+                  <i class="ph-bold ph-check-circle"></i> Semua Hadir
+                </button>
+                <button type="button" onclick="setAllSupplierManpowerStatus('TIDAK HADIR')"
+                  class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10.5px] font-bold rounded-lg transition flex items-center gap-1 shadow-2xs">
+                  <i class="ph-bold ph-x-circle"></i> Reset Semua
+                </button>
+              </div>
             </div>
-            <div class="flex flex-col justify-end">
-              <label class="block font-bold text-blue-900 mb-1">Jumlah Pengawas (Auto)</label>
-              <input type="number" id="sup_readiness_pengawas" readonly value="0"
-                class="w-full bg-blue-100/80 border border-blue-300 rounded-xl px-3.5 py-2.5 text-blue-900 font-black font-mono text-base text-center">
-            </div>
-          </div>
 
-          <div
-            class="md:col-span-2 bg-purple-50/70 p-4 rounded-xl border border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="md:col-span-2">
-              <label class="block font-extrabold text-purple-900 mb-1 flex items-center gap-1.5">
-                <i class="ph-bold ph-users-three text-purple-600"></i> Daftar Nama Blaster Onsite <span
-                  class="text-red-600">*</span>
-              </label>
-              <span class="block text-[11px] text-purple-700 font-medium mb-1.5">Pisahkan nama dengan koma (Contoh:
-                Doni, Eko, Farhan)</span>
-              <input type="text" id="sup_readiness_nama_blaster" placeholder="Doni, Eko, Farhan..."
-                oninput="calculateManpowerFromNames()" required
-                class="w-full bg-white border border-purple-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-500 shadow-sm transition">
+            <!-- Two-column Tables side-by-side matching User Image 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Tabel Pengawas -->
+              <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs flex flex-col">
+                <div
+                  class="bg-[#1b4332] text-white px-3 py-2 flex items-center justify-between font-extrabold text-xs tracking-wide">
+                  <span class="flex items-center gap-1.5"><i class="ph-bold ph-user-gear"></i> Pengawas</span>
+                  <span class="w-32 text-center">Status</span>
+                </div>
+                <div id="supplier-pengawas-roster-list"
+                  class="divide-y divide-slate-100 max-h-72 overflow-y-auto custom-scrollbar flex-1">
+                  <!-- Populated dynamically by JS -->
+                </div>
+                <div
+                  class="bg-amber-100/90 border-t border-amber-200 px-3 py-2 flex items-center justify-between font-bold text-xs text-amber-950">
+                  <span class="font-extrabold">Jumlah Hadir</span>
+                  <span id="display-pengawas-hadir-count"
+                    class="font-mono font-black text-sm text-slate-900 bg-yellow-300/80 px-2.5 py-0.5 rounded border border-amber-400">0
+                    Orang</span>
+                </div>
+                <div class="p-2 bg-slate-50 border-t border-slate-200">
+                  <input type="text" id="sup_readiness_spv_extra" oninput="handleExtraManpowerInput()"
+                    placeholder="+ Tambah Pengawas Lain (pisahkan koma)..."
+                    class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-emerald-600">
+                </div>
+              </div>
+
+              <!-- Tabel Blaster -->
+              <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs flex flex-col">
+                <div
+                  class="bg-[#1b4332] text-white px-3 py-2 flex items-center justify-between font-extrabold text-xs tracking-wide">
+                  <span class="flex items-center gap-1.5"><i class="ph-bold ph-fire"></i> Blaster</span>
+                  <span class="w-32 text-center">Status</span>
+                </div>
+                <div id="supplier-blaster-roster-list"
+                  class="divide-y divide-slate-100 max-h-72 overflow-y-auto custom-scrollbar flex-1">
+                  <!-- Populated dynamically by JS -->
+                </div>
+                <div
+                  class="bg-amber-100/90 border-t border-amber-200 px-3 py-2 flex items-center justify-between font-bold text-xs text-amber-950">
+                  <span class="font-extrabold">Jumlah Hadir</span>
+                  <span id="display-blaster-hadir-count"
+                    class="font-mono font-black text-sm text-slate-900 bg-yellow-300/80 px-2.5 py-0.5 rounded border border-amber-400">0
+                    Orang</span>
+                </div>
+                <div class="p-2 bg-slate-50 border-t border-slate-200">
+                  <input type="text" id="sup_readiness_blaster_extra" oninput="handleExtraManpowerInput()"
+                    placeholder="+ Tambah Blaster Lain (pisahkan koma)..."
+                    class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-emerald-600">
+                </div>
+              </div>
             </div>
-            <div class="flex flex-col justify-end">
-              <label class="block font-bold text-purple-900 mb-1">Jumlah Blaster (Auto)</label>
-              <input type="number" id="sup_readiness_blaster" readonly value="0"
-                class="w-full bg-purple-100/80 border border-purple-300 rounded-xl px-3.5 py-2.5 text-purple-900 font-black font-mono text-base text-center">
-            </div>
+
+            <!-- Synchronized inputs for backward compatibility and backend save -->
+            <input type="hidden" id="sup_readiness_nama_spv" value="">
+            <input type="hidden" id="sup_readiness_pengawas" value="0">
+            <input type="hidden" id="sup_readiness_nama_blaster" value="">
+            <input type="hidden" id="sup_readiness_blaster" value="0">
           </div>
 
           <!-- Note / Catatan Kesiapan Supplier -->
@@ -1135,31 +1190,71 @@
               class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium">
           </div>
 
+          <!-- Roster Presensi Manpower Edit Modal -->
           <div
-            class="md:col-span-2 bg-blue-50/70 p-3 rounded-xl border border-blue-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="sm:col-span-2">
-              <label class="block font-extrabold text-blue-900 mb-1">Daftar Nama Pengawas (Pisahkan Koma)</label>
-              <input type="text" id="edit_sup_nama_spv" oninput="calcEditSupManpower()" placeholder="Marshal, Heri..."
-                class="w-full bg-white border border-blue-300 rounded-xl p-2 font-bold text-slate-800">
+            class="md:col-span-2 bg-gradient-to-br from-slate-50 to-emerald-50/30 p-3.5 rounded-xl border border-emerald-200/90 space-y-3">
+            <div class="flex items-center justify-between pb-1.5 border-b border-emerald-200/60">
+              <span class="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                <i class="ph-bold ph-users-three text-emerald-700"></i> Presensi Pengawas & Blaster Lapangan
+              </span>
+              <div class="flex items-center gap-1">
+                <button type="button" onclick="setAllModalEditSupplierManpower('HADIR')"
+                  class="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold rounded">Semua
+                  Hadir</button>
+                <button type="button" onclick="setAllModalEditSupplierManpower('TIDAK HADIR')"
+                  class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold rounded">Reset</button>
+              </div>
             </div>
-            <div>
-              <label class="block font-bold text-blue-900 mb-1">Jumlah Pengawas (Auto)</label>
-              <input type="number" id="edit_sup_supervisor" readonly value="0"
-                class="w-full bg-blue-100 border border-blue-300 rounded-xl p-2 font-black font-mono text-center">
-            </div>
-          </div>
 
-          <div
-            class="md:col-span-2 bg-purple-50/70 p-3 rounded-xl border border-purple-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="sm:col-span-2">
-              <label class="block font-extrabold text-purple-900 mb-1">Daftar Nama Blaster (Pisahkan Koma)</label>
-              <input type="text" id="edit_sup_nama_blaster" oninput="calcEditSupManpower()" placeholder="Abid, Rian..."
-                class="w-full bg-white border border-purple-300 rounded-xl p-2 font-bold text-slate-800">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Pengawas -->
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
+                <div class="bg-[#1b4332] text-white px-2.5 py-1.5 flex justify-between font-bold text-[11px]">
+                  <span>Pengawas</span>
+                  <span>Status</span>
+                </div>
+                <div id="modal-edit-sup-pengawas-list"
+                  class="divide-y divide-slate-100 max-h-48 overflow-y-auto custom-scrollbar flex-1"></div>
+                <div
+                  class="bg-amber-100 px-2.5 py-1.5 flex justify-between font-bold text-xs text-amber-950 border-t border-amber-200">
+                  <span>Hadir:</span>
+                  <span id="edit-display-pengawas-hadir-count"
+                    class="font-mono font-black text-slate-900 bg-yellow-300/80 px-2 py-0.2 rounded">0 Orang</span>
+                </div>
+              </div>
+
+              <!-- Blaster -->
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
+                <div class="bg-[#1b4332] text-white px-2.5 py-1.5 flex justify-between font-bold text-[11px]">
+                  <span>Blaster</span>
+                  <span>Status</span>
+                </div>
+                <div id="modal-edit-sup-blaster-list"
+                  class="divide-y divide-slate-100 max-h-48 overflow-y-auto custom-scrollbar flex-1"></div>
+                <div
+                  class="bg-amber-100 px-2.5 py-1.5 flex justify-between font-bold text-xs text-amber-950 border-t border-amber-200">
+                  <span>Hadir:</span>
+                  <span id="edit-display-blaster-hadir-count"
+                    class="font-mono font-black text-slate-900 bg-yellow-300/80 px-2 py-0.2 rounded">0 Orang</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <label class="block font-bold text-purple-900 mb-1">Jumlah Blaster (Auto)</label>
-              <input type="number" id="edit_sup_blaster" readonly value="0"
-                class="w-full bg-purple-100 border border-purple-300 rounded-xl p-2 font-black font-mono text-center">
+
+            <!-- Manual input fallback & extra names -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200/80">
+              <div>
+                <label class="block font-bold text-slate-600 text-[10px] mb-0.5">Daftar Pengawas (Tersinkron):</label>
+                <input type="text" id="edit_sup_nama_spv" oninput="calcEditSupManpower()" placeholder="Nama pengawas..."
+                  class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold text-slate-800 text-xs">
+                <input type="hidden" id="edit_sup_supervisor" value="0">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 text-[10px] mb-0.5">Daftar Blaster (Tersinkron):</label>
+                <input type="text" id="edit_sup_nama_blaster" oninput="calcEditSupManpower()"
+                  placeholder="Nama blaster..."
+                  class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold text-slate-800 text-xs">
+                <input type="hidden" id="edit_sup_blaster" value="0">
+              </div>
             </div>
           </div>
 
@@ -1247,6 +1342,111 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ==================== EXPORT DATA MODAL ==================== -->
+  <div id="modal-export-data"
+    class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+    <div
+      class="clean-card w-full max-w-3xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-2xs">
+            <i class="ph-bold ph-microsoft-excel-logo text-2xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Export Data Rencana Peledakan (Plan Blasting)
+            </h3>
+            <p class="text-[11px] text-slate-500">Pilih kolom/konten dan format export (File Excel .xlsx atau format
+              WhatsApp)</p>
+          </div>
+        </div>
+        <button onclick="closeExportModal()"
+          class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i class="ph-bold ph-x text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar py-3 space-y-3.5">
+
+        <!-- Filter Options -->
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Filter Kontraktor Mitra</label>
+            <select id="export-filter-kontraktor" onchange="updateExportPreviewCount()"
+              class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-800">
+              <option value="ALL">Semua Mitra (PT SIS & PT BUMA)</option>
+              <option value="SIS">PT SIS Saja</option>
+              <option value="BUMA">PT BUMA Saja</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Filter Status Peledakan</label>
+            <select id="export-filter-status" onchange="updateExportPreviewCount()"
+              class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-800">
+              <option value="ALL">Semua Status</option>
+              <option value="TODAY">TODAY</option>
+              <option value="SLEEP">SLEEP</option>
+              <option value="TIE UP">TIE UP</option>
+              <option value="TIE UP + TODAY">TIE UP + TODAY</option>
+              <option value="TODAY/SLEEP">TODAY/SLEEP</option>
+              <option value="CANCEL/HOLD">CANCEL/HOLD</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Column Selector (Pivot Field Options) -->
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 mb-2 border-b border-slate-100 gap-1.5">
+            <span class="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+              <i class="ph-bold ph-squares-four text-emerald-600"></i> Pilih Kolom yang Ingin Diexport (Field Options)
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="selectAllExportColumns(true)"
+                class="text-[10px] font-bold text-emerald-700 hover:underline">Pilih Semua</button>
+              <span class="text-slate-300">•</span>
+              <button type="button" onclick="resetStandardExportColumns()"
+                class="text-[10px] font-bold text-blue-700 hover:underline">Format Standar</button>
+              <span class="text-slate-300">•</span>
+              <button type="button" onclick="selectAllExportColumns(false)"
+                class="text-[10px] font-bold text-rose-700 hover:underline">Kosongkan</button>
+            </div>
+          </div>
+
+          <div id="export-columns-checklist" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div
+        class="flex flex-col sm:flex-row items-center justify-between pt-3 border-t border-slate-200 gap-2 flex-shrink-0">
+        <span class="text-[11px] text-slate-500 font-mono" id="export-preview-count">0 baris akan diexport</span>
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button type="button" onclick="closeExportModal()"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+            Batal
+          </button>
+          <button type="button" onclick="copyExportToWhatsApp()"
+            class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5"
+            title="Salin ringkasan siap kirim ke WhatsApp">
+            <i class="ph-bold ph-whatsapp-logo text-base"></i> Salin WhatsApp
+          </button>
+          <button type="button" onclick="downloadExportExcel()"
+            class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-md glow-emerald transition flex items-center gap-1.5">
+            <i class="ph-bold ph-download-simple text-base"></i> Download Excel (.xlsx)
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1342,13 +1542,14 @@
       return `BOX (${parts.join(', ')})`;
     }
 
+    // Presets MMU / MMT (Kapasitas DTH Ton) - MMT 28 diupdate ke 15 Ton per User Request
     const SUPPLIER_MMU_PRESETS = {
       'DAHANA': [
         { code: 'MMT 18', cap: 16 },
         { code: 'MMT 25', cap: 17.5 },
         { code: 'MMT 26', cap: 17.5 },
         { code: 'MMT 13', cap: 16 },
-        { code: 'MMT 28', cap: 17 },
+        { code: 'MMT 28', cap: 15 },
         { code: 'MMT 39', cap: 10 }
       ],
       'MNK-KMB': [
@@ -1360,6 +1561,108 @@
         { code: 'MMU 123', cap: 17 }
       ]
     };
+
+    // Daftar Lengkap Nama Pengawas dan Blaster Default Onsite per User Request Gambar 1
+    const SUPPLIER_PERSONNEL_ROSTER = {
+      'DAHANA': {
+        title: 'Pengawas dan Blaster Dahana',
+        pengawas: [
+          'Bakery', 'Xaverius', 'Arman', 'Teguh', 'Hairi',
+          'Abu', 'Athaul', 'Rendi', 'Ade', 'Agam'
+        ],
+        blaster: [
+          'Hendry', 'Saprul', 'Ihsan', 'Tumadi', 'Ady P',
+          'Aulia', 'Bayu', 'Marwandi', 'Rahmadi', 'Rizal (ast blaster)'
+        ]
+      },
+      'MNK-KMB': {
+        title: 'Pengawas dan Blaster MNK-KMB',
+        pengawas: [
+          'Sahlan', 'Dayat', 'Ideris', 'Jekson',
+          'Rolly', 'Badrianoor', 'Mahadir', 'Sepiyanus'
+        ],
+        blaster: [
+          'Faisal', 'Henderi', 'Doni', 'Eko',
+          'Khamim', 'Ardani', 'Ari', 'Arfi'
+        ]
+      }
+    };
+
+    // Konfigurasi Pilihan Status Peledakan & Visual Badge per User Request Gambar 2
+    const BLASTING_STATUS_CONFIG = {
+      'TODAY': {
+        label: 'TODAY',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+        dotColor: 'bg-emerald-500',
+        mapColor: '#16a34a'
+      },
+      'SLEEP': {
+        label: 'SLEEP',
+        badgeClass: 'bg-red-100 text-red-800 border-red-300',
+        dotColor: 'bg-red-500',
+        mapColor: '#dc2626'
+      },
+      'TIE UP': {
+        label: 'TIE UP',
+        badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+        dotColor: 'bg-amber-500',
+        mapColor: '#d97706'
+      },
+      'TIE UP + TODAY': {
+        label: 'TIE UP + TODAY',
+        badgeClass: 'bg-blue-100 text-blue-900 border-blue-300',
+        dotColor: 'bg-blue-600',
+        mapColor: '#2563eb'
+      },
+      'TODAY/SLEEP': {
+        label: 'TODAY/SLEEP',
+        badgeClass: 'bg-slate-200 text-slate-800 border-slate-300',
+        dotColor: 'bg-slate-500',
+        mapColor: '#64748b'
+      },
+      'CANCEL/HOLD': {
+        label: 'CANCEL/HOLD',
+        badgeClass: 'bg-stone-800 text-stone-100 border-stone-900',
+        dotColor: 'bg-rose-400',
+        mapColor: '#292524'
+      }
+    };
+
+    // State Presensi Manpower Roster Supplier
+    let supplierManpowerAttendance = {
+      pengawas: new Set(),
+      blaster: new Set()
+    };
+    let modalEditSupAttendance = {
+      pengawas: new Set(),
+      blaster: new Set()
+    };
+
+    // Kolom Tersedia untuk Export Excel & WhatsApp per User Request Gambar 4
+    const EXPORT_AVAILABLE_COLUMNS = [
+      { id: 'no', label: 'NO', default: true },
+      { id: 'lokasi', label: 'LOKASI', default: true },
+      { id: 'prioritas', label: 'PRIORITAS', default: true },
+      { id: 'today_sleep', label: 'TODAY / SLEEP', default: true },
+      { id: 'inisiasi', label: 'INISIASI', default: true },
+      { id: 'jam_masuk', label: 'JAM MASUK', default: true },
+      { id: 'remark', label: 'REMARK', default: true },
+      { id: 'pengawas', label: 'PENGAWAS', default: true },
+      { id: 'holes', label: 'JUMLAH HOLES', default: true },
+      { id: 'isian', label: 'ISIAN (KG)', default: true },
+      { id: 'volume', label: 'VOLUME DTH (TON)', default: true },
+      { id: 'akses', label: 'AKSES', default: true },
+      { id: 'desa', label: 'DESA', default: true },
+      { id: 'matrix', label: 'MATRIX ISIAN', default: true },
+      { id: 'geometri', label: 'GEOMETRI', default: true },
+      { id: 'supplier', label: 'SUPPLIER', default: false },
+      { id: 'pengawas_sup', label: 'PENGAWAS SUPPLIER', default: false },
+      { id: 'blaster', label: 'BLASTER', default: false },
+      { id: 'unit_mmu', label: 'UNIT MMU/MMT', default: false },
+      { id: 'unit_box', label: 'MOBIL BOX', default: false },
+      { id: 'coordinates', label: 'KOORDINAT (LAT, LONG)', default: false }
+    ];
+    let selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id));
 
     let selectedPlanNeedMmus = [];
 
@@ -1818,12 +2121,35 @@
       return '';
     }
 
+    // HELPER NORMALISASI STATUS PELEDAKAN (Mendukung 6 Status Sesuai User Gambar 2)
+    function normalizeBlastingStatus(raw) {
+      if (!raw) return 'TODAY';
+      const str = String(raw).trim().toUpperCase();
+      if (str.includes('CANCEL') || str.includes('CALCEL') || str.includes('HOLD')) return 'CANCEL/HOLD';
+      if (str.includes('TIE') && str.includes('TODAY')) return 'TIE UP + TODAY';
+      if (str.includes('TIE')) return 'TIE UP';
+      if (str.includes('TODAY') && str.includes('SLEEP')) return 'TODAY/SLEEP';
+      if (str.includes('SLEEP')) return 'SLEEP';
+      if (str.includes('TODAY')) return 'TODAY';
+      return str;
+    }
+
+    // HELPER STATUS BADGE HTML
+    function getStatusBadgeHtml(status) {
+      const norm = normalizeBlastingStatus(status);
+      const cfg = BLASTING_STATUS_CONFIG[norm] || {
+        label: norm,
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+        dotColor: 'bg-slate-400'
+      };
+      return `<span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide inline-flex items-center gap-1 border ${cfg.badgeClass}"><span class="w-1.5 h-1.5 rounded-full ${cfg.dotColor}"></span>${cfg.label}</span>`;
+    }
+
     // HELPER ROBUST STATUS TODAY / SLEEP DARI SHEET plan_blasting
     function getPlanTodaySleepStatus(item) {
       if (!item) return 'TODAY';
       const raw = getValFlexible(item, 'today_sleep', 'today/sleep', 'todaysleep', 'today / sleep', 'status', 'blast_status', 'mode');
-      const str = String(raw || '').trim().toUpperCase();
-      return str.includes('SLEEP') ? 'SLEEP' : 'TODAY';
+      return normalizeBlastingStatus(raw);
     }
 
     // HELPER PARSER TANGGAL EXCEL FLEXIBLE
@@ -1987,6 +2313,8 @@
 
       initTableSplitResizer();
       renderPlanNeedMmuChips();
+      renderMmuChips();
+      handleSupplierCompanyRosterChange();
 
       const savedUser = sessionStorage.getItem('blasting_user');
       if (savedUser) {
@@ -2437,10 +2765,10 @@
         }
 
         const mode = getPlanTodaySleepStatus(p);
-        if (mode === 'SLEEP') {
+        if (mode === 'SLEEP' || mode === 'TODAY/SLEEP') {
           blastSleepDth += vol;
           blastSleepCount += 1;
-        } else {
+        } else if (mode !== 'CANCEL/HOLD') {
           blastTodayDth += vol;
           blastTodayCount += 1;
         }
@@ -2677,7 +3005,7 @@
           `).join('')
         : `<span class="text-[8.5px] text-slate-400 italic flex items-center gap-1"><i class="ph-bold ph-info text-[9px]"></i> Belum ada unit ready</span>`;
 
-      const noteText = notes.length > 0 ? notes.join(' • ') : 'Tidak ada catatan kesiapan operasional';
+      const noteText = notes.length > 0 ? notes.join(' â€¢ ') : 'Tidak ada catatan kesiapan operasional';
       const supRatioPercent = totalCap > 0 ? Math.min(100, Math.round((totalSupAllocatedDth / totalCap) * 100)) : 0;
 
       return `
@@ -3215,10 +3543,7 @@
         }
 
 
-        const isSleep = todaySleep === 'SLEEP';
-        const statusBadge = isSleep
-          ? `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wide">SLEEP</span>`
-          : `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wide">TODAY</span>`;
+        const statusBadge = getStatusBadgeHtml(todaySleep);
 
         const editBtn = canEdit
           ? `<button onclick="openEditPlanModal('${id}')" class="px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Plan">
@@ -3613,15 +3938,185 @@
       document.getElementById('sup_readiness_dth').value = totalCap;
     }
 
+    // =========================================================================
+    // SUPPLIER MANPOWER ROSTER CHECKLIST LOGIC (User Request Gambar 1)
+    // =========================================================================
+    function getSelectedSupplierKey() {
+      const el = document.getElementById('sup_readiness_supplier');
+      const val = el ? el.value : 'DAHANA';
+      return (val.toUpperCase().includes('MNK') || val.toUpperCase().includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+    }
+
+    function handleSupplierCompanyRosterChange() {
+      const supKey = getSelectedSupplierKey();
+      const titleEl = document.getElementById('roster-header-supplier-title');
+      if (titleEl) {
+        titleEl.innerText = (SUPPLIER_PERSONNEL_ROSTER[supKey] && SUPPLIER_PERSONNEL_ROSTER[supKey].title)
+          ? SUPPLIER_PERSONNEL_ROSTER[supKey].title
+          : `Pengawas dan Blaster ${supKey}`;
+      }
+      initSupplierManpowerRoster(supKey);
+    }
+
+    function initSupplierManpowerRoster(supKey = 'DAHANA', existingSpvStr = '', existingBlasterStr = '') {
+      const normKey = (supKey.toUpperCase().includes('MNK') || supKey.toUpperCase().includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+      const roster = SUPPLIER_PERSONNEL_ROSTER[normKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      supplierManpowerAttendance.pengawas.clear();
+      supplierManpowerAttendance.blaster.clear();
+
+      if (existingSpvStr) {
+        const parts = existingSpvStr.split(/[,;/]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        roster.pengawas.forEach(name => {
+          if (parts.some(p => p === name.toLowerCase())) {
+            supplierManpowerAttendance.pengawas.add(name);
+          }
+        });
+      }
+
+      if (existingBlasterStr) {
+        const parts = existingBlasterStr.split(/[,;/]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        roster.blaster.forEach(name => {
+          if (parts.some(p => p === name.toLowerCase())) {
+            supplierManpowerAttendance.blaster.add(name);
+          }
+        });
+      }
+
+      renderSupplierManpowerUI(normKey);
+    }
+
+    function renderSupplierManpowerUI(supKey) {
+      const normKey = (supKey.toUpperCase().includes('MNK') || supKey.toUpperCase().includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+      const roster = SUPPLIER_PERSONNEL_ROSTER[normKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      const spvContainer = document.getElementById('supplier-pengawas-roster-list');
+      const blsContainer = document.getElementById('supplier-blaster-roster-list');
+
+      if (spvContainer) {
+        let htmlSpv = '';
+        roster.pengawas.forEach((name, idx) => {
+          const isHadir = supplierManpowerAttendance.pengawas.has(name);
+          htmlSpv += `
+            <div class="px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition text-xs">
+              <span class="font-bold text-slate-800 flex items-center gap-2">
+                <span class="text-slate-400 font-mono text-[10px] w-4">${idx + 1}.</span>
+                <span>${name}</span>
+              </span>
+              <div class="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200">
+                <button type="button" onclick="setPersonStatus('pengawas', '${name.replace(/'/g, "\\'")}', true)"
+                  class="${isHadir ? 'bg-emerald-600 text-white font-black shadow-xs' : 'text-slate-600 font-bold hover:text-slate-900'} px-2.5 py-1 rounded-md text-[10.5px] transition flex items-center gap-1">
+                  ${isHadir ? '<i class="ph-bold ph-check"></i>' : ''} Hadir
+                </button>
+                <button type="button" onclick="setPersonStatus('pengawas', '${name.replace(/'/g, "\\'")}', false)"
+                  class="${!isHadir ? 'bg-rose-100 text-rose-800 font-bold border border-rose-200' : 'text-slate-400 font-medium hover:text-slate-700'} px-2.5 py-1 rounded-md text-[10.5px] transition">
+                  Tidak Hadir
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        spvContainer.innerHTML = htmlSpv;
+      }
+
+      if (blsContainer) {
+        let htmlBls = '';
+        roster.blaster.forEach((name, idx) => {
+          const isHadir = supplierManpowerAttendance.blaster.has(name);
+          htmlBls += `
+            <div class="px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition text-xs">
+              <span class="font-bold text-slate-800 flex items-center gap-2">
+                <span class="text-slate-400 font-mono text-[10px] w-4">${idx + 1}.</span>
+                <span>${name}</span>
+              </span>
+              <div class="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200">
+                <button type="button" onclick="setPersonStatus('blaster', '${name.replace(/'/g, "\\'")}', true)"
+                  class="${isHadir ? 'bg-emerald-600 text-white font-black shadow-xs' : 'text-slate-600 font-bold hover:text-slate-900'} px-2.5 py-1 rounded-md text-[10.5px] transition flex items-center gap-1">
+                  ${isHadir ? '<i class="ph-bold ph-check"></i>' : ''} Hadir
+                </button>
+                <button type="button" onclick="setPersonStatus('blaster', '${name.replace(/'/g, "\\'")}', false)"
+                  class="${!isHadir ? 'bg-rose-100 text-rose-800 font-bold border border-rose-200' : 'text-slate-400 font-medium hover:text-slate-700'} px-2.5 py-1 rounded-md text-[10.5px] transition">
+                  Tidak Hadir
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        blsContainer.innerHTML = htmlBls;
+      }
+
+      updateSupplierAttendanceFormValues();
+    }
+
+    function setPersonStatus(type, name, isHadir) {
+      if (isHadir) {
+        supplierManpowerAttendance[type].add(name);
+      } else {
+        supplierManpowerAttendance[type].delete(name);
+      }
+      renderSupplierManpowerUI(getSelectedSupplierKey());
+    }
+
+    function setAllSupplierManpowerStatus(status) {
+      const supKey = getSelectedSupplierKey();
+      const roster = SUPPLIER_PERSONNEL_ROSTER[supKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      if (status === 'HADIR') {
+        roster.pengawas.forEach(n => supplierManpowerAttendance.pengawas.add(n));
+        roster.blaster.forEach(n => supplierManpowerAttendance.blaster.add(n));
+      } else {
+        supplierManpowerAttendance.pengawas.clear();
+        supplierManpowerAttendance.blaster.clear();
+        const extraSpv = document.getElementById('sup_readiness_spv_extra');
+        if (extraSpv) extraSpv.value = '';
+        const extraBls = document.getElementById('sup_readiness_blaster_extra');
+        if (extraBls) extraBls.value = '';
+      }
+      renderSupplierManpowerUI(supKey);
+    }
+
+    function handleExtraManpowerInput() {
+      updateSupplierAttendanceFormValues();
+    }
+
+    function updateSupplierAttendanceFormValues() {
+      // 1. Pengawas
+      const spvList = Array.from(supplierManpowerAttendance.pengawas);
+      const extraSpvInput = document.getElementById('sup_readiness_spv_extra');
+      const extraSpvs = (extraSpvInput && extraSpvInput.value)
+        ? extraSpvInput.value.split(/[,;/]+/).map(s => s.trim()).filter(Boolean)
+        : [];
+      const totalSpvNames = [...spvList, ...extraSpvs];
+
+      const dispSpvCount = document.getElementById('display-pengawas-hadir-count');
+      if (dispSpvCount) dispSpvCount.innerText = `${totalSpvNames.length} Orang`;
+
+      const hiddenSpvNames = document.getElementById('sup_readiness_nama_spv');
+      if (hiddenSpvNames) hiddenSpvNames.value = totalSpvNames.join(', ');
+
+      const hiddenSpvCount = document.getElementById('sup_readiness_pengawas');
+      if (hiddenSpvCount) hiddenSpvCount.value = totalSpvNames.length;
+
+      // 2. Blaster
+      const blsList = Array.from(supplierManpowerAttendance.blaster);
+      const extraBlsInput = document.getElementById('sup_readiness_blaster_extra');
+      const extraBls = (extraBlsInput && extraBlsInput.value)
+        ? extraBlsInput.value.split(/[,;/]+/).map(s => s.trim()).filter(Boolean)
+        : [];
+      const totalBlsNames = [...blsList, ...extraBls];
+
+      const dispBlsCount = document.getElementById('display-blaster-hadir-count');
+      if (dispBlsCount) dispBlsCount.innerText = `${totalBlsNames.length} Orang`;
+
+      const hiddenBlsNames = document.getElementById('sup_readiness_nama_blaster');
+      if (hiddenBlsNames) hiddenBlsNames.value = totalBlsNames.join(', ');
+
+      const hiddenBlsCount = document.getElementById('sup_readiness_blaster');
+      if (hiddenBlsCount) hiddenBlsCount.value = totalBlsNames.length;
+    }
+
     function calculateManpowerFromNames() {
-      const spvInput = document.getElementById('sup_readiness_nama_spv').value.trim();
-      const blasterInput = document.getElementById('sup_readiness_nama_blaster').value.trim();
-
-      const spvCount = spvInput ? spvInput.split(/[,;/]+/).filter(x => x.trim() !== '').length : 0;
-      const blasterCount = blasterInput ? blasterInput.split(/[,;/]+/).filter(x => x.trim() !== '').length : 0;
-
-      document.getElementById('sup_readiness_pengawas').value = spvCount;
-      document.getElementById('sup_readiness_blaster').value = blasterCount;
+      updateSupplierAttendanceFormValues();
     }
 
     function resetSupplierReadinessForm() {
@@ -3641,12 +4136,132 @@
       if (mmuHidden) mmuHidden.value = '0';
       const dthHidden = document.getElementById('sup_readiness_dth');
       if (dthHidden) dthHidden.value = '0';
-      const spvCount = document.getElementById('sup_readiness_pengawas');
-      if (spvCount) spvCount.value = '0';
-      const blsCount = document.getElementById('sup_readiness_blaster');
-      if (blsCount) blsCount.value = '0';
       const noteEl = document.getElementById('sup_readiness_note');
       if (noteEl) noteEl.value = '';
+
+      // Reset Roster Manpower
+      supplierManpowerAttendance.pengawas.clear();
+      supplierManpowerAttendance.blaster.clear();
+      const extraSpv = document.getElementById('sup_readiness_spv_extra');
+      if (extraSpv) extraSpv.value = '';
+      const extraBls = document.getElementById('sup_readiness_blaster_extra');
+      if (extraBls) extraBls.value = '';
+      handleSupplierCompanyRosterChange();
+    }
+
+    // Modal Edit Supplier Manpower Roster Logic
+    function initModalEditSupManpowerRoster(supKey, existingSpvStr = '', existingBlasterStr = '') {
+      const normKey = (supKey.toUpperCase().includes('MNK') || supKey.toUpperCase().includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+      const roster = SUPPLIER_PERSONNEL_ROSTER[normKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      modalEditSupAttendance.pengawas.clear();
+      modalEditSupAttendance.blaster.clear();
+
+      const spvNames = existingSpvStr ? existingSpvStr.split(/[,;/]+/).map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+      roster.pengawas.forEach(name => {
+        if (spvNames.some(p => p === name.toLowerCase() || name.toLowerCase().includes(p) || p.includes(name.toLowerCase()))) {
+          modalEditSupAttendance.pengawas.add(name);
+        }
+      });
+
+      const blsNames = existingBlasterStr ? existingBlasterStr.split(/[,;/]+/).map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+      roster.blaster.forEach(name => {
+        if (blsNames.some(p => p === name.toLowerCase() || name.toLowerCase().includes(p) || p.includes(name.toLowerCase()))) {
+          modalEditSupAttendance.blaster.add(name);
+        }
+      });
+
+      renderModalEditSupManpowerUI(normKey);
+    }
+
+    function renderModalEditSupManpowerUI(supKey) {
+      const normKey = (supKey.toUpperCase().includes('MNK') || supKey.toUpperCase().includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+      const roster = SUPPLIER_PERSONNEL_ROSTER[normKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      const spvContainer = document.getElementById('modal-edit-sup-pengawas-list');
+      const blsContainer = document.getElementById('modal-edit-sup-blaster-list');
+
+      if (spvContainer) {
+        let html = '';
+        roster.pengawas.forEach((name, idx) => {
+          const isHadir = modalEditSupAttendance.pengawas.has(name);
+          html += `
+            <div class="px-2.5 py-1.5 flex items-center justify-between text-xs hover:bg-slate-50">
+              <span class="font-bold text-slate-800 text-[11px]">${idx + 1}. ${name}</span>
+              <div class="inline-flex rounded p-0.5 bg-slate-100">
+                <button type="button" onclick="setModalEditPersonStatus('pengawas', '${name.replace(/'/g, "\\'")}', true)" class="${isHadir ? 'bg-emerald-600 text-white font-bold' : 'text-slate-600 font-medium'} px-2 py-0.5 rounded text-[10px]">Hadir</button>
+                <button type="button" onclick="setModalEditPersonStatus('pengawas', '${name.replace(/'/g, "\\'")}', false)" class="${!isHadir ? 'bg-rose-100 text-rose-800 font-bold' : 'text-slate-400 font-medium'} px-2 py-0.5 rounded text-[10px]">Tidak</button>
+              </div>
+            </div>
+          `;
+        });
+        spvContainer.innerHTML = html;
+      }
+
+      if (blsContainer) {
+        let html = '';
+        roster.blaster.forEach((name, idx) => {
+          const isHadir = modalEditSupAttendance.blaster.has(name);
+          html += `
+            <div class="px-2.5 py-1.5 flex items-center justify-between text-xs hover:bg-slate-50">
+              <span class="font-bold text-slate-800 text-[11px]">${idx + 1}. ${name}</span>
+              <div class="inline-flex rounded p-0.5 bg-slate-100">
+                <button type="button" onclick="setModalEditPersonStatus('blaster', '${name.replace(/'/g, "\\'")}', true)" class="${isHadir ? 'bg-emerald-600 text-white font-bold' : 'text-slate-600 font-medium'} px-2 py-0.5 rounded text-[10px]">Hadir</button>
+                <button type="button" onclick="setModalEditPersonStatus('blaster', '${name.replace(/'/g, "\\'")}', false)" class="${!isHadir ? 'bg-rose-100 text-rose-800 font-bold' : 'text-slate-400 font-medium'} px-2 py-0.5 rounded text-[10px]">Tidak</button>
+              </div>
+            </div>
+          `;
+        });
+        blsContainer.innerHTML = html;
+      }
+
+      updateModalEditSupAttendanceFormValues();
+    }
+
+    function setModalEditPersonStatus(type, name, isHadir) {
+      if (isHadir) {
+        modalEditSupAttendance[type].add(name);
+      } else {
+        modalEditSupAttendance[type].delete(name);
+      }
+      const supEl = document.getElementById('edit_sup_supplier');
+      const supKey = supEl ? supEl.value : 'DAHANA';
+      renderModalEditSupManpowerUI(supKey);
+    }
+
+    function setAllModalEditSupplierManpower(status) {
+      const supEl = document.getElementById('edit_sup_supplier');
+      const supKey = (supEl ? supEl.value : 'DAHANA').toUpperCase();
+      const normKey = (supKey.includes('MNK') || supKey.includes('KMB')) ? 'MNK-KMB' : 'DAHANA';
+      const roster = SUPPLIER_PERSONNEL_ROSTER[normKey] || SUPPLIER_PERSONNEL_ROSTER['DAHANA'];
+
+      if (status === 'HADIR') {
+        roster.pengawas.forEach(n => modalEditSupAttendance.pengawas.add(n));
+        roster.blaster.forEach(n => modalEditSupAttendance.blaster.add(n));
+      } else {
+        modalEditSupAttendance.pengawas.clear();
+        modalEditSupAttendance.blaster.clear();
+      }
+      renderModalEditSupManpowerUI(normKey);
+    }
+
+    function updateModalEditSupAttendanceFormValues() {
+      const spvList = Array.from(modalEditSupAttendance.pengawas);
+      const blsList = Array.from(modalEditSupAttendance.blaster);
+
+      const dispSpv = document.getElementById('edit-display-pengawas-hadir-count');
+      if (dispSpv) dispSpv.innerText = `${spvList.length} Orang`;
+      const inputSpv = document.getElementById('edit_sup_nama_spv');
+      if (inputSpv && spvList.length > 0) inputSpv.value = spvList.join(', ');
+      const hiddenSpvCount = document.getElementById('edit_sup_supervisor');
+      if (hiddenSpvCount) hiddenSpvCount.value = spvList.length;
+
+      const dispBls = document.getElementById('edit-display-blaster-hadir-count');
+      if (dispBls) dispBls.innerText = `${blsList.length} Orang`;
+      const inputBls = document.getElementById('edit_sup_nama_blaster');
+      if (inputBls && blsList.length > 0) inputBls.value = blsList.join(', ');
+      const hiddenBlsCount = document.getElementById('edit_sup_blaster');
+      if (hiddenBlsCount) hiddenBlsCount.value = blsList.length;
     }
 
     async function handleSupplierReadinessSubmit(event) {
@@ -3811,6 +4426,10 @@
                 <select id="edit_today_sleep" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
                   <option value="TODAY" ${item.today_sleep === 'TODAY' ? 'selected' : ''}>TODAY</option>
                   <option value="SLEEP" ${item.today_sleep === 'SLEEP' ? 'selected' : ''}>SLEEP</option>
+                  <option value="TIE UP" ${item.today_sleep === 'TIE UP' ? 'selected' : ''}>TIE UP</option>
+                  <option value="TIE UP + TODAY" ${item.today_sleep === 'TIE UP + TODAY' ? 'selected' : ''}>TIE UP + TODAY</option>
+                  <option value="TODAY/SLEEP" ${item.today_sleep === 'TODAY/SLEEP' ? 'selected' : ''}>TODAY/SLEEP</option>
+                  <option value="CANCEL/HOLD" ${item.today_sleep === 'CANCEL/HOLD' || String(item.today_sleep).includes('CALCEL') || String(item.today_sleep).includes('HOLD') ? 'selected' : ''}>CANCEL/HOLD</option>
                 </select>
               </div>
 
@@ -4675,6 +5294,7 @@
       document.getElementById('edit_sup_nama_blaster').value = item.nama_blaster || '';
       document.getElementById('edit_sup_note').value = item.note || '';
 
+      initModalEditSupManpowerRoster(item.supplier || 'DAHANA', item.nama_spv || '', item.nama_blaster || '');
       calcEditSupManpower();
 
       document.getElementById('modal-edit-supplier').classList.remove('hidden');
@@ -4688,6 +5308,7 @@
 
     function renderModalEditMmuChips() {
       const sup = document.getElementById('edit_sup_supplier').value;
+      initModalEditSupManpowerRoster(sup, document.getElementById('edit_sup_nama_spv').value, document.getElementById('edit_sup_nama_blaster').value);
       const container = document.getElementById('edit-sup-mmu-chips');
       const presets = SUPPLIER_MMU_PRESETS[sup] || SUPPLIER_MMU_PRESETS['DAHANA'];
 
@@ -4871,7 +5492,7 @@
             const inisiasiVal = (inisiasiRaw && String(inisiasiRaw).toUpperCase().includes('LIL')) ? 'LIL' : 'RF';
 
             const statusBlastingRaw = getValFlexible(row, 'STATUS BLASTING', 'statusblasting', 'todaysleep', 'status');
-            const statusBlastingVal = (statusBlastingRaw && String(statusBlastingRaw).toUpperCase().includes('SLEEP')) ? 'SLEEP' : 'TODAY';
+            const statusBlastingVal = normalizeBlastingStatus(statusBlastingRaw);
 
             const desaVal = getValFlexible(row, 'DESA TERDEKAT / SEKTOR TERDAMPAK', 'desaterdekatsektorterdampak', 'desa_terdampak', 'desa');
             const geometriVal = getValFlexible(row, 'GEOMETRI (B x S)', 'geometribxs', 'geometri');
@@ -4960,9 +5581,13 @@
               </select>
             </td>
             <td class="p-1.5">
-              <select onchange="updateBulkRow(${idx}, 'today_sleep', this.value)" class="w-20 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
+              <select onchange="updateBulkRow(${idx}, 'today_sleep', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
                 <option value="TODAY" ${row.today_sleep === 'TODAY' ? 'selected' : ''}>TODAY</option>
                 <option value="SLEEP" ${row.today_sleep === 'SLEEP' ? 'selected' : ''}>SLEEP</option>
+                <option value="TIE UP" ${row.today_sleep === 'TIE UP' ? 'selected' : ''}>TIE UP</option>
+                <option value="TIE UP + TODAY" ${row.today_sleep === 'TIE UP + TODAY' ? 'selected' : ''}>TIE UP + TODAY</option>
+                <option value="TODAY/SLEEP" ${row.today_sleep === 'TODAY/SLEEP' ? 'selected' : ''}>TODAY/SLEEP</option>
+                <option value="CANCEL/HOLD" ${row.today_sleep === 'CANCEL/HOLD' || String(row.today_sleep).includes('CALCEL') || String(row.today_sleep).includes('HOLD') ? 'selected' : ''}>CANCEL/HOLD</option>
               </select>
             </td>
             <td class="p-1.5">
@@ -5272,9 +5897,10 @@
       }
 
       if (colorMode === 'today_sleep') {
-        const s = getPlanTodaySleepStatus(item);
-        if (s === 'SLEEP') return { color: '#d97706', label: 'SLEEP' };
-        return { color: '#16a34a', label: 'TODAY' };
+        const norm = getPlanTodaySleepStatus(item);
+        const cfg = BLASTING_STATUS_CONFIG[norm];
+        if (cfg) return { color: cfg.mapColor, label: cfg.label };
+        return { color: '#64748b', label: norm };
       }
 
       // Default: Kontraktor
@@ -5419,8 +6045,7 @@
       const geometri = item.geometri || '-';
       const matrix = item.matrix || '-';
 
-      const isSleep = String(todaySleep).toUpperCase().includes('SLEEP');
-      const statusBadgeClass = isSleep ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-emerald-100 text-emerald-900 border-emerald-300';
+      const statusBadgeHtml = getStatusBadgeHtml(todaySleep);
 
       return `
         <div class="font-sans text-xs text-slate-800 p-1" style="min-width: 270px; max-width: 320px;">
@@ -5430,7 +6055,7 @@
             <div>
               <div class="flex items-center gap-1.5">
                 <span class="text-[10px] font-mono font-black text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">#${uuid}</span>
-                <span class="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded border ${statusBadgeClass}">${todaySleep}</span>
+                ${statusBadgeHtml}
               </div>
               <h4 class="font-black text-sm text-slate-900 mt-1 leading-snug">${lokasi}</h4>
             </div>
@@ -5509,10 +6134,10 @@
           { label: 'Prioritas 2', color: '#0891b2' }
         ];
       } else if (colorMode === 'today_sleep') {
-        items = [
-          { label: 'TODAY', color: '#16a34a' },
-          { label: 'SLEEP', color: '#d97706' }
-        ];
+        items = Object.values(BLASTING_STATUS_CONFIG).map(cfg => ({
+          label: cfg.label,
+          color: cfg.mapColor
+        }));
       } else {
         // Kontraktor
         items = [
@@ -5679,6 +6304,373 @@
       Toast.fire({ icon: 'success', title: 'Koordinat lokasi berhasil diset' });
 
       closeMapPickerModal();
+    }
+
+    // =========================================================================
+    // EXPORT ENGINE (EXCEL & WHATSAPP) - User Request Gambar 4
+    // =========================================================================
+    function openExportModal() {
+      renderExportColumnChecklist();
+      updateExportPreviewCount();
+      const modal = document.getElementById('modal-export-data');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeExportModal() {
+      const modal = document.getElementById('modal-export-data');
+      if (modal) {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+      }
+    }
+
+    function renderExportColumnChecklist() {
+      const container = document.getElementById('export-columns-checklist');
+      if (!container) return;
+
+      let html = '';
+      EXPORT_AVAILABLE_COLUMNS.forEach(col => {
+        const isChecked = selectedExportColumnIds.has(col.id);
+        html += `
+          <label class="flex items-center gap-1.5 p-1.5 rounded-lg border transition cursor-pointer select-none ${isChecked ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600'}">
+            <input type="checkbox" onchange="toggleExportColumn('${col.id}')" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-emerald-600 rounded">
+            <span class="text-[11px] truncate" title="${col.label}">${col.label}</span>
+          </label>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function toggleExportColumn(colId) {
+      if (selectedExportColumnIds.has(colId)) {
+        selectedExportColumnIds.delete(colId);
+      } else {
+        selectedExportColumnIds.add(colId);
+      }
+      renderExportColumnChecklist();
+    }
+
+    function selectAllExportColumns(selectAll = true) {
+      if (selectAll) {
+        selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.map(c => c.id));
+      } else {
+        selectedExportColumnIds.clear();
+      }
+      renderExportColumnChecklist();
+    }
+
+    function resetStandardExportColumns() {
+      selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id));
+      renderExportColumnChecklist();
+    }
+
+    function getFilteredExportPlans() {
+      const filterKontraktor = (document.getElementById('export-filter-kontraktor') ? document.getElementById('export-filter-kontraktor').value : 'ALL');
+      const filterStatus = (document.getElementById('export-filter-status') ? document.getElementById('export-filter-status').value : 'ALL');
+
+      return (globalPlanData || []).filter(item => {
+        if (filterKontraktor !== 'ALL') {
+          const k = String(item.kontraktor || '').toUpperCase();
+          if (!k.includes(filterKontraktor)) return false;
+        }
+        if (filterStatus !== 'ALL') {
+          const s = getPlanTodaySleepStatus(item);
+          if (s !== filterStatus) return false;
+        }
+        return true;
+      });
+    }
+
+    function updateExportPreviewCount() {
+      const countEl = document.getElementById('export-preview-count');
+      if (countEl) {
+        const plans = getFilteredExportPlans();
+        countEl.innerText = `${plans.length} baris siap diexport`;
+      }
+    }
+
+    function downloadExportExcel() {
+      const plans = getFilteredExportPlans();
+      if (plans.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data plan yang sesuai filter untuk diexport!' });
+        return;
+      }
+
+      if (selectedExportColumnIds.size === 0) {
+        Swal.fire({ icon: 'warning', title: 'Pilih Kolom', text: 'Harap pilih minimal 1 kolom yang ingin diexport!' });
+        return;
+      }
+
+      const activeColumns = EXPORT_AVAILABLE_COLUMNS.filter(c => selectedExportColumnIds.has(c.id));
+      const groupByKontraktor = true;
+      const includeSummary = true;
+      const targetDate = document.getElementById('global-date-filter').value || getWitaDateString();
+
+      const aoa = [];
+      aoa.push([`RENCANA PELEDAKAN (PLAN BLASTING) - ${targetDate}`]);
+      aoa.push([`Tanggal Export: ${getWitaDateString()} WITA | Total Record: ${plans.length}`]);
+      aoa.push([]);
+
+      const headerRow = activeColumns.map(c => c.label);
+      aoa.push(headerRow);
+
+      function getPlanColValue(item, colId, rowIndex) {
+        switch (colId) {
+          case 'no': return rowIndex + 1;
+          case 'lokasi': return item.lokasi || '-';
+          case 'prioritas': return item.prioritas || '-';
+          case 'today_sleep': return getPlanTodaySleepStatus(item);
+          case 'inisiasi': return item.inisiasi || '-';
+          case 'jam_masuk': return formatExcelTime(item.jam_masuk || item.kondisi_jam_masuk);
+          case 'remark': return item.remark || item.kondisi_remark || '-';
+          case 'pengawas': return item.pengawas_kontraktor || '-';
+          case 'holes': return Number(item.jumlah_holes || item.holes || 0);
+          case 'isian': return Number(item.isian_kg || item.isian || 0);
+          case 'volume': return Number(item.volume_ton || item.volume || 0);
+          case 'akses': return item.akses || '-';
+          case 'desa': return item.desa || item.desa_terdampak || '-';
+          case 'matrix': return item.matrix || '-';
+          case 'geometri': return item.geometri || '-';
+          case 'supplier': return item.supplier || '-';
+          case 'pengawas_sup': return item.pengawas_supplier || item.supervisor || '-';
+          case 'blaster': return item.blaster || '-';
+          case 'unit_mmu': return item.unit_mmu || item.need_mmu || '-';
+          case 'unit_box': return item.unit_box || '-';
+          case 'coordinates': return (item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '-';
+          default: return '';
+        }
+      }
+
+      let dthTodaySum = 0;
+      let dthSleepSum = 0;
+      let globalRowIndex = 0;
+
+      if (groupByKontraktor) {
+        const groups = {};
+        plans.forEach(p => {
+          const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
+          if (!groups[kName]) groups[kName] = [];
+          groups[kName].push(p);
+        });
+
+        const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+          if (a.includes('SIS')) return -1;
+          if (b.includes('SIS')) return 1;
+          if (a.includes('BUMA')) return -1;
+          if (b.includes('BUMA')) return 1;
+          return a.localeCompare(b);
+        });
+
+        sortedGroupKeys.forEach(grpName => {
+          aoa.push([grpName]);
+          const grpPlans = groups[grpName];
+          grpPlans.forEach(plan => {
+            const rowData = activeColumns.map(c => getPlanColValue(plan, c.id, globalRowIndex));
+            aoa.push(rowData);
+
+            const vol = Number(plan.volume_ton || plan.volume || 0);
+            const st = getPlanTodaySleepStatus(plan);
+            if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
+              dthSleepSum += vol;
+            } else if (st !== 'CANCEL/HOLD') {
+              dthTodaySum += vol;
+            }
+
+            globalRowIndex++;
+          });
+          aoa.push([]);
+        });
+      } else {
+        plans.forEach(plan => {
+          const rowData = activeColumns.map(c => getPlanColValue(plan, c.id, globalRowIndex));
+          aoa.push(rowData);
+
+          const vol = Number(plan.volume_ton || plan.volume || 0);
+          const st = getPlanTodaySleepStatus(plan);
+          if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
+            dthSleepSum += vol;
+          } else if (st !== 'CANCEL/HOLD') {
+            dthTodaySum += vol;
+          }
+
+          globalRowIndex++;
+        });
+        aoa.push([]);
+      }
+
+      const totalDthSum = dthTodaySum + dthSleepSum;
+
+      if (includeSummary) {
+        const summarySpacer = new Array(Math.max(0, activeColumns.length - 4)).fill('');
+        aoa.push([...summarySpacer, 'DTH TODAY', parseFloat(dthTodaySum.toFixed(3)), 'TOTAL DTH', parseFloat(totalDthSum.toFixed(3))]);
+        aoa.push([...summarySpacer, 'DTH SLEEP', parseFloat(dthSleepSum.toFixed(3)), '', '']);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      const colWidths = activeColumns.map((col, idx) => {
+        let maxLen = col.label.length;
+        aoa.forEach(r => {
+          if (r[idx] !== undefined && r[idx] !== null) {
+            const len = String(r[idx]).length;
+            if (len > maxLen) maxLen = len;
+          }
+        });
+        return { wch: Math.min(Math.max(maxLen + 3, 10), 40) };
+      });
+      ws['!cols'] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Plan Blasting");
+
+      const fileName = `Plan_Blasting_${targetDate.replace(/[^a-zA-Z0-9-]/g, '_')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'File Excel Berhasil Diunduh!',
+        text: `File ${fileName} telah disimpan ke perangkat Anda.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+
+    function copyExportToWhatsApp() {
+      const plans = getFilteredExportPlans();
+      if (plans.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data plan yang sesuai filter untuk disalin!' });
+        return;
+      }
+
+      function waClean(val, fallback = '-') {
+        if (val === undefined || val === null) return fallback;
+        const clean = String(val).replace(/\s+/g, ' ').trim();
+        return clean || fallback;
+      }
+
+      function waBold(val) {
+        if (val === undefined || val === null) return '';
+        const clean = String(val).replace(/\s+/g, ' ').trim();
+        if (!clean) return '';
+        return `*${clean}*`;
+      }
+
+      const targetDate = waClean(document.getElementById('global-date-filter').value || getWitaDateString());
+      let dthTodaySum = 0;
+      let dthSleepSum = 0;
+
+      let countSis = 0;
+      let countBuma = 0;
+      let countOther = 0;
+
+      const groups = {};
+      plans.forEach(p => {
+        const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
+        if (!groups[kName]) groups[kName] = [];
+        groups[kName].push(p);
+
+        const kUpper = String(p.kontraktor || '').toUpperCase();
+        if (kUpper.includes('SIS')) countSis++;
+        else if (kUpper.includes('BUMA')) countBuma++;
+        else countOther++;
+      });
+
+      let text = `*RENCANA PELEDAKAN (PLAN BLASTING)*\n`;
+      text += `📅 *Tanggal:* ${targetDate}\n`;
+      let rekapLine = `📊 *Total Plan:* PT SIS: *${countSis}* | PT BUMA: *${countBuma}*`;
+      if (countOther > 0) {
+        rekapLine += ` | Lainnya: *${countOther}*`;
+      }
+      rekapLine += ` (Total: *${plans.length}*)\n`;
+      text += rekapLine;
+      text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+      const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+        if (a.includes('SIS')) return -1;
+        if (b.includes('SIS')) return 1;
+        if (a.includes('BUMA')) return -1;
+        if (b.includes('BUMA')) return 1;
+        return a.localeCompare(b);
+      });
+
+      let overallIdx = 1;
+      sortedGroupKeys.forEach(grpName => {
+        text += `🏢 ${waBold(grpName)}\n`;
+        const grpPlans = groups[grpName];
+        grpPlans.forEach(p => {
+          const st = getPlanTodaySleepStatus(p);
+          const vol = Number(p.volume_ton || p.volume || 0);
+          const holes = p.jumlah_holes || p.holes || 0;
+          const isian = p.isian_kg || p.isian || 0;
+          const prio = p.prioritas || 'P1';
+          const inisiasi = p.inisiasi || 'RF';
+          const jam = formatExcelTime(p.jam_masuk || p.kondisi_jam_masuk);
+          const spv = p.pengawas_kontraktor || '-';
+          const remark = p.remark || p.kondisi_remark || 'OK';
+          const desa = p.desa || p.desa_terdampak || '-';
+          const akses = p.akses || '-';
+          const matrix = p.matrix || '-';
+          const geo = p.geometri || '-';
+
+          const lokasiClean = waClean(p.lokasi, 'Lokasi');
+          const prioClean = waClean(prio, 'P1');
+          const stClean = waClean(st, 'TODAY');
+
+          text += `${overallIdx}. ${waBold(lokasiClean)} (${prioClean})\n`;
+          text += `   • Status: ${waBold(stClean)} | Inisiasi: ${waClean(inisiasi, 'RF')} @ ${waClean(jam, '-')}\n`;
+          text += `   • Holes: ${waClean(holes, '0')} | Isian: ${waClean(isian, '0')} kg | ${waBold(`Vol: ${vol.toFixed(2)} Ton`)}\n`;
+          text += `   • Pengawas: ${waClean(spv, '-')} | Remark: ${waClean(remark, 'OK')}\n`;
+          text += `   • Akses: ${waClean(akses, '-')} | Desa: ${waClean(desa, '-')}\n`;
+          text += `   • Matrix: ${waClean(matrix, '-')} | Geo: ${waClean(geo, '-')}\n\n`;
+
+          if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
+            dthSleepSum += vol;
+          } else if (st !== 'CANCEL/HOLD') {
+            dthTodaySum += vol;
+          }
+
+          overallIdx++;
+        });
+      });
+
+      const totalDth = dthTodaySum + dthSleepSum;
+      text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      text += `*RINGKASAN VOLUME DTH:*\n`;
+      text += `🟢 *DTH TODAY:* ${dthTodaySum.toFixed(2)} Ton\n`;
+      text += `🔴 *DTH SLEEP:* ${dthSleepSum.toFixed(2)} Ton\n`;
+      text += `⭐ *TOTAL DTH:* ${totalDth.toFixed(2)} Ton\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      text += `_Dikirim via Integrated Blasting Portal Adaro_`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Teks WhatsApp Berhasil Disalin!',
+            text: 'Format laporan WhatsApp telah disalin ke clipboard. Silakan tempel (paste) di grup WhatsApp Anda.',
+            timer: 2500,
+            showConfirmButton: false
+          });
+        }).catch(err => {
+          prompt('Salin teks di bawah ini:', text);
+        });
+      } else {
+        prompt('Salin teks di bawah ini:', text);
+      }
+    }
+
+    // Registrasi Service Worker PWA (Offline & Fast Caching)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('Blasting PWA Service Worker aktif:', reg.scope);
+        }).catch(err => {
+          console.warn('Gagal registrasi Service Worker:', err);
+        });
+      });
     }
   </script>
 </body>
