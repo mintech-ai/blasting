@@ -1388,28 +1388,72 @@
       <div class="flex-1 overflow-y-auto custom-scrollbar py-3 space-y-3.5">
 
         <!-- Filter Options -->
-        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Filter Kontraktor Mitra</label>
-            <select id="export-filter-kontraktor" onchange="updateExportPreviewCount()"
-              class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-800">
-              <option value="ALL">Semua Mitra (PT SIS & PT BUMA)</option>
-              <option value="SIS">PT SIS Saja</option>
-              <option value="BUMA">PT BUMA Saja</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Filter Status Peledakan</label>
-            <select id="export-filter-status" onchange="updateExportPreviewCount()"
-              class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-800">
-              <option value="ALL">Semua Status</option>
-              <option value="TODAY">TODAY</option>
-              <option value="SLEEP">SLEEP</option>
-              <option value="TIE UP">TIE UP</option>
-              <option value="TIE UP + TODAY">TIE UP + TODAY</option>
-              <option value="TODAY/SLEEP">TODAY/SLEEP</option>
-              <option value="CANCEL/HOLD">CANCEL/HOLD</option>
-            </select>
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Tabel 1: Filter Plan Blasting (Kontraktor Mitra) -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-bold text-slate-800 flex items-center gap-1">
+                  <i class="ph-bold ph-file-text text-red-600"></i> Tabel 1: Plan Mitra Kerja:
+                </label>
+                <div class="flex gap-1.5 text-[10px]">
+                  <button type="button" onclick="toggleAllExportCheckboxes('kontraktor', true)" class="text-emerald-700 font-bold hover:underline">Semua</button>
+                  <span class="text-slate-300">|</span>
+                  <button type="button" onclick="toggleAllExportCheckboxes('kontraktor', false)" class="text-rose-700 font-bold hover:underline">Reset</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-slate-300">
+                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input type="checkbox" name="export_chk_kontraktor" value="SIS" checked onchange="updateExportPreviewCount()" class="w-3.5 h-3.5 text-red-600 rounded">
+                  <span>PT SIS</span>
+                </label>
+                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input type="checkbox" name="export_chk_kontraktor" value="BUMA" checked onchange="updateExportPreviewCount()" class="w-3.5 h-3.5 text-red-600 rounded">
+                  <span>PT BUMA</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Tabel 2: Filter Kesiapan Operasional (Supplier Handak) -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-bold text-slate-800 flex items-center gap-1">
+                  <i class="ph-bold ph-shield-check text-amber-700"></i> Tabel 2: Kesiapan Supplier:
+                </label>
+                <div class="flex gap-1.5 text-[10px]">
+                  <button type="button" onclick="toggleAllExportCheckboxes('supplier', true)" class="text-emerald-700 font-bold hover:underline">Semua</button>
+                  <span class="text-slate-300">|</span>
+                  <button type="button" onclick="toggleAllExportCheckboxes('supplier', false)" class="text-rose-700 font-bold hover:underline">Reset</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-slate-300">
+                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input type="checkbox" name="export_chk_supplier" value="DAHANA" checked onchange="updateExportPreviewCount()" class="w-3.5 h-3.5 text-amber-600 rounded">
+                  <span>PT DAHANA</span>
+                </label>
+                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input type="checkbox" name="export_chk_supplier" value="MNK" checked onchange="updateExportPreviewCount()" class="w-3.5 h-3.5 text-amber-600 rounded">
+                  <span>PT MNK-KMB</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Filter Status Dropdown (Khusus Plan Blasting) -->
+            <div>
+              <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1">
+                <i class="ph-bold ph-check-square-offset text-blue-600"></i> Status Plan Peledakan:
+              </label>
+              <select id="export-filter-status" onchange="updateExportPreviewCount()"
+                class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-slate-800 h-[38px]">
+                <option value="ALL">Semua Status</option>
+                <option value="TODAY">TODAY</option>
+                <option value="SLEEP">SLEEP</option>
+                <option value="TIE UP">TIE UP</option>
+                <option value="TIE UP + TODAY">TIE UP + TODAY</option>
+                <option value="TODAY/SLEEP">TODAY/SLEEP</option>
+                <option value="CANCEL/HOLD">CANCEL/HOLD</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1661,7 +1705,7 @@
       { id: 'inisiasi', label: 'INISIASI', default: true },
       { id: 'jam_masuk', label: 'JAM MASUK', default: true },
       { id: 'remark', label: 'REMARK', default: true },
-      { id: 'pengawas', label: 'PENGAWAS', default: true },
+      { id: 'pengawas', label: 'PENGAWAS KONT.', default: true },
       { id: 'holes', label: 'JUMLAH HOLES', default: true },
       { id: 'isian', label: 'ISIAN (KG)', default: true },
       { id: 'volume', label: 'VOLUME DTH (TON)', default: true },
@@ -1669,11 +1713,11 @@
       { id: 'desa', label: 'DESA', default: true },
       { id: 'matrix', label: 'MATRIX ISIAN', default: true },
       { id: 'geometri', label: 'GEOMETRI', default: true },
-      { id: 'supplier', label: 'SUPPLIER', default: false },
-      { id: 'pengawas_sup', label: 'PENGAWAS SUPPLIER', default: false },
-      { id: 'blaster', label: 'BLASTER', default: false },
-      { id: 'unit_mmu', label: 'UNIT MMU/MMT', default: false },
-      { id: 'unit_box', label: 'MOBIL BOX', default: false },
+      { id: 'supplier', label: 'SUPPLIER', default: true },
+      { id: 'pengawas_sup', label: 'PENGAWAS SUPPLIER', default: true },
+      { id: 'blaster', label: 'BLASTER', default: true },
+      { id: 'unit_mmu', label: 'UNIT MMU/MMT', default: true },
+      { id: 'unit_box', label: 'MOBIL BOX', default: true },
       { id: 'coordinates', label: 'KOORDINAT (LAT, LONG)', default: false }
     ];
     let selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id));
@@ -1949,7 +1993,8 @@
 
     function getMmuCapacity(unitCode) {
       if (!unitCode) return 15;
-      const cleanCode = String(unitCode).toUpperCase().replace(/\s+/g, '');
+      const baseCode = String(unitCode).replace(/\s*reload/i, '').trim();
+      const cleanCode = baseCode.toUpperCase().replace(/\s+/g, '');
       for (const list of Object.values(SUPPLIER_MMU_PRESETS)) {
         const found = list.find(m => m.code.toUpperCase().replace(/\s+/g, '') === cleanCode);
         if (found) return found.cap;
@@ -3542,7 +3587,7 @@
         const rawSpv = item.pengawas_supplier || item.supervisor || '-';
         const cleanSpv = cleanManpowerString(rawSpv);
 
-        const rawBlaster = item.blaster || '-';
+        const rawBlaster = item.blaster || item.jumlah_blaster || item.nama_blaster || '-';
         const cleanBlaster = cleanManpowerString(rawBlaster);
 
         const canEdit = checkCanEditPlan(item);
@@ -3905,35 +3950,71 @@
       }
 
       selectedMmuChips = [];
-      let html = '';
+      let html = `
+        <div class="w-full space-y-2.5">
+          <div>
+            <span class="block text-[10.5px] uppercase font-bold text-slate-500 mb-1">Unit Utama:</span>
+            <div class="flex flex-wrap gap-2">
+      `;
 
       presets.forEach(p => {
         html += `
-          <button type="button" onclick="toggleMmuChip('${p.code}', ${p.cap})" id="chip-${p.code.replace(/\s+/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500">
+          <button type="button" onclick="toggleMmuChip('${p.code}', ${p.cap})" id="chip-${p.code.replace(/[^a-zA-Z0-9]/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500 shadow-2xs">
             ${p.code} (${p.cap}T)
           </button>
         `;
       });
+
+      html += `
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-[10.5px] uppercase font-extrabold text-amber-700 mb-1 flex items-center gap-1">
+              <i class="ph-bold ph-arrows-clockwise text-xs"></i> Opsi Reload MMU (Maksimal 2 Unit per MMU):
+            </span>
+            <div class="flex flex-wrap gap-2">
+      `;
+
+      presets.forEach(p => {
+        const reloadCode = `${p.code} Reload`;
+        html += `
+          <button type="button" onclick="toggleMmuChip('${reloadCode}', ${p.cap})" id="chip-${reloadCode.replace(/[^a-zA-Z0-9]/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-amber-50/70 text-amber-900 border-amber-300 hover:border-amber-600 flex items-center gap-1 shadow-2xs">
+            <i class="ph-bold ph-arrow-counter-clockwise text-[10px] text-amber-600"></i>
+            <span>${p.code} Reload</span>
+            <span class="text-[9.5px] opacity-75">(${p.cap}T)</span>
+          </button>
+        `;
+      });
+
+      html += `
+            </div>
+          </div>
+        </div>
+      `;
 
       container.innerHTML = html;
       updateMmuDisplay();
     }
 
     function toggleMmuChip(code, cap) {
-      const idx = selectedMmuChips.findIndex(c => c.code === code);
+      const idx = selectedMmuChips.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
       if (idx > -1) {
         selectedMmuChips.splice(idx, 1);
       } else {
         selectedMmuChips.push({ code, cap });
       }
 
-      const btnId = `chip-${code.replace(/\s+/g, '-')}`;
+      const btnId = `chip-${code.replace(/[^a-zA-Z0-9]/g, '-')}`;
       const btn = document.getElementById(btnId);
       if (btn) {
-        if (selectedMmuChips.some(c => c.code === code)) {
-          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold border transition bg-amber-600 text-white border-amber-600 shadow-sm";
+        const isReload = code.toLowerCase().includes('reload');
+        if (selectedMmuChips.some(c => c.code.toUpperCase() === code.toUpperCase())) {
+          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold border transition bg-amber-600 text-white border-amber-600 shadow-sm flex items-center gap-1";
         } else {
-          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500";
+          btn.className = isReload
+            ? "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-amber-50/70 text-amber-900 border-amber-300 hover:border-amber-600 flex items-center gap-1 shadow-2xs"
+            : "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500 shadow-2xs";
         }
       }
 
@@ -4726,7 +4807,7 @@
       let existingBlasterVal = currentEditingItem ? (currentEditingItem.jumlah_blaster || '') : '';
       if (String(existingBlasterVal).includes('#NUM') || String(existingBlasterVal) === 'NaN') existingBlasterVal = '';
 
-      // 3. Available MMUs (Hanya dari kesiapan supplier yang diinput)
+      // 3. Available MMUs (Dari kesiapan supplier yang diinput + unit existing plan jika ada)
       let availableMmus = [];
       if (supReadiness && supReadiness.unit_mmu) {
         availableMmus = supReadiness.unit_mmu.split(/[,;/]+/).map(x => x.trim()).filter(Boolean);
@@ -4735,6 +4816,16 @@
       // Existing assigned MMU
       const existingMmuVal = currentEditingItem ? (currentEditingItem.unit_mmu || '') : '';
       const parsedExistingMmu = parseAllocatedMmuInfo(existingMmuVal);
+
+      // Pastikan unit yang sudah teralokasi di plan ini tetap muncul meskipun supplier update kesiapan
+      if (parsedExistingMmu && parsedExistingMmu.items) {
+        parsedExistingMmu.items.forEach(it => {
+          const itClean = it.code.toUpperCase().replace(/\s+/g, '');
+          if (!availableMmus.some(u => u.toUpperCase().replace(/\s+/g, '') === itClean)) {
+            availableMmus.push(it.code);
+          }
+        });
+      }
 
       // 4. Available Box
       let availableBoxes = [];
@@ -4846,6 +4937,8 @@
         availableMmus.forEach(unit => {
           const cap = getMmuCapacity(unit);
           const cleanUnitCode = unit.toUpperCase().replace(/\s+/g, '');
+          const cleanId = unit.replace(/[^A-Z0-9]/gi, '');
+          const isReload = unit.toUpperCase().includes('RELOAD');
           const existingItem = parsedExistingMmu.items.find(x => x.code.toUpperCase().replace(/\s+/g, '') === cleanUnitCode);
           const activeQty = existingItem ? existingItem.qty : 0;
           const isChecked = activeQty > 0;
@@ -4854,14 +4947,17 @@
           const qtyUsedElsewhere = allocatedOtherMmus.get(cleanUnitCode) || 0;
           const isFullyUsedElsewhere = qtyUsedElsewhere >= 1 && !isChecked;
           const remainingCapacityRatio = Math.max(0, 1 - qtyUsedElsewhere);
+          const initQtyVal = activeQty > 0 ? activeQty : (isChecked ? 1 : '');
+          const initTonVal = activeQty > 0 ? (activeQty * cap).toFixed(2) : (isChecked ? cap.toFixed(2) : '');
 
           if (isFullyUsedElsewhere) {
             dynamicHtml += `
-            <div class="flex items-center justify-between p-2 rounded-xl border bg-slate-100/70 border-slate-200 opacity-60" id="row-alloc-mmu-${unit.replace(/[^A-Z0-9]/gi, '')}">
+            <div class="flex items-center justify-between p-2.5 rounded-xl border bg-slate-100/70 border-slate-200 opacity-60" id="row-alloc-mmu-${cleanId}">
               <label class="flex items-center gap-2 cursor-not-allowed">
                 <input type="checkbox" disabled class="rounded text-slate-400 focus:ring-0 cursor-not-allowed">
                 <span class="font-mono font-bold text-slate-400 text-xs line-through">${unit}</span>
                 <span class="text-[10px] font-semibold text-slate-400">(${cap} Ton)</span>
+                ${isReload ? `<span class="text-[9px] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded border border-slate-300">Reload</span>` : ''}
                 <span class="text-[9px] font-bold text-red-500 bg-red-50 px-1 rounded border border-red-200">Penuh Dialokasikan</span>
               </label>
               <span class="text-[10px] font-mono text-slate-400 font-bold">Terpakai di plan lain</span>
@@ -4869,18 +4965,34 @@
           `;
           } else {
             dynamicHtml += `
-            <div class="flex items-center justify-between p-2 rounded-xl border ${isChecked ? 'bg-amber-50/70 border-amber-300' : 'bg-slate-50 border-slate-200'} transition" id="row-alloc-mmu-${unit.replace(/[^A-Z0-9]/gi, '')}">
-              <label class="flex items-center gap-2 cursor-pointer">
+            <div class="flex items-center justify-between p-2.5 rounded-xl border ${isChecked ? 'bg-amber-50/70 border-amber-300 shadow-2xs' : 'bg-slate-50 border-slate-200'} transition" id="row-alloc-mmu-${cleanId}">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
                 <input type="checkbox" name="alloc_mmu_chk" value="${unit}" data-cap="${cap}" ${isChecked ? 'checked' : ''} onchange="handleAllocMmuRowToggle('${unit}')" class="rounded text-amber-600 focus:ring-0">
                 <span class="font-mono font-black text-slate-900 text-xs">${unit}</span>
                 <span class="text-[10px] font-bold text-slate-500">(${cap} Ton)</span>
+                ${isReload ? `<span class="text-[9px] font-extrabold text-amber-900 bg-amber-200 px-1.5 py-0.5 rounded border border-amber-300 shadow-2xs">Reload</span>` : ''}
                 ${qtyUsedElsewhere > 0 ? `<span class="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 rounded border border-amber-300">Sisa ${(remainingCapacityRatio).toFixed(2)} Unit</span>` : ''}
               </label>
 
               <div class="flex items-center gap-2">
-                <span class="text-[11px] font-semibold text-slate-600">Jumlah Unit:</span>
-                <input type="number" step="0.05" min="0" max="${(remainingCapacityRatio + activeQty).toFixed(2)}" value="${activeQty > 0 ? activeQty : (remainingCapacityRatio > 0 && remainingCapacityRatio < 1 ? remainingCapacityRatio : 1)}" id="qty_alloc_${unit.replace(/[^A-Z0-9]/gi, '')}" oninput="calculateAllocMmuSummary()" class="w-20 bg-white border border-amber-300 rounded-lg p-1 text-center font-mono font-black text-xs">
-                <span class="text-[11px] font-mono text-emerald-700 font-bold w-16 text-right" id="cap_alloc_${unit.replace(/[^A-Z0-9]/gi, '')}">${(activeQty * cap).toFixed(2)}T</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-bold text-slate-500">Jumlah Unit:</span>
+                  <input type="number" step="0.05" min="0" max="${(remainingCapacityRatio + activeQty).toFixed(2)}"
+                    value="${initQtyVal}"
+                    placeholder="0"
+                    id="qty_alloc_${cleanId}"
+                    oninput="handleAllocUnitChange('${unit}', ${cap})"
+                    class="w-16 bg-white border border-amber-300 rounded-lg p-1 text-center font-mono font-black text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-bold text-slate-500">Tonase:</span>
+                  <input type="number" step="0.1" min="0"
+                    value="${initTonVal}"
+                    placeholder="0.00"
+                    id="ton_alloc_${cleanId}"
+                    oninput="handleAllocTonChange('${unit}', ${cap})"
+                    class="w-20 bg-white border border-emerald-400 rounded-lg p-1 text-center font-mono font-black text-xs text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
               </div>
             </div>
           `;
@@ -4890,7 +5002,8 @@
 
       dynamicHtml += `
           </div>
-          <input type="text" id="edit_unit_mmu" value="${existingMmuVal}" readonly class="w-full bg-slate-50 border border-amber-300 rounded-xl p-2 font-mono font-bold text-slate-800 text-xs">
+          <input type="text" id="edit_unit_mmu" value="${existingMmuVal}" readonly class="w-full bg-slate-50 border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-800 text-xs">
+          <div id="alloc-mmu-comparison-badge"></div>
         </div>
 
         <!-- MOBIL BOX ALLOCATION -->
@@ -4981,14 +5094,98 @@
       const cleanId = unit.replace(/[^A-Z0-9]/gi, '');
       const chk = document.querySelector(`input[name="alloc_mmu_chk"][value="${unit}"]`);
       const row = document.getElementById(`row-alloc-mmu-${cleanId}`);
+      const qtyInput = document.getElementById(`qty_alloc_${cleanId}`);
+      const tonInput = document.getElementById(`ton_alloc_${cleanId}`);
+      const cap = Number(chk ? chk.dataset.cap : getMmuCapacity(unit)) || 15;
+
       if (chk && row) {
         if (chk.checked) {
-          row.className = "flex items-center justify-between p-2 rounded-xl border bg-amber-50/70 border-amber-300 transition";
+          row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-amber-50/70 border-amber-300 shadow-2xs transition";
+          let currentQty = parseFloat(qtyInput ? qtyInput.value : 0);
+          if (isNaN(currentQty) || currentQty <= 0) {
+            currentQty = 1;
+            if (qtyInput) qtyInput.value = 1;
+            if (tonInput) tonInput.value = cap.toFixed(2);
+          }
         } else {
-          row.className = "flex items-center justify-between p-2 rounded-xl border bg-slate-50 border-slate-200 transition";
+          row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-slate-50 border-slate-200 transition";
         }
       }
       calculateAllocMmuSummary();
+    }
+
+    function handleAllocUnitChange(unit, cap) {
+      const cleanId = unit.replace(/[^A-Z0-9]/gi, '');
+      const qtyInput = document.getElementById(`qty_alloc_${cleanId}`);
+      const tonInput = document.getElementById(`ton_alloc_${cleanId}`);
+      const chk = document.querySelector(`input[name="alloc_mmu_chk"][value="${unit}"]`);
+      const row = document.getElementById(`row-alloc-mmu-${cleanId}`);
+
+      let qty = parseFloat(qtyInput ? qtyInput.value : 0);
+      if (isNaN(qty) || qty < 0) qty = 0;
+
+      const ton = qty * cap;
+      if (tonInput && document.activeElement !== tonInput) {
+        tonInput.value = ton > 0 ? (ton % 1 === 0 ? ton.toString() : ton.toFixed(2)) : '';
+      }
+
+      if (chk) {
+        if (qty > 0 && !chk.checked) {
+          chk.checked = true;
+          if (row) row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-amber-50/70 border-amber-300 shadow-2xs transition";
+        } else if (qty === 0 && chk.checked) {
+          chk.checked = false;
+          if (row) row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-slate-50 border-slate-200 transition";
+        }
+      }
+
+      calculateAllocMmuSummary();
+    }
+
+    function handleAllocTonChange(unit, cap) {
+      const cleanId = unit.replace(/[^A-Z0-9]/gi, '');
+      const qtyInput = document.getElementById(`qty_alloc_${cleanId}`);
+      const tonInput = document.getElementById(`ton_alloc_${cleanId}`);
+      const chk = document.querySelector(`input[name="alloc_mmu_chk"][value="${unit}"]`);
+      const row = document.getElementById(`row-alloc-mmu-${cleanId}`);
+
+      let ton = parseFloat(tonInput ? tonInput.value : 0);
+      if (isNaN(ton) || ton < 0) ton = 0;
+
+      let qty = cap > 0 ? (ton / cap) : 0;
+      qty = Math.round(qty * 100) / 100;
+
+      if (qtyInput && document.activeElement !== qtyInput) {
+        qtyInput.value = qty > 0 ? qty : '';
+      }
+
+      if (chk) {
+        if (ton > 0 && !chk.checked) {
+          chk.checked = true;
+          if (row) row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-amber-50/70 border-amber-300 shadow-2xs transition";
+        } else if (ton === 0 && chk.checked) {
+          chk.checked = false;
+          if (row) row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-slate-50 border-slate-200 transition";
+        }
+      }
+
+      calculateAllocMmuSummary();
+    }
+
+    function getTargetPlanDthVolume() {
+      const el = document.getElementById('edit_volume_ton');
+      if (el && el.value) {
+        const v = parseFloat(el.value);
+        if (!isNaN(v) && v > 0) return v;
+      }
+      if (currentEditingItem) {
+        const v = parseFloat(currentEditingItem.volume_ton || currentEditingItem.volume);
+        if (!isNaN(v) && v > 0) return v;
+        const h = Number(currentEditingItem.jumlah_holes) || 0;
+        const i = Number(currentEditingItem.isian_kg) || 0;
+        if (h > 0 && i > 0) return (h * i) / 1000;
+      }
+      return 0;
     }
 
     function calculateAllocMmuSummary() {
@@ -5002,13 +5199,15 @@
         const cleanId = unit.replace(/[^A-Z0-9]/gi, '');
         const cap = Number(c.dataset.cap || getMmuCapacity(unit));
         const qtyInput = document.getElementById(`qty_alloc_${cleanId}`);
-        const capDisplay = document.getElementById(`cap_alloc_${cleanId}`);
+        const tonInput = document.getElementById(`ton_alloc_${cleanId}`);
 
         let qty = qtyInput ? parseFloat(qtyInput.value) : 1;
         if (isNaN(qty) || qty <= 0) qty = 1;
 
         const rowDth = qty * cap;
-        if (capDisplay) capDisplay.innerText = `${rowDth.toFixed(2)}T`;
+        if (tonInput && (!tonInput.value || document.activeElement !== tonInput)) {
+          tonInput.value = rowDth > 0 ? (rowDth % 1 === 0 ? rowDth.toString() : rowDth.toFixed(2)) : '';
+        }
 
         totalUnits += qty;
         totalDth += rowDth;
@@ -5021,12 +5220,60 @@
         : '';
 
       const mmuInput = document.getElementById('edit_unit_mmu');
-      if (mmuInput) mmuInput.value = summaryStr;
-
       const totalDisplay = document.getElementById('display-alloc-mmu-total');
+      const targetVol = getTargetPlanDthVolume();
+      const isSufficient = (targetVol <= 0) || (totalDth >= (targetVol - 0.01));
+
+      if (mmuInput) {
+        mmuInput.value = summaryStr;
+        if (!summaryStr) {
+          mmuInput.className = "w-full bg-slate-50 border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-800 text-xs";
+        } else if (isSufficient) {
+          mmuInput.className = "w-full bg-emerald-50 border-2 border-emerald-500 rounded-xl p-2.5 font-mono font-black text-emerald-800 text-xs shadow-2xs transition";
+        } else {
+          mmuInput.className = "w-full bg-red-50 border-2 border-red-500 rounded-xl p-2.5 font-mono font-black text-red-700 text-xs shadow-2xs transition";
+        }
+      }
+
       if (totalDisplay) {
         const unitStr = (totalUnits % 1 === 0) ? totalUnits : totalUnits.toFixed(2);
         totalDisplay.innerText = `${unitStr} Unit | ${totalDth.toFixed(2)} Ton`;
+        if (summaryStr && !isSufficient && targetVol > 0) {
+          totalDisplay.className = "text-xs font-black text-red-600 font-mono";
+        } else {
+          totalDisplay.className = "text-xs font-black text-emerald-700 font-mono";
+        }
+      }
+
+      const badgeEl = document.getElementById('alloc-mmu-comparison-badge');
+      if (badgeEl) {
+        if (targetVol > 0) {
+          if (isSufficient) {
+            const surplus = Math.max(0, totalDth - targetVol);
+            badgeEl.innerHTML = `
+              <div class="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between text-xs font-bold text-emerald-900">
+                <span class="flex items-center gap-1.5">
+                  <i class="ph-bold ph-check-circle text-emerald-600 text-sm"></i>
+                  <span>Alokasi MMU Sesuai / Mencukupi: <b>${totalDth.toFixed(2)} Ton</b> (Kebutuhan: ${targetVol.toFixed(2)} Ton)</span>
+                </span>
+                <span class="font-mono text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-md font-extrabold">+${surplus.toFixed(2)} T</span>
+              </div>
+            `;
+          } else {
+            const defisit = targetVol - totalDth;
+            badgeEl.innerHTML = `
+              <div class="mt-2 p-2.5 rounded-xl bg-red-50 border border-red-300 flex items-center justify-between text-xs font-bold text-red-900">
+                <span class="flex items-center gap-1.5">
+                  <i class="ph-bold ph-warning-circle text-red-600 text-sm"></i>
+                  <span>Alokasi MMU Kurang: <b>${totalDth.toFixed(2)} Ton</b> (Kebutuhan: ${targetVol.toFixed(2)} Ton)</span>
+                </span>
+                <span class="font-mono text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded-md font-extrabold">-${defisit.toFixed(2)} T</span>
+              </div>
+            `;
+          }
+        } else {
+          badgeEl.innerHTML = '';
+        }
       }
     }
 
@@ -5053,6 +5300,7 @@
       const v = (h * i) / 1000;
       const el = document.getElementById('edit_volume_ton');
       if (el) el.value = v.toFixed(2);
+      calculateAllocMmuSummary();
     }
 
     function closeEditModal() {
@@ -5155,11 +5403,13 @@
         const spvVal = grab('alloc_spv_custom') || grab('edit_pengawas_supplier');
         if (spvVal !== undefined) {
           updateData.pengawas_supplier = spvVal;
+          updateData.pengawas_sup = spvVal;
         }
 
         const blasterVal = grab('alloc_blaster_custom') || grab('edit_jumlah_blaster');
         if (blasterVal !== undefined) {
           updateData.jumlah_blaster = blasterVal;
+          updateData.blaster = blasterVal;
         }
 
         const mmuVal = grab('edit_unit_mmu');
@@ -5340,35 +5590,73 @@
         if (fieldAxiss) fieldAxiss.classList.add('hidden');
       }
 
-      let html = '';
+      let html = `
+        <div class="w-full space-y-2.5">
+          <div>
+            <span class="block text-[10.5px] uppercase font-bold text-slate-500 mb-1">Unit Utama:</span>
+            <div class="flex flex-wrap gap-2">
+      `;
+
       presets.forEach(p => {
-        const isSelected = editSupSelectedMmus.some(c => c.code === p.code);
+        const isSelected = editSupSelectedMmus.some(c => c.code.toUpperCase() === p.code.toUpperCase());
         html += `
-          <button type="button" onclick="toggleModalEditMmuChip('${p.code}', ${p.cap})" id="modal-chip-${p.code.replace(/\s+/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition ${isSelected ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:border-amber-500'}">
+          <button type="button" onclick="toggleModalEditMmuChip('${p.code}', ${p.cap})" id="modal-chip-${p.code.replace(/[^a-zA-Z0-9]/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition ${isSelected ? 'bg-amber-600 text-white border-amber-600 shadow-sm font-extrabold' : 'bg-white text-slate-700 border-slate-300 hover:border-amber-500'} shadow-2xs">
             ${p.code} (${p.cap}T)
           </button>
         `;
       });
+
+      html += `
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-[10.5px] uppercase font-extrabold text-amber-700 mb-1 flex items-center gap-1">
+              <i class="ph-bold ph-arrows-clockwise text-xs"></i> Opsi Reload MMU (Maksimal 2 Unit per MMU):
+            </span>
+            <div class="flex flex-wrap gap-2">
+      `;
+
+      presets.forEach(p => {
+        const reloadCode = `${p.code} Reload`;
+        const isSelected = editSupSelectedMmus.some(c => c.code.toUpperCase() === reloadCode.toUpperCase());
+        html += `
+          <button type="button" onclick="toggleModalEditMmuChip('${reloadCode}', ${p.cap})" id="modal-chip-${reloadCode.replace(/[^a-zA-Z0-9]/g, '-')}" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition ${isSelected ? 'bg-amber-600 text-white border-amber-600 shadow-sm font-extrabold flex items-center gap-1' : 'bg-amber-50/70 text-amber-900 border-amber-300 hover:border-amber-600 flex items-center gap-1'} shadow-2xs">
+            <i class="ph-bold ph-arrow-counter-clockwise text-[10px] ${isSelected ? 'text-white' : 'text-amber-600'}"></i>
+            <span>${p.code} Reload</span>
+            <span class="text-[9.5px] opacity-75">(${p.cap}T)</span>
+          </button>
+        `;
+      });
+
+      html += `
+            </div>
+          </div>
+        </div>
+      `;
 
       container.innerHTML = html;
       updateModalEditMmuDisplay();
     }
 
     function toggleModalEditMmuChip(code, cap) {
-      const idx = editSupSelectedMmus.findIndex(c => c.code === code);
+      const idx = editSupSelectedMmus.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
       if (idx > -1) {
         editSupSelectedMmus.splice(idx, 1);
       } else {
         editSupSelectedMmus.push({ code, cap });
       }
 
-      const btnId = `modal-chip-${code.replace(/\s+/g, '-')}`;
+      const btnId = `modal-chip-${code.replace(/[^a-zA-Z0-9]/g, '-')}`;
       const btn = document.getElementById(btnId);
       if (btn) {
-        if (editSupSelectedMmus.some(c => c.code === code)) {
-          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold border transition bg-amber-600 text-white border-amber-600 shadow-sm";
+        const isReload = code.toLowerCase().includes('reload');
+        if (editSupSelectedMmus.some(c => c.code.toUpperCase() === code.toUpperCase())) {
+          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold border transition bg-amber-600 text-white border-amber-600 shadow-sm flex items-center gap-1";
         } else {
-          btn.className = "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500";
+          btn.className = isReload
+            ? "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-amber-50/70 text-amber-900 border-amber-300 hover:border-amber-600 flex items-center gap-1 shadow-2xs"
+            : "px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500 shadow-2xs";
         }
       }
 
@@ -6409,20 +6697,41 @@
       renderExportColumnChecklist();
     }
 
+    function toggleAllExportCheckboxes(type, isCheck) {
+      const name = type === 'kontraktor' ? 'export_chk_kontraktor' : 'export_chk_supplier';
+      document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+        cb.checked = isCheck;
+      });
+      updateExportPreviewCount();
+    }
+
     function getFilteredExportPlans() {
-      const filterKontraktor = (document.getElementById('export-filter-kontraktor') ? document.getElementById('export-filter-kontraktor').value : 'ALL');
+      const selectedKontraktors = Array.from(document.querySelectorAll('input[name="export_chk_kontraktor"]:checked')).map(c => c.value);
       const filterStatus = (document.getElementById('export-filter-status') ? document.getElementById('export-filter-status').value : 'ALL');
 
+      if (selectedKontraktors.length === 0) return [];
+
       return (globalPlanData || []).filter(item => {
-        if (filterKontraktor !== 'ALL') {
-          const k = String(item.kontraktor || '').toUpperCase();
-          if (!k.includes(filterKontraktor)) return false;
-        }
+        const k = String(item.kontraktor || '').toUpperCase();
+        const matchKontraktor = selectedKontraktors.some(val => k.includes(val));
+        if (!matchKontraktor) return false;
+
         if (filterStatus !== 'ALL') {
-          const s = getPlanTodaySleepStatus(item);
-          if (s !== filterStatus) return false;
+          const st = getPlanTodaySleepStatus(item);
+          if (st !== filterStatus) return false;
         }
+
         return true;
+      });
+    }
+
+    function getFilteredExportSuppliers() {
+      const selectedSuppliers = Array.from(document.querySelectorAll('input[name="export_chk_supplier"]:checked')).map(c => c.value);
+      if (selectedSuppliers.length === 0) return [];
+
+      return (globalSupplierData || []).filter(item => {
+        const s = String(item.supplier || '').toUpperCase();
+        return selectedSuppliers.some(val => s.includes(val));
       });
     }
 
@@ -6430,86 +6739,124 @@
       const countEl = document.getElementById('export-preview-count');
       if (countEl) {
         const plans = getFilteredExportPlans();
-        countEl.innerText = `${plans.length} baris siap diexport`;
+        const sups = getFilteredExportSuppliers();
+        const parts = [];
+        if (plans.length > 0) parts.push(`${plans.length} baris Plan Blasting`);
+        if (sups.length > 0) parts.push(`${sups.length} baris Kesiapan Supplier`);
+        if (parts.length === 0) {
+          countEl.innerText = '0 data dipilih untuk diexport';
+        } else {
+          countEl.innerText = `${parts.join(' & ')} siap diexport`;
+        }
       }
     }
 
     function downloadExportExcel() {
       const plans = getFilteredExportPlans();
-      if (plans.length === 0) {
-        Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data plan yang sesuai filter untuk diexport!' });
+      const sups = getFilteredExportSuppliers();
+
+      if (plans.length === 0 && sups.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Tidak Ada Data',
+          text: 'Harap centang minimal 1 Kontraktor atau 1 Supplier untuk diexport!'
+        });
         return;
       }
 
-      if (selectedExportColumnIds.size === 0) {
-        Swal.fire({ icon: 'warning', title: 'Pilih Kolom', text: 'Harap pilih minimal 1 kolom yang ingin diexport!' });
+      if (plans.length > 0 && selectedExportColumnIds.size === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Pilih Kolom Plan',
+          text: 'Harap pilih minimal 1 kolom Plan Blasting yang ingin diexport!'
+        });
         return;
       }
 
-      const activeColumns = EXPORT_AVAILABLE_COLUMNS.filter(c => selectedExportColumnIds.has(c.id));
-      const groupByKontraktor = true;
-      const includeSummary = true;
       const targetDate = document.getElementById('global-date-filter').value || getWitaDateString();
-
       const aoa = [];
-      aoa.push([`RENCANA PELEDAKAN (PLAN BLASTING) - ${targetDate}`]);
-      aoa.push([`Tanggal Export: ${getWitaDateString()} WITA | Total Record: ${plans.length}`]);
-      aoa.push([]);
 
-      const headerRow = activeColumns.map(c => c.label);
-      aoa.push(headerRow);
+      // ==================== TABEL 1: RENCANA PELEDAKAN (PLAN BLASTING) ====================
+      if (plans.length > 0) {
+        const activeColumns = EXPORT_AVAILABLE_COLUMNS.filter(c => selectedExportColumnIds.has(c.id));
+        const groupByKontraktor = true;
+        const includeSummary = true;
 
-      function getPlanColValue(item, colId, rowIndex) {
-        switch (colId) {
-          case 'no': return rowIndex + 1;
-          case 'lokasi': return item.lokasi || '-';
-          case 'prioritas': return item.prioritas || '-';
-          case 'today_sleep': return getPlanTodaySleepStatus(item);
-          case 'inisiasi': return item.inisiasi || '-';
-          case 'jam_masuk': return formatExcelTime(item.jam_masuk || item.kondisi_jam_masuk);
-          case 'remark': return item.remark || item.kondisi_remark || '-';
-          case 'pengawas': return item.pengawas_kontraktor || '-';
-          case 'holes': return Number(item.jumlah_holes || item.holes || 0);
-          case 'isian': return Number(item.isian_kg || item.isian || 0);
-          case 'volume': return Number(item.volume_ton || item.volume || 0);
-          case 'akses': return item.akses || '-';
-          case 'desa': return item.desa || item.desa_terdampak || '-';
-          case 'matrix': return item.matrix || '-';
-          case 'geometri': return item.geometri || '-';
-          case 'supplier': return item.supplier || '-';
-          case 'pengawas_sup': return item.pengawas_supplier || item.supervisor || '-';
-          case 'blaster': return item.blaster || '-';
-          case 'unit_mmu': return item.unit_mmu || item.need_mmu || '-';
-          case 'unit_box': return item.unit_box || '-';
-          case 'coordinates': return (item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '-';
-          default: return '';
+        aoa.push([`TABEL 1: RENCANA PELEDAKAN (PLAN BLASTING) - ${targetDate}`]);
+        aoa.push([`Tanggal Export: ${getWitaDateString()} WITA | Total Record: ${plans.length}`]);
+        aoa.push([]);
+
+        const headerRow = activeColumns.map(c => c.label);
+        aoa.push(headerRow);
+
+        function getPlanColValue(item, colId, rowIndex) {
+          switch (colId) {
+            case 'no': return rowIndex + 1;
+            case 'lokasi': return item.lokasi || '-';
+            case 'prioritas': return item.prioritas || '-';
+            case 'today_sleep': return getPlanTodaySleepStatus(item);
+            case 'inisiasi': return item.inisiasi || '-';
+            case 'jam_masuk': return formatExcelTime(item.jam_masuk || item.kondisi_jam_masuk);
+            case 'remark': return item.remark || item.kondisi_remark || '-';
+            case 'pengawas': return item.pengawas_kontraktor || '-';
+            case 'holes': return Number(item.jumlah_holes || item.holes || 0);
+            case 'isian': return Number(item.isian_kg || item.isian || 0);
+            case 'volume': return Number(item.volume_ton || item.volume || 0);
+            case 'akses': return item.akses || '-';
+            case 'desa': return item.desa || item.desa_terdampak || '-';
+            case 'matrix': return item.matrix || '-';
+            case 'geometri': return item.geometri || '-';
+            case 'supplier': return item.supplier || '-';
+            case 'pengawas_sup': return cleanManpowerString(item.pengawas_supplier || item.supervisor || '') || '-';
+            case 'blaster': return cleanManpowerString(item.blaster || item.jumlah_blaster || item.nama_blaster || '') || '-';
+            case 'unit_mmu': return item.unit_mmu || item.need_mmu || '-';
+            case 'unit_box': return item.unit_box || '-';
+            case 'coordinates': return (item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '-';
+            default: return '';
+          }
         }
-      }
 
-      let dthTodaySum = 0;
-      let dthSleepSum = 0;
-      let globalRowIndex = 0;
+        let dthTodaySum = 0;
+        let dthSleepSum = 0;
+        let globalRowIndex = 0;
 
-      if (groupByKontraktor) {
-        const groups = {};
-        plans.forEach(p => {
-          const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
-          if (!groups[kName]) groups[kName] = [];
-          groups[kName].push(p);
-        });
+        if (groupByKontraktor) {
+          const groups = {};
+          plans.forEach(p => {
+            const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
+            if (!groups[kName]) groups[kName] = [];
+            groups[kName].push(p);
+          });
 
-        const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
-          if (a.includes('SIS')) return -1;
-          if (b.includes('SIS')) return 1;
-          if (a.includes('BUMA')) return -1;
-          if (b.includes('BUMA')) return 1;
-          return a.localeCompare(b);
-        });
+          const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+            if (a.includes('SIS')) return -1;
+            if (b.includes('SIS')) return 1;
+            if (a.includes('BUMA')) return -1;
+            if (b.includes('BUMA')) return 1;
+            return a.localeCompare(b);
+          });
 
-        sortedGroupKeys.forEach(grpName => {
-          aoa.push([grpName]);
-          const grpPlans = groups[grpName];
-          grpPlans.forEach(plan => {
+          sortedGroupKeys.forEach(grpName => {
+            aoa.push([grpName]);
+            const grpPlans = groups[grpName];
+            grpPlans.forEach(plan => {
+              const rowData = activeColumns.map(c => getPlanColValue(plan, c.id, globalRowIndex));
+              aoa.push(rowData);
+
+              const vol = Number(plan.volume_ton || plan.volume || 0);
+              const st = getPlanTodaySleepStatus(plan);
+              if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
+                dthSleepSum += vol;
+              } else if (st !== 'CANCEL/HOLD') {
+                dthTodaySum += vol;
+              }
+
+              globalRowIndex++;
+            });
+            aoa.push([]);
+          });
+        } else {
+          plans.forEach(plan => {
             const rowData = activeColumns.map(c => getPlanColValue(plan, c.id, globalRowIndex));
             aoa.push(rowData);
 
@@ -6524,51 +6871,103 @@
             globalRowIndex++;
           });
           aoa.push([]);
-        });
-      } else {
-        plans.forEach(plan => {
-          const rowData = activeColumns.map(c => getPlanColValue(plan, c.id, globalRowIndex));
-          aoa.push(rowData);
+        }
 
-          const vol = Number(plan.volume_ton || plan.volume || 0);
-          const st = getPlanTodaySleepStatus(plan);
-          if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
-            dthSleepSum += vol;
-          } else if (st !== 'CANCEL/HOLD') {
-            dthTodaySum += vol;
-          }
+        const totalDthSum = dthTodaySum + dthSleepSum;
 
-          globalRowIndex++;
-        });
-        aoa.push([]);
+        if (includeSummary) {
+          const summarySpacer = new Array(Math.max(0, activeColumns.length - 4)).fill('');
+          aoa.push([...summarySpacer, 'DTH TODAY', parseFloat(dthTodaySum.toFixed(3)), 'TOTAL DTH', parseFloat(totalDthSum.toFixed(3))]);
+          aoa.push([...summarySpacer, 'DTH SLEEP', parseFloat(dthSleepSum.toFixed(3)), '', '']);
+          aoa.push([]);
+        }
       }
 
-      const totalDthSum = dthTodaySum + dthSleepSum;
+      // ==================== TABEL 2: KESIAPAN OPERASIONAL SUPPLIER ====================
+      if (sups.length > 0) {
+        if (plans.length > 0) {
+          aoa.push([]);
+          aoa.push([]);
+        }
 
-      if (includeSummary) {
-        const summarySpacer = new Array(Math.max(0, activeColumns.length - 4)).fill('');
-        aoa.push([...summarySpacer, 'DTH TODAY', parseFloat(dthTodaySum.toFixed(3)), 'TOTAL DTH', parseFloat(totalDthSum.toFixed(3))]);
-        aoa.push([...summarySpacer, 'DTH SLEEP', parseFloat(dthSleepSum.toFixed(3)), '', '']);
+        aoa.push([`TABEL 2: KESIAPAN OPERASIONAL SUPPLIER - ${targetDate}`]);
+        aoa.push([`Tanggal: ${targetDate} | Total Record Supplier: ${sups.length}`]);
+        aoa.push([]);
+
+        const supHeaders = [
+          'NO',
+          'TANGGAL',
+          'SUPPLIER',
+          'UNIT MMU / MMT READY',
+          'TOTAL DTH READY (TON)',
+          'MOBIL BOX READY',
+          'DEVICE (HEBS / ESTAR)',
+          'NONEL STARTER',
+          'PENGAWAS ONSITE',
+          'JML PENGAWAS',
+          'BLASTER ONSITE',
+          'JML BLASTER',
+          'CATATAN / NOTE'
+        ];
+        aoa.push(supHeaders);
+
+        sups.forEach((item, index) => {
+          const rowNo = index + 1;
+          const tgl = normalizeDateToYYYYMMDD(item.tanggal) || item.tanggal || '-';
+          const sup = cleanCompanyName(item.supplier) || '-';
+          const mmu = formatMmuReadyList(item.unit_mmu, item.supplier);
+          const dth = Number(item.dth_ready || 0);
+          const box = formatBoxReadyList(item.unit_box);
+          const devices = [item.hebs, item.estar, item.axiss].filter(x => x && x !== '' && x !== '0').join(', ') || '-';
+          const nonel = item.nonel || '-';
+          const namaSpv = item.nama_spv || '-';
+          const numSpv = Number(item.supervisor || 0);
+          const namaBlaster = item.nama_blaster || '-';
+          const numBlaster = Number(item.blaster || 0);
+          const note = item.note || '-';
+
+          aoa.push([
+            rowNo,
+            tgl,
+            sup,
+            mmu,
+            dth,
+            box,
+            devices,
+            nonel,
+            namaSpv,
+            numSpv,
+            namaBlaster,
+            numBlaster,
+            note
+          ]);
+        });
       }
 
       const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-      const colWidths = activeColumns.map((col, idx) => {
-        let maxLen = col.label.length;
+      const maxCols = Math.max(...aoa.map(r => r.length));
+      const colWidths = [];
+      for (let c = 0; c < maxCols; c++) {
+        let maxLen = 10;
         aoa.forEach(r => {
-          if (r[idx] !== undefined && r[idx] !== null) {
-            const len = String(r[idx]).length;
+          if (r[c] !== undefined && r[c] !== null) {
+            const len = String(r[c]).length;
             if (len > maxLen) maxLen = len;
           }
         });
-        return { wch: Math.min(Math.max(maxLen + 3, 10), 40) };
-      });
+        colWidths.push({ wch: Math.min(Math.max(maxLen + 2, 10), 45) });
+      }
       ws['!cols'] = colWidths;
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Plan Blasting");
+      XLSX.utils.book_append_sheet(wb, ws, "Blasting Data");
 
-      const fileName = `Plan_Blasting_${targetDate.replace(/[^a-zA-Z0-9-]/g, '_')}.xlsx`;
+      let filePrefix = 'Plan_Blasting';
+      if (plans.length > 0 && sups.length > 0) filePrefix = 'Laporan_Blasting_Lengkap';
+      else if (sups.length > 0) filePrefix = 'Kesiapan_Supplier';
+
+      const fileName = `${filePrefix}_${targetDate.replace(/[^a-zA-Z0-9-]/g, '_')}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
       Swal.fire({
@@ -6582,8 +6981,14 @@
 
     function copyExportToWhatsApp() {
       const plans = getFilteredExportPlans();
-      if (plans.length === 0) {
-        Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data plan yang sesuai filter untuk disalin!' });
+      const sups = getFilteredExportSuppliers();
+
+      if (plans.length === 0 && sups.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data Kosong',
+          text: 'Harap centang minimal 1 Kontraktor atau 1 Supplier untuk disalin ke WhatsApp!'
+        });
         return;
       }
 
@@ -6601,90 +7006,201 @@
       }
 
       const targetDate = waClean(document.getElementById('global-date-filter').value || getWitaDateString());
-      let dthTodaySum = 0;
-      let dthSleepSum = 0;
+      let text = '';
 
-      let countSis = 0;
-      let countBuma = 0;
-      let countOther = 0;
+      // ==================== TABEL 1: PLAN BLASTING MITRA ====================
+      if (plans.length > 0) {
+        let dthTodaySum = 0;
+        let dthSleepSum = 0;
+        let countSis = 0;
+        let countBuma = 0;
+        let countOther = 0;
 
-      const groups = {};
-      plans.forEach(p => {
-        const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
-        if (!groups[kName]) groups[kName] = [];
-        groups[kName].push(p);
+        const groups = {};
+        plans.forEach(p => {
+          const kName = cleanCompanyName(p.kontraktor) || 'PT LAINNYA';
+          if (!groups[kName]) groups[kName] = [];
+          groups[kName].push(p);
 
-        const kUpper = String(p.kontraktor || '').toUpperCase();
-        if (kUpper.includes('SIS')) countSis++;
-        else if (kUpper.includes('BUMA')) countBuma++;
-        else countOther++;
-      });
-
-      let text = `*RENCANA PELEDAKAN (PLAN BLASTING)*\n`;
-      text += `📅 *Tanggal:* ${targetDate}\n`;
-      let rekapLine = `📊 *Total Plan:* PT SIS: *${countSis}* | PT BUMA: *${countBuma}*`;
-      if (countOther > 0) {
-        rekapLine += ` | Lainnya: *${countOther}*`;
-      }
-      rekapLine += ` (Total: *${plans.length}*)\n`;
-      text += rekapLine;
-      text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-      const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
-        if (a.includes('SIS')) return -1;
-        if (b.includes('SIS')) return 1;
-        if (a.includes('BUMA')) return -1;
-        if (b.includes('BUMA')) return 1;
-        return a.localeCompare(b);
-      });
-
-      let overallIdx = 1;
-      sortedGroupKeys.forEach(grpName => {
-        text += `🏢 ${waBold(grpName)}\n`;
-        const grpPlans = groups[grpName];
-        grpPlans.forEach(p => {
-          const st = getPlanTodaySleepStatus(p);
-          const vol = Number(p.volume_ton || p.volume || 0);
-          const holes = p.jumlah_holes || p.holes || 0;
-          const isian = p.isian_kg || p.isian || 0;
-          const prio = p.prioritas || 'P1';
-          const inisiasi = p.inisiasi || 'RF';
-          const jam = formatExcelTime(p.jam_masuk || p.kondisi_jam_masuk);
-          const spv = p.pengawas_kontraktor || '-';
-          const remark = p.remark || p.kondisi_remark || 'OK';
-          const desa = p.desa || p.desa_terdampak || '-';
-          const akses = p.akses || '-';
-          const matrix = p.matrix || '-';
-          const geo = p.geometri || '-';
-
-          const lokasiClean = waClean(p.lokasi, 'Lokasi');
-          const prioClean = waClean(prio, 'P1');
-          const stClean = waClean(st, 'TODAY');
-
-          text += `${overallIdx}. ${waBold(lokasiClean)} (${prioClean})\n`;
-          text += `   • Status: ${waBold(stClean)} | Inisiasi: ${waClean(inisiasi, 'RF')} @ ${waClean(jam, '-')}\n`;
-          text += `   • Holes: ${waClean(holes, '0')} | Isian: ${waClean(isian, '0')} kg | ${waBold(`Vol: ${vol.toFixed(2)} Ton`)}\n`;
-          text += `   • Pengawas: ${waClean(spv, '-')} | Remark: ${waClean(remark, 'OK')}\n`;
-          text += `   • Akses: ${waClean(akses, '-')} | Desa: ${waClean(desa, '-')}\n`;
-          text += `   • Matrix: ${waClean(matrix, '-')} | Geo: ${waClean(geo, '-')}\n\n`;
-
-          if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
-            dthSleepSum += vol;
-          } else if (st !== 'CANCEL/HOLD') {
-            dthTodaySum += vol;
-          }
-
-          overallIdx++;
+          const kUpper = String(p.kontraktor || '').toUpperCase();
+          if (kUpper.includes('SIS')) countSis++;
+          else if (kUpper.includes('BUMA')) countBuma++;
+          else countOther++;
         });
-      });
 
-      const totalDth = dthTodaySum + dthSleepSum;
-      text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-      text += `*RINGKASAN VOLUME DTH:*\n`;
-      text += `🟢 *DTH TODAY:* ${dthTodaySum.toFixed(2)} Ton\n`;
-      text += `🔴 *DTH SLEEP:* ${dthSleepSum.toFixed(2)} Ton\n`;
-      text += `⭐ *TOTAL DTH:* ${totalDth.toFixed(2)} Ton\n`;
-      text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `*RENCANA PELEDAKAN (PLAN BLASTING)*\n`;
+        text += `📅 *Tanggal:* ${targetDate}\n`;
+        let rekapLine = `📊 *Total Plan:* PT SIS: *${countSis}* | PT BUMA: *${countBuma}*`;
+        if (countOther > 0) {
+          rekapLine += ` | Lainnya: *${countOther}*`;
+        }
+        rekapLine += ` (Total: *${plans.length}*)\n`;
+        text += rekapLine;
+        text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+          if (a.includes('SIS')) return -1;
+          if (b.includes('SIS')) return 1;
+          if (a.includes('BUMA')) return -1;
+          if (b.includes('BUMA')) return 1;
+          return a.localeCompare(b);
+        });
+
+        let overallIdx = 1;
+        sortedGroupKeys.forEach(grpName => {
+          text += `🏢 ${waBold(grpName)}\n`;
+          const grpPlans = groups[grpName];
+          grpPlans.forEach(p => {
+            const st = getPlanTodaySleepStatus(p);
+            const vol = Number(p.volume_ton || p.volume || 0);
+            const holes = p.jumlah_holes || p.holes || 0;
+            const isian = p.isian_kg || p.isian || 0;
+            const prio = p.prioritas || 'P1';
+            const inisiasi = p.inisiasi || 'RF';
+            const jam = formatExcelTime(p.jam_masuk || p.kondisi_jam_masuk);
+            const spv = p.pengawas_kontraktor || '-';
+            const remark = p.remark || p.kondisi_remark || 'OK';
+            const desa = p.desa || p.desa_terdampak || '-';
+            const akses = p.akses || '-';
+            const matrix = p.matrix || '-';
+            const geo = p.geometri || '-';
+
+            const lokasiClean = waClean(p.lokasi, 'Lokasi');
+            const prioClean = waClean(prio, 'P1');
+            const stClean = waClean(st, 'TODAY');
+
+            text += `${overallIdx}. ${waBold(lokasiClean)} (${prioClean})\n`;
+
+            // Baris 1: Status & Inisiasi
+            const l1 = [];
+            if (selectedExportColumnIds.has('today_sleep')) l1.push(`Status: ${waBold(stClean)}`);
+            if (selectedExportColumnIds.has('inisiasi')) {
+              const jm = selectedExportColumnIds.has('jam_masuk') ? ` @ ${waClean(jam, '-')}` : '';
+              l1.push(`Inisiasi: ${waClean(inisiasi, 'RF')}${jm}`);
+            } else if (selectedExportColumnIds.has('jam_masuk')) {
+              l1.push(`Jam: ${waClean(jam, '-')}`);
+            }
+            if (l1.length > 0) text += `   • ${l1.join(' | ')}\n`;
+
+            // Baris 2: Holes, Isian, Volume
+            const l2 = [];
+            if (selectedExportColumnIds.has('holes')) l2.push(`Holes: ${waClean(holes, '0')}`);
+            if (selectedExportColumnIds.has('isian')) l2.push(`Isian: ${waClean(isian, '0')} kg`);
+            if (selectedExportColumnIds.has('volume')) l2.push(waBold(`Vol: ${vol.toFixed(2)} Ton`));
+            if (l2.length > 0) text += `   • ${l2.join(' | ')}\n`;
+
+            // Baris 3: Pengawas Kontraktor & Remark
+            const l3 = [];
+            if (selectedExportColumnIds.has('pengawas')) l3.push(`Pengawas Kont: ${waClean(spv, '-')}`);
+            if (selectedExportColumnIds.has('remark')) l3.push(`Remark: ${waClean(remark, 'OK')}`);
+            if (l3.length > 0) text += `   • ${l3.join(' | ')}\n`;
+
+            // Baris 4: Akses & Desa
+            const l4 = [];
+            if (selectedExportColumnIds.has('akses')) l4.push(`Akses: ${waClean(akses, '-')}`);
+            if (selectedExportColumnIds.has('desa')) l4.push(`Desa: ${waClean(desa, '-')}`);
+            if (l4.length > 0) text += `   • ${l4.join(' | ')}\n`;
+
+            // Baris 5: Matrix & Geo
+            const l5 = [];
+            if (selectedExportColumnIds.has('matrix')) l5.push(`Matrix: ${waClean(matrix, '-')}`);
+            if (selectedExportColumnIds.has('geometri')) l5.push(`Geo: ${waClean(geo, '-')}`);
+            if (l5.length > 0) text += `   • ${l5.join(' | ')}\n`;
+
+            // Baris 6: Supplier & Manpower Supplier (Pengawas & Blaster)
+            const sup = waClean(p.supplier, '');
+            const pSup = cleanManpowerString(p.pengawas_supplier || p.supervisor || '');
+            const bls = cleanManpowerString(p.blaster || p.jumlah_blaster || p.nama_blaster || '');
+            const lSup = [];
+            if (selectedExportColumnIds.has('supplier')) {
+              lSup.push(`Supplier: ${sup ? waBold('PT ' + sup.replace(/^PT\\s+/i, '')) : '-'}`);
+            }
+            if (selectedExportColumnIds.has('pengawas_sup')) {
+              lSup.push(`Spv Sup: ${pSup || '-'}`);
+            }
+            if (selectedExportColumnIds.has('blaster')) {
+              lSup.push(`Blaster: ${bls || '-'}`);
+            }
+            if (lSup.length > 0) text += `   • ${lSup.join(' | ')}\n`;
+
+            // Baris 7: Unit MMU & Box
+            const mmu = waClean(p.unit_mmu || p.need_mmu, '');
+            const box = waClean(p.unit_box, '');
+            const lUnit = [];
+            if (selectedExportColumnIds.has('unit_mmu')) {
+              lUnit.push(`MMU: ${mmu || '-'}`);
+            }
+            if (selectedExportColumnIds.has('unit_box')) {
+              lUnit.push(`Box: ${box || '-'}`);
+            }
+            if (lUnit.length > 0) text += `   • ${lUnit.join(' | ')}\n`;
+
+            // Baris 8: Koordinat
+            if (selectedExportColumnIds.has('coordinates')) {
+              const coord = (p.latitude && p.longitude) ? `${p.latitude}, ${p.longitude}` : '-';
+              text += `   • Koordinat: ${coord}\n`;
+            }
+
+            text += `\n`;
+
+            if (st === 'SLEEP' || st === 'TODAY/SLEEP') {
+              dthSleepSum += vol;
+            } else if (st !== 'CANCEL/HOLD') {
+              dthTodaySum += vol;
+            }
+
+            overallIdx++;
+          });
+        });
+
+        const totalDth = dthTodaySum + dthSleepSum;
+        text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `*RINGKASAN VOLUME DTH:*\n`;
+        text += `🟢 *DTH TODAY:* ${dthTodaySum.toFixed(2)} Ton\n`;
+        text += `🔴 *DTH SLEEP:* ${dthSleepSum.toFixed(2)} Ton\n`;
+        text += `⭐ *TOTAL DTH:* ${totalDth.toFixed(2)} Ton\n`;
+        text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      }
+
+      // ==================== TABEL 2: KESIAPAN OPERASIONAL SUPPLIER ====================
+      if (sups.length > 0) {
+        if (plans.length > 0) {
+          text += `\n`;
+        }
+        text += `*KESIAPAN OPERASIONAL SUPPLIER*\n`;
+        text += `📅 *Tanggal:* ${targetDate}\n`;
+        text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        sups.forEach((item, idx) => {
+          const sup = cleanCompanyName(item.supplier) || 'PT SUPPLIER';
+          const mmu = formatMmuReadyList(item.unit_mmu, item.supplier);
+          const dth = Number(item.dth_ready || 0).toFixed(2);
+          const box = formatBoxReadyList(item.unit_box);
+          const devices = [item.hebs, item.estar, item.axiss].filter(x => x && x !== '' && x !== '0').join(', ') || '-';
+          const nonel = item.nonel || '-';
+          const namaSpv = item.nama_spv || '-';
+          const numSpv = item.supervisor || 0;
+          const namaBlaster = item.nama_blaster || '-';
+          const numBlaster = item.blaster || 0;
+          const note = item.note || '-';
+
+          text += `${idx + 1}. *${sup}*\n`;
+          text += `   • Unit MMU: ${mmu} (*${dth} Ton*)\n`;
+          text += `   • Mobil Box: ${box}\n`;
+          text += `   • Pengawas: ${namaSpv} (${numSpv} Org)\n`;
+          text += `   • Blaster: ${namaBlaster} (${numBlaster} Org)\n`;
+          if (devices !== '-' || nonel !== '-') {
+            text += `   • Device: ${devices} | Nonel: ${nonel}\n`;
+          }
+          if (note && note !== '-') {
+            text += `   • Catatan: ${note}\n`;
+          }
+          text += `\n`;
+        });
+
+        text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      }
+
       text += `_Dikirim via Integrated Blasting Portal Adaro_`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
