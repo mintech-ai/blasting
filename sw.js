@@ -1,14 +1,18 @@
 // Aturan Wajib: Setiap kali Anda mengubah kode HTML/JS dan mengunggahnya ke Netlify, 
 // Anda HARUS mengubah angka versi di bawah ini (misal: v5, v6, dst) agar HP pengguna mendeteksi pembaruan!
-const CACHE_NAME = 'blasting-pwa-v11';
+const CACHE_NAME = 'blasting-pwa-v13';
 const LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
+  './js/libs/dxf-parser.min.js',
+  './js/libs/proj4.js',
+  './js/libs/turf.min.js',
   './js/config.js',
   './js/utils.js',
   './js/api.js',
+  './js/spatial.js',
   './js/auth.js',
   './js/dashboard.js',
   './js/tables.js',

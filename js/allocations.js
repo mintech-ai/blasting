@@ -827,6 +827,17 @@ async function handleEditPlanSubmit(event) {
     updateData.matrix = grab('edit_matrix');
     updateData.geometri = grab('edit_geometri');
 
+    // Pertahankan / sinkronkan boundary spasial
+    updateData.geometry = item.geometry || '';
+    if (typeof findBoundaryByName === 'function') {
+      const bound = findBoundaryByName(updateData.lokasi);
+      if (bound) {
+        updateData.geometry = bound.wkt;
+        updateData.latitude = bound.centroid.lat;
+        updateData.longitude = bound.centroid.lng;
+      }
+    }
+
     if (grab('edit_need_mmu') !== undefined) {
       const editNeedMmuVal = grab('edit_need_mmu').trim();
       updateData.unit_mmu = editNeedMmuVal;

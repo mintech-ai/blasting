@@ -22,6 +22,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof renderPlanNeedMmuChips === 'function') renderPlanNeedMmuChips();
   if (typeof renderMmuChips === 'function') renderMmuChips();
   if (typeof handleSupplierCompanyRosterChange === 'function') handleSupplierCompanyRosterChange();
+  if (typeof updateBoundaryUIState === 'function') updateBoundaryUIState();
 
   const savedUser = sessionStorage.getItem('blasting_user');
   if (savedUser) {

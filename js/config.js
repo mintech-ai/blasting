@@ -155,7 +155,8 @@ const EXPORT_AVAILABLE_COLUMNS = [
   { id: 'blaster', label: 'BLASTER', default: true },
   { id: 'unit_mmu', label: 'UNIT MMU/MMT', default: true },
   { id: 'unit_box', label: 'MOBIL BOX', default: true },
-  { id: 'coordinates', label: 'KOORDINAT (LAT, LONG)', default: false }
+  { id: 'coordinates', label: 'KOORDINAT (LAT, LONG)', default: false },
+  { id: 'geometry', label: 'WKT GEOMETRY (POLYGON)', default: false }
 ];
 
 let selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id));

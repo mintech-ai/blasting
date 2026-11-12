@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -393,6 +393,28 @@
 
           <div class="hidden sm:block w-[1px] h-8 bg-slate-200"></div>
 
+          <!-- Switch Layer Spasial (Boundary Polygon & Buffer) -->
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1">
+              <i class="ph-bold ph-layers text-red-600"></i> Layer Spasial
+            </span>
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 shadow-2xs h-[34px]">
+              <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                <input type="checkbox" id="chk-toggle-polygons" checked onchange="toggleMapPolygons(this.checked)"
+                  class="rounded text-red-600 focus:ring-0 cursor-pointer w-3.5 h-3.5">
+                <span>Boundary</span>
+              </label>
+              <span class="text-slate-300">|</span>
+              <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-slate-700 select-none" title="Buffer 100m, 150m, 300m, 500m">
+                <input type="checkbox" id="chk-toggle-buffers" checked onchange="toggleMapBuffers(this.checked)"
+                  class="rounded text-amber-600 focus:ring-0 cursor-pointer w-3.5 h-3.5">
+                <span>Buffer</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="hidden sm:block w-[1px] h-8 bg-slate-200"></div>
+
           <!-- Search Point -->
           <div class="flex flex-col gap-0.5 w-full sm:w-auto">
             <span class="text-[10px] uppercase font-bold text-slate-400">Cari Lokasi / ID</span>
@@ -476,7 +498,11 @@
             </h2>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" onclick="triggerExcelImport()"
+            <button type="button" id="btn-upload-dxf-header" onclick="openDxfUploadModal()"
+              class="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl transition shadow-md flex items-center gap-1.5 glow-red">
+              <i class="ph-bold ph-polygon text-base"></i> Upload DXF Boundaries
+            </button>
+            <button type="button" id="btn-bulk-import-header" onclick="triggerExcelImport()"
               class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition shadow-md flex items-center gap-1.5 glow-emerald">
               <i class="ph-bold ph-file-arrow-up text-base"></i> Bulk Import Excel
             </button>
@@ -486,6 +512,9 @@
           </div>
         </div>
 
+        <!-- STATUS BANNER DXF BOUNDARY (MANDATORY STEP) -->
+        <div id="dxf-boundary-status-banner"></div>
+
         <form id="form-alokasi-main" onsubmit="handleKontraktorFormSubmit(event)"
           class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
 
@@ -494,7 +523,7 @@
               <i class="ph-bold ph-calendar text-red-600 text-sm"></i> Tanggal Plan Blasting <span
                 class="text-red-600">*</span>
             </label>
-            <input type="date" id="input_tanggal" required onchange="renderPlanNeedMmuChips()"
+            <input type="date" id="input_tanggal" required onchange="renderPlanNeedMmuChips(); if(typeof updateBoundaryUIState === 'function') updateBoundaryUIState();"
               class="w-full bg-white border border-red-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 shadow-sm transition">
           </div>
 
@@ -505,19 +534,54 @@
               <i class="ph-bold ph-buildings text-red-600 text-sm"></i> Kontraktor Mitra Kerja <span
                 class="text-red-600">*</span>
             </label>
-            <select id="input_kontraktor_select"
+            <select id="input_kontraktor_select" onchange="if(typeof updateBoundaryUIState === 'function') updateBoundaryUIState();"
               class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition">
               <option value="PT SIS">PT SIS</option>
               <option value="PT BUMA">PT BUMA</option>
             </select>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1.5">1. Lokasi Blasting (Blasting Area) <span
-                class="text-red-600">*</span></label>
-            <input type="text" id="input_lokasi" placeholder="Isi Lokasi Blasting..." required
-              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
+          <!-- GATE CARD: TAMPIL JIKA DXF BELUM DIUNGGAH UNTUK TANGGAL INI -->
+          <div id="dxf-upload-gate-card" class="col-span-1 md:col-span-2 bg-gradient-to-br from-red-50/90 via-orange-50/50 to-white border-2 border-dashed border-red-300 rounded-2xl p-6 sm:p-8 text-center shadow-xs">
+            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+              <i class="ph-bold ph-polygon text-2xl"></i>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 border border-red-200 inline-block mb-1.5">
+              LANGKAH WAJIB (MANDATORY)
+            </span>
+            <h3 class="font-extrabold text-slate-900 text-base mb-1.5">Unggah File DXF Boundary Peledakan</h3>
+            <p class="text-xs text-slate-600 max-w-lg mx-auto mb-5 leading-relaxed">
+              Form pengisian plan peledakan terkunci. Rencana peledakan mewajibkan batas area spasial (polygon). Silakan unggah file AutoCAD DXF (.dxf) milik kontraktor untuk tanggal ini agar form manual dan bulk import dapat dibuka.
+            </p>
+            <div class="flex items-center justify-center gap-3 flex-wrap">
+              <button type="button" onclick="openDxfUploadModal()"
+                class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl transition shadow-md inline-flex items-center gap-2 glow-red cursor-pointer">
+                <i class="ph-bold ph-upload-simple text-base"></i> Unggah File DXF Boundaries (.dxf)
+              </button>
+            </div>
           </div>
+
+          <!-- WRAPPER FORM FIELDS: DIBUKA SETELAH DXF BERHASIL DIUNGGAH -->
+          <div id="kontraktor-form-fields-wrapper" class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 hidden">
+            
+            <div id="all-boundaries-allocated-notice" class="md:col-span-2 hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-2 shadow-2xs"></div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block font-bold text-slate-700">1. Lokasi Blasting (Boundary DXF) <span
+                    class="text-red-600">*</span></label>
+                <button type="button" onclick="openDxfUploadModal()" class="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1">
+                  <i class="ph-bold ph-upload-simple"></i> Upload DXF
+                </button>
+              </div>
+              <select id="input_lokasi_select" required onchange="handleBoundarySelectChange(this.value)"
+                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition cursor-pointer">
+                <option value="" disabled selected>-- Pilih Lokasi dari Boundary DXF --</option>
+              </select>
+              <input type="hidden" id="input_lokasi" required>
+              <input type="hidden" id="input_geometry">
+              <div id="selected-boundary-info-badge" class="mt-1.5 text-xs hidden flex items-center justify-between bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"></div>
+            </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1.5">2. Prioritas <span
@@ -700,6 +764,8 @@
               <i class="ph-bold ph-paper-plane-tilt text-base"></i> <span>Simpan Data Plan</span>
             </button>
           </div>
+
+          </div><!-- /kontraktor-form-fields-wrapper -->
 
         </form>
       </div>
@@ -923,6 +989,116 @@
   </main>
 
   <!-- ==================== MODALS ==================== -->
+
+  <!-- ==================== DXF BOUNDARY UPLOAD & NAMING MODAL ==================== -->
+  <div id="modal-dxf-flow"
+    class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5">
+    <div
+      class="clean-card w-full max-w-6xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[94vh] flex flex-col bg-white">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-md glow-red">
+            <i class="ph-bold ph-polygon text-2xl"></i>
+          </div>
+          <div>
+            <span class="text-[10px] font-black tracking-widest text-red-600 uppercase">SPATIAL TRANSFORM & BOUNDARIES</span>
+            <h3 class="text-base font-extrabold text-slate-900 leading-tight">Unggah & Namai Boundary Peledakan (DXF)</h3>
+          </div>
+        </div>
+        <button type="button" onclick="closeDxfUploadModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Step 1: Upload Box -->
+      <div id="dxf-step-upload" class="p-6 sm:p-10 flex flex-col items-center justify-center text-center">
+        <div class="max-w-md w-full border-2 border-dashed border-red-300 hover:border-red-500 rounded-2xl p-8 bg-red-50/40 transition cursor-pointer flex flex-col items-center group"
+          onclick="document.getElementById('dxf-file-input').click()">
+          <div class="w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-3 group-hover:scale-110 transition shadow-inner">
+            <i class="ph-bold ph-cloud-arrow-up text-3xl"></i>
+          </div>
+          <h4 class="text-sm font-extrabold text-slate-900">Pilih atau Drag & Drop File DXF</h4>
+          <p class="text-xs text-slate-500 mt-1">Sistem otomatis mendeteksi garis boundary peledakan, mereproyeksi dari koordinat Tutupan ke WGS84, dan men-generate zona radius peledakan.</p>
+          <div class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl shadow-md glow-red flex items-center gap-1.5">
+            <i class="ph-bold ph-file-plus"></i> Browse File .DXF
+          </div>
+          <input type="file" id="dxf-file-input" accept=".dxf" class="hidden" onchange="handleDxfFileSelect(event)">
+        </div>
+        <div class="mt-4 text-[11px] text-slate-400 font-mono flex items-center gap-2">
+          <i class="ph-bold ph-info text-blue-500"></i>
+          <span>Format didukung: AutoCAD DXF (R12 - 2018). Sistem otomatis mengambil layer boundary peledakan.</span>
+        </div>
+      </div>
+
+      <!-- Step 2: Interactive Preview & Naming Table -->
+      <div id="dxf-step-preview" class="hidden flex-1 min-h-0 flex flex-col overflow-hidden pt-4">
+        <div class="flex items-center justify-between pb-3 shrink-0">
+          <div>
+            <span class="text-xs font-bold text-slate-800" id="dxf-preview-filename">File DXF</span>
+            <p class="text-[11px] text-slate-500">Ketikkan nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
+          </div>
+          <button type="button" onclick="document.getElementById('dxf-file-input').click()"
+            class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition flex items-center gap-1">
+            <i class="ph-bold ph-arrows-clockwise"></i> Ganti File DXF
+          </button>
+        </div>
+
+        <!-- Split View: Left Map Preview, Right Table -->
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+          
+          <!-- Mini Leaflet Map Preview -->
+          <div class="lg:col-span-5 h-48 lg:h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
+            <div id="dxfPreviewMapContainer" class="w-full h-full"></div>
+            <div class="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md border border-slate-200 text-[10px] font-bold text-slate-700">
+              Klik boundary di peta untuk menamai
+            </div>
+          </div>
+
+          <!-- Naming Form Table -->
+          <div class="lg:col-span-7 flex flex-col min-h-0 overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
+            <div class="flex-1 overflow-auto custom-scrollbar">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 uppercase font-black text-[10px] tracking-wider text-slate-700 sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
+                  <tr>
+                    <th class="p-2 text-center w-12">No</th>
+                    <th class="p-2 w-28">Handle / Pts</th>
+                    <th class="p-2">Nama Lokasi Blasting (Wajib) <span class="text-red-600">*</span></th>
+                    <th class="p-2 text-center w-16">Peta</th>
+                  </tr>
+                </thead>
+                <tbody id="dxf-preview-tbody" class="bg-white divide-y divide-slate-100">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex flex-col sm:flex-row items-center justify-between pt-4 mt-3 border-t border-slate-200 gap-3 shrink-0">
+          <span class="text-xs font-bold text-slate-600 font-mono" id="dxf-named-count-tag">
+            0 Boundary Telah Dinamai
+          </span>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button type="button" onclick="closeDxfUploadModal()"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+              Batal
+            </button>
+            <button type="button" id="btn-save-dxf-boundaries" onclick="confirmSaveDxfBoundaries()"
+              class="px-5 py-2 bg-red-600 text-white font-extrabold rounded-xl text-xs shadow-md glow-red transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+              disabled>
+              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan & Terapkan Boundary
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
 
   <!-- BULK IMPORT PREVIEW MODAL -->
   <div id="modal-bulk-preview"
@@ -1436,10 +1612,16 @@
   </div>
 
 
+  <!-- GIS & Spatial Libraries (Offline Local + Fallback) -->
+  <script src="js/libs/dxf-parser.min.js"></script>
+  <script src="js/libs/proj4.js"></script>
+  <script src="js/libs/turf.min.js"></script>
+
   <!-- ==================== JAVASCRIPT MODULAR MODULES ==================== -->
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/spatial.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/tables.js"></script>

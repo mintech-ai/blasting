@@ -5,9 +5,13 @@
  */
 
 let blastingMarkersGroup = null;
+let blastingPolygonsGroup = null;
+let blastingBuffersGroup = null;
 let blastingMarkerList = [];
 let blastingDefaultTileLayer = null;
 let blastingOrthoTileLayer = null;
+let mapShowPolygons = true;
+let mapShowBuffers = true;
 
 // Helper: Parse koordinat (mendukung titik atau koma)
 function parseCoordNumber(val) {
@@ -78,6 +82,9 @@ function initBlastingMap() {
     }
   });
 
+  // Urutan z-index Layer Leaflet: Buffer di bawah, Polygon di tengah, Marker di atas
+  blastingBuffersGroup = L.featureGroup().addTo(blastingMap);
+  blastingPolygonsGroup = L.featureGroup().addTo(blastingMap);
   blastingMarkersGroup = L.featureGroup().addTo(blastingMap);
 
   // Pastikan invalidateSize dipanggil setelah render awal agar tile peta langsung aktif di HP
@@ -147,12 +154,52 @@ function toggleMapLegend() {
 function fitBlastingMapBounds() {
   if (!blastingMap) return;
   const pad = window.innerWidth < 768 ? [24, 24] : [60, 60];
+
+  const allBounds = [];
+  if (blastingPolygonsGroup && blastingPolygonsGroup.getLayers().length > 0) {
+    allBounds.push(blastingPolygonsGroup.getBounds());
+  }
   if (blastingMarkersGroup && blastingMarkersGroup.getLayers().length > 0) {
-    blastingMap.fitBounds(blastingMarkersGroup.getBounds(), { padding: pad, maxZoom: 15 });
+    allBounds.push(blastingMarkersGroup.getBounds());
+  }
+  if (blastingBuffersGroup && blastingBuffersGroup.getLayers().length > 0) {
+    allBounds.push(blastingBuffersGroup.getBounds());
+  }
+
+  if (allBounds.length > 0) {
+    let combinedBounds = allBounds[0];
+    for (let i = 1; i < allBounds.length; i++) {
+      combinedBounds.extend(allBounds[i]);
+    }
+    blastingMap.fitBounds(combinedBounds, { padding: pad, maxZoom: 16 });
   } else {
     blastingMap.setView([-2.1700, 115.5500], 12);
   }
 }
+
+function toggleMapPolygons(show) {
+  mapShowPolygons = !!show;
+  if (!blastingMap || !blastingPolygonsGroup) return;
+  if (mapShowPolygons) {
+    if (!blastingMap.hasLayer(blastingPolygonsGroup)) blastingMap.addLayer(blastingPolygonsGroup);
+  } else {
+    if (blastingMap.hasLayer(blastingPolygonsGroup)) blastingMap.removeLayer(blastingPolygonsGroup);
+  }
+  renderBlastingMapMarkers();
+}
+window.toggleMapPolygons = toggleMapPolygons;
+
+function toggleMapBuffers(show) {
+  mapShowBuffers = !!show;
+  if (!blastingMap || !blastingBuffersGroup) return;
+  if (mapShowBuffers) {
+    if (!blastingMap.hasLayer(blastingBuffersGroup)) blastingMap.addLayer(blastingBuffersGroup);
+  } else {
+    if (blastingMap.hasLayer(blastingBuffersGroup)) blastingMap.removeLayer(blastingBuffersGroup);
+  }
+  renderBlastingMapMarkers();
+}
+window.toggleMapBuffers = toggleMapBuffers;
 
 function handleMapColorModeChange(mode) {
   renderBlastingMapMarkers();
@@ -205,6 +252,8 @@ function renderBlastingMapMarkers(searchQuery = '') {
   if (!blastingMap || !blastingMarkersGroup) return;
 
   blastingMarkersGroup.clearLayers();
+  if (blastingPolygonsGroup) blastingPolygonsGroup.clearLayers();
+  if (blastingBuffersGroup) blastingBuffersGroup.clearLayers();
   blastingMarkerList = [];
 
   const colorMode = (document.getElementById('blastingMapColorMode') ? document.getElementById('blastingMapColorMode').value : 'kontraktor');
@@ -247,8 +296,19 @@ function renderBlastingMapMarkers(searchQuery = '') {
       }
     }
 
-    const lat = parseCoordNumber(item.latitude || item.lat);
-    const lng = parseCoordNumber(item.longitude || item.long || item.lng);
+    // Periksa apakah item memiliki geometri WKT Polygon
+    const hasPolygonGeom = item.geometry && typeof parseWktPolygon === 'function';
+    const polygonCoords = hasPolygonGeom ? parseWktPolygon(item.geometry) : null;
+
+    let lat = parseCoordNumber(item.latitude || item.lat);
+    let lng = parseCoordNumber(item.longitude || item.long || item.lng);
+
+    // Jika lat/lng belum ada tapi ada polygon, ambil centroidnya
+    if ((lat === null || lng === null) && polygonCoords && polygonCoords.length >= 3) {
+      const c = calculatePolygonCentroid(polygonCoords);
+      lat = c.lat;
+      lng = c.lng;
+    }
 
     if (lat === null || lng === null) {
       unplottedCount++;
@@ -259,35 +319,143 @@ function renderBlastingMapMarkers(searchQuery = '') {
     const { color, label } = getBlastingMarkerColor(item, colorMode);
     legendCounts[label] = (legendCounts[label] || 0) + 1;
 
-    // Leaflet Circle Marker dengan glow modern
-    const marker = L.circleMarker([lat, lng], {
-      radius: 10,
-      fillColor: color,
-      color: '#ffffff',
-      weight: 2.5,
-      opacity: 1,
-      fillOpacity: 0.95
-    });
-
-    // Tooltip Hover Cepat
-    marker.bindTooltip(`
-      <div class="font-sans text-xs">
-        <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
-        <span class="font-extrabold text-slate-900">${item.lokasi || 'Pit Blasting'}</span>
-        <span class="text-slate-500 font-bold">(${item.kontraktor || '-'})</span>
-      </div>
-    `, { direction: 'top', offset: [0, -8] });
-
-    // Popup Ringkasan / Summary Blasting saat Titik Diklik
     const popupContent = createBlastingPopupHtml(item, lat, lng, color);
-    marker.bindPopup(popupContent, { maxWidth: 320, className: 'blasting-popup' });
 
-    marker.on('click', () => {
-      marker.openPopup();
-    });
+    // ==================== A. RENDER POLYGON BOUNDARY & BUFFER ====================
+    if (polygonCoords && polygonCoords.length >= 3) {
+      const latlngs = polygonCoords.map(([lon, pLat]) => [pLat, lon]);
 
-    blastingMarkersGroup.addLayer(marker);
-    blastingMarkerList.push({ item, marker, lat, lng });
+      // 1. Gambar Boundary Polygon
+      if (mapShowPolygons && blastingPolygonsGroup) {
+        const poly = L.polygon(latlngs, {
+          color: color,
+          weight: 3,
+          opacity: 0.95,
+          fillColor: color,
+          fillOpacity: 0.35
+        });
+
+        poly.bindTooltip(`
+          <div class="font-sans text-xs">
+            <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
+            <span class="font-extrabold text-slate-900">${item.lokasi || 'Boundary Blasting'}</span>
+            <span class="text-slate-500 font-bold">(${item.kontraktor || '-'})</span>
+            <span class="text-red-600 font-bold block text-[10px]">⬡ Area Polygon Peledakan</span>
+          </div>
+        `, { sticky: true });
+
+        poly.bindPopup(popupContent, { maxWidth: 320, className: 'blasting-popup' });
+        poly.on('click', () => { poly.openPopup(); });
+
+        blastingPolygonsGroup.addLayer(poly);
+      }
+
+      // 2. Generate & Gambar Buffer Konsentris Spesifik Kontraktor via Turf.js
+      // - PT BUMA (2 buffer): 200m (Jarak Aman Alat) & 500m (Jarak Aman Manusia)
+      // - PT SIS (4 buffer): 100m, 150m, 300m, 500m
+      if (mapShowBuffers && blastingBuffersGroup && typeof turf !== 'undefined') {
+        try {
+          const ring = [...polygonCoords];
+          if (ring[0][0] !== ring[ring.length - 1][0] || ring[0][1] !== ring[ring.length - 1][1]) {
+            ring.push([ring[0][0], ring[0][1]]);
+          }
+
+          const geojsonPoly = {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'Polygon', coordinates: [ring] }
+          };
+
+          const bufferConfigs = (typeof getContractorBufferConfig === 'function')
+            ? getContractorBufferConfig(item.kontraktor)
+            : [
+                { dist: 500, color: '#dc2626', label: 'Jarak Aman Manusia (500m)', fillOpacity: 0.08, dash: '4, 4' },
+                { dist: 200, color: '#ea580c', label: 'Jarak Aman Alat (200m)', fillOpacity: 0.14, dash: null }
+              ];
+
+          bufferConfigs.forEach(cfg => {
+            const buf = turf.buffer(geojsonPoly, cfg.dist, { units: 'meters' });
+            if (buf && buf.geometry && buf.geometry.coordinates) {
+              const coordsArray = buf.geometry.type === 'MultiPolygon'
+                ? buf.geometry.coordinates[0][0]
+                : buf.geometry.coordinates[0];
+
+              if (Array.isArray(coordsArray) && coordsArray.length > 0) {
+                const bufLatLngs = coordsArray.map(([bLon, bLat]) => [bLat, bLon]);
+                const bufPoly = L.polygon(bufLatLngs, {
+                  color: cfg.color,
+                  weight: 1.5,
+                  dashArray: cfg.dash || null,
+                  opacity: 0.8,
+                  fillColor: cfg.color,
+                  fillOpacity: cfg.fillOpacity || 0.1,
+                  interactive: true
+                });
+
+                const kName = item.kontraktor || '';
+                const lName = item.lokasi || 'Boundary';
+                bufPoly.bindTooltip(`
+                  <div class="font-sans text-[11px] font-bold text-slate-900 leading-tight">
+                    <span class="text-red-700 font-extrabold">${kName}</span> - ${lName}:<br/>
+                    <span class="text-slate-800 font-black">${cfg.label}</span>
+                  </div>
+                `, { sticky: true });
+
+                blastingBuffersGroup.addLayer(bufPoly);
+              }
+            }
+          });
+        } catch (bufErr) {
+          console.warn('Gagal men-generate buffer untuk item:', item.lokasi, bufErr);
+        }
+      }
+
+      // Marker Centroid dengan Icon Minimalis
+      const centerMarker = L.circleMarker([lat, lng], {
+        radius: 6,
+        fillColor: color,
+        color: '#ffffff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 1
+      });
+
+      centerMarker.bindTooltip(`
+        <div class="font-sans text-xs">
+          <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
+          <span class="font-extrabold text-slate-900">${item.lokasi || 'Pit Blasting'}</span>
+        </div>
+      `, { direction: 'top', offset: [0, -6] });
+
+      centerMarker.bindPopup(popupContent, { maxWidth: 320, className: 'blasting-popup' });
+      blastingMarkersGroup.addLayer(centerMarker);
+      blastingMarkerList.push({ item, marker: centerMarker, lat, lng });
+
+    } else {
+      // ==================== B. FALLBACK TITIK LOKASI BIASA ====================
+      const marker = L.circleMarker([lat, lng], {
+        radius: 10,
+        fillColor: color,
+        color: '#ffffff',
+        weight: 2.5,
+        opacity: 1,
+        fillOpacity: 0.95
+      });
+
+      marker.bindTooltip(`
+        <div class="font-sans text-xs">
+          <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
+          <span class="font-extrabold text-slate-900">${item.lokasi || 'Pit Blasting'}</span>
+          <span class="text-slate-500 font-bold">(${item.kontraktor || '-'})</span>
+        </div>
+      `, { direction: 'top', offset: [0, -8] });
+
+      marker.bindPopup(popupContent, { maxWidth: 320, className: 'blasting-popup' });
+      marker.on('click', () => { marker.openPopup(); });
+
+      blastingMarkersGroup.addLayer(marker);
+      blastingMarkerList.push({ item, marker, lat, lng });
+    }
   });
 
   // Update Badges

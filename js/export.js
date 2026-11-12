@@ -177,6 +177,7 @@ function downloadExportExcel() {
         case 'unit_mmu': return item.unit_mmu || item.need_mmu || '-';
         case 'unit_box': return item.unit_box || '-';
         case 'coordinates': return (item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '-';
+        case 'geometry': return item.geometry || '-';
         default: return '';
       }
     }

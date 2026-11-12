@@ -83,6 +83,7 @@ function initAuthenticatedUI() {
   if (formComp) formComp.innerText = formattedCompany.toUpperCase();
 
   configureRoleViews();
+  if (typeof updateBoundaryUIState === 'function') updateBoundaryUIState();
   refreshData(false);
 }
 

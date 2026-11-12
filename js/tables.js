@@ -350,7 +350,12 @@ function renderPlanBlastingTable() {
         <td class="px-1.5 py-1 text-center font-mono text-slate-700 text-[10px]">${tgl}</td>
         <td class="px-1.5 py-1 text-center font-bold text-slate-800">${prioritas}</td>
         <td class="px-1.5 py-1 font-extrabold text-slate-900">${kontraktor}</td>
-        <td class="px-1.5 py-1 font-bold text-slate-800">${lokasi}</td>
+        <td class="px-1.5 py-1 font-bold text-slate-800">
+          <div class="flex items-center gap-1 flex-wrap">
+            <span>${lokasi}</span>
+            ${item.geometry ? `<span class="text-[7.5px] bg-red-100 text-red-700 font-black px-1 py-0.2 rounded border border-red-200 flex items-center gap-0.5" title="Boundary WKT Polygon"><i class="ph-bold ph-polygon"></i> BOUNDARY</span>` : ''}
+          </div>
+        </td>
         <td class="px-1.5 py-1 text-center">${statusBadge}</td>
         <td class="px-1.5 py-1 text-slate-700">${inisiasi}</td>
         <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${jamMasuk}</td>
