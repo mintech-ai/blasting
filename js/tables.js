@@ -351,9 +351,12 @@ function renderPlanBlastingTable() {
         <td class="px-1.5 py-1 text-center font-bold text-slate-800">${prioritas}</td>
         <td class="px-1.5 py-1 font-extrabold text-slate-900">${kontraktor}</td>
         <td class="px-1.5 py-1 font-bold text-slate-800">
-          <div class="flex items-center gap-1 flex-wrap">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <span>${lokasi}</span>
-            ${item.geometry ? `<span class="text-[7.5px] bg-red-100 text-red-700 font-black px-1 py-0.2 rounded border border-red-200 flex items-center gap-0.5" title="Boundary WKT Polygon"><i class="ph-bold ph-polygon"></i> BOUNDARY</span>` : ''}
+            ${item.geometry
+              ? `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ganti / revisi DXF"><i class="ph-bold ph-polygon"></i> Geo</button>`
+              : `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk mengunggah atau menautkan file DXF menyusul"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
+            }
           </div>
         </td>
         <td class="px-1.5 py-1 text-center">${statusBadge}</td>

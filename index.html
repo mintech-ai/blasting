@@ -541,43 +541,44 @@
             </select>
           </div>
 
-          <!-- GATE CARD: TAMPIL JIKA DXF BELUM DIUNGGAH UNTUK TANGGAL INI -->
-          <div id="dxf-upload-gate-card" class="col-span-1 md:col-span-2 bg-gradient-to-br from-red-50/90 via-orange-50/50 to-white border-2 border-dashed border-red-300 rounded-2xl p-6 sm:p-8 text-center shadow-xs">
-            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
-              <i class="ph-bold ph-polygon text-2xl"></i>
-            </div>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 border border-red-200 inline-block mb-1.5">
-              LANGKAH WAJIB (MANDATORY)
-            </span>
-            <h3 class="font-extrabold text-slate-900 text-base mb-1.5">Unggah File DXF Boundary Peledakan</h3>
-            <p class="text-xs text-slate-600 max-w-lg mx-auto mb-5 leading-relaxed">
-              Form pengisian plan peledakan terkunci. Rencana peledakan mewajibkan batas area spasial (polygon). Silakan unggah file AutoCAD DXF (.dxf) milik kontraktor untuk tanggal ini agar form manual dan bulk import dapat dibuka.
-            </p>
-            <div class="flex items-center justify-center gap-3 flex-wrap">
-              <button type="button" onclick="openDxfUploadModal()"
-                class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl transition shadow-md inline-flex items-center gap-2 glow-red cursor-pointer">
-                <i class="ph-bold ph-upload-simple text-base"></i> Unggah File DXF Boundaries (.dxf)
-              </button>
-            </div>
-          </div>
+          <!-- STATUS BANNER DXF BOUNDARY (FLEKSIBEL / BISA NYUSUL) -->
+          <div id="dxf-boundary-status-banner" class="col-span-1 md:col-span-2"></div>
 
-          <!-- WRAPPER FORM FIELDS: DIBUKA SETELAH DXF BERHASIL DIUNGGAH -->
-          <div id="kontraktor-form-fields-wrapper" class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 hidden">
+          <!-- WRAPPER FORM FIELDS: SELALU TERBUKA (FLEKSIBEL) -->
+          <div id="kontraktor-form-fields-wrapper" class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
             
             <div id="all-boundaries-allocated-notice" class="md:col-span-2 hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-2 shadow-2xs"></div>
 
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <label class="block font-bold text-slate-700">1. Lokasi Blasting (Boundary DXF) <span
+                <label class="block font-bold text-slate-700">1. Lokasi Blasting <span
                     class="text-red-600">*</span></label>
-                <button type="button" onclick="openDxfUploadModal()" class="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1">
-                  <i class="ph-bold ph-upload-simple"></i> Upload DXF
-                </button>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" id="btn-toggle-lokasi-mode" onclick="toggleLokasiInputMode()"
+                    class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-lg border border-slate-300 transition flex items-center gap-1">
+                    <i class="ph-bold ph-pencil-simple"></i> <span id="label-toggle-lokasi-mode">Ketik Manual</span>
+                  </button>
+                  <button type="button" onclick="openDxfUploadModal()" class="text-[10px] font-bold text-red-600 hover:underline flex items-center gap-1">
+                    <i class="ph-bold ph-upload-simple"></i> Upload DXF
+                  </button>
+                </div>
               </div>
-              <select id="input_lokasi_select" required onchange="handleBoundarySelectChange(this.value)"
-                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition cursor-pointer">
-                <option value="" disabled selected>-- Pilih Lokasi dari Boundary DXF --</option>
-              </select>
+
+              <!-- Pilihan A: Dropdown dari Boundary DXF -->
+              <div id="container-lokasi-select">
+                <select id="input_lokasi_select" onchange="handleBoundarySelectChange(this.value)"
+                  class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition cursor-pointer">
+                  <option value="" disabled selected>-- Pilih Lokasi dari Boundary DXF --</option>
+                </select>
+              </div>
+
+              <!-- Pilihan B: Input Manual jika belum ada DXF atau lokasi baru -->
+              <div id="container-lokasi-manual" class="hidden">
+                <input type="text" id="input_lokasi_manual" placeholder="Ketik Nama Lokasi Blasting (mis: PIT 1 WEST, STACK 2)..."
+                  oninput="handleManualLokasiInput(this.value)"
+                  class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition">
+              </div>
+
               <input type="hidden" id="input_lokasi" required>
               <input type="hidden" id="input_geometry">
               <div id="selected-boundary-info-badge" class="mt-1.5 text-xs hidden flex items-center justify-between bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"></div>
@@ -1062,10 +1063,11 @@
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-100 uppercase font-black text-[10px] tracking-wider text-slate-700 sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
                   <tr>
-                    <th class="p-2 text-center w-12">No</th>
-                    <th class="p-2 w-28">Handle / Pts</th>
-                    <th class="p-2">Nama Lokasi Blasting (Wajib) <span class="text-red-600">*</span></th>
-                    <th class="p-2 text-center w-16">Peta</th>
+                    <th class="p-2 text-center w-10">No</th>
+                    <th class="p-2 w-24">Handle</th>
+                    <th class="p-2">Nama Boundary <span class="text-red-600">*</span></th>
+                    <th class="p-2 w-52">Tautkan ke Plan (Nyusul/Revisi)</th>
+                    <th class="p-2 text-center w-14">Peta</th>
                   </tr>
                 </thead>
                 <tbody id="dxf-preview-tbody" class="bg-white divide-y divide-slate-100">

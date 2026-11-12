@@ -95,24 +95,6 @@ function handleEditNeedMmuInput(val) {
 async function handleKontraktorFormSubmit(event) {
   event.preventDefault();
 
-  // Validasi Wajib: Harus mengunggah dan menamai DXF Boundary hari ini
-  if (typeof hasValidLocalBoundaries === 'function' && !hasValidLocalBoundaries()) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'DXF Belum Diunggah!',
-      text: 'Anda wajib mengunggah file DXF boundary dan menamai lokasinya terlebih dahulu sebelum menyimpan rencana peledakan.',
-      confirmButtonText: '<i class="ph-bold ph-upload-simple"></i> Unggah File DXF Sekarang',
-      showCancelButton: true,
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
-    }).then(res => {
-      if (res.isConfirmed && typeof openDxfUploadModal === 'function') {
-        openDxfUploadModal();
-      }
-    });
-    return;
-  }
-
   const holes = Number(document.getElementById('input_holes').value) || 0;
   const isian = Number(document.getElementById('input_isian_kg').value) || 0;
   
@@ -140,24 +122,11 @@ async function handleKontraktorFormSubmit(event) {
   const targetDate = document.getElementById('input_tanggal').value;
   const dthSupCalculated = Number(document.getElementById('input_dth_supplier') ? document.getElementById('input_dth_supplier').value : 0) || calculateMmuTotalDth(needMmuInput);
 
-  // Ambil lokasi dan geometri boundary
-  let lokasiVal = (document.getElementById('input_lokasi')?.value || document.getElementById('input_lokasi_select')?.value || '').trim();
+  // Ambil lokasi dan geometri boundary (Fleksibel: bisa dari DXF atau ketik manual)
+  let lokasiVal = (document.getElementById('input_lokasi')?.value || document.getElementById('input_lokasi_manual')?.value || document.getElementById('input_lokasi_select')?.value || '').trim();
   if (!lokasiVal) {
-    Swal.fire({ icon: 'warning', title: 'Pilih Boundary Blasting', text: 'Lokasi blasting (Boundary DXF) wajib dipilih untuk setiap rencana peledakan!' });
+    Swal.fire({ icon: 'warning', title: 'Pilih / Isi Lokasi', text: 'Nama lokasi blasting wajib diisi (bisa pilih dari DXF atau ketik manual)!' });
     return;
-  }
-
-  // Validasi 1:1 Alokasi Boundary (1 boundary hanya dapat digunakan oleh 1 plan pada tanggal yang sama)
-  if (typeof getAllocatedBoundaryNames === 'function') {
-    const allocated = getAllocatedBoundaryNames(targetDate);
-    if (allocated.has(lokasiVal.toLowerCase())) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Boundary Sudah Terpakai!',
-        text: `Boundary "${lokasiVal}" sudah dialokasikan ke plan peledakan lain pada tanggal ${targetDate}. Setiap boundary hanya dapat dialokasikan ke 1 plan (1:1 alokasi)!`
-      });
-      return;
-    }
   }
 
   let geomVal = document.getElementById('input_geometry') ? document.getElementById('input_geometry').value : '';
@@ -173,13 +142,17 @@ async function handleKontraktorFormSubmit(event) {
     }
   }
 
-  if (!geomVal || !geomVal.startsWith('POLYGON')) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Geometri Tidak Valid',
-      text: 'Geometri polygon boundary tidak ditemukan. Harap pilih boundary dari dropdown lokasi.'
-    });
-    return;
+  // Jika memilih boundary DXF, validasi 1:1 Alokasi Boundary pada tanggal yang sama
+  if (geomVal && typeof getAllocatedBoundaryNames === 'function') {
+    const allocated = getAllocatedBoundaryNames(targetDate, (typeof currentEditingItem !== 'undefined' && currentEditingItem) ? currentEditingItem.uuid : null);
+    if (allocated.has(lokasiVal.toLowerCase())) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Boundary Sudah Terpakai!',
+        text: `Boundary "${lokasiVal}" sudah dialokasikan ke plan peledakan lain pada tanggal ${targetDate}. Setiap boundary hanya dapat dialokasikan ke 1 plan!`
+      });
+      return;
+    }
   }
 
   // Validasi PIN Keamanan 8080
@@ -669,24 +642,6 @@ async function handleSupplierReadinessSubmit(event) {
 // ==================== BULK EXCEL IMPORT & PREVIEW LOGIC ====================
 
 function triggerExcelImport() {
-  // Validasi Wajib DXF sebelum Bulk Import
-  if (typeof hasValidLocalBoundaries === 'function' && !hasValidLocalBoundaries()) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'DXF Belum Diunggah!',
-      text: 'Anda wajib mengunggah file DXF boundary dan menamai lokasinya terlebih dahulu sebelum melakukan bulk import Excel.',
-      confirmButtonText: '<i class="ph-bold ph-upload-simple"></i> Unggah File DXF Sekarang',
-      showCancelButton: true,
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
-    }).then(res => {
-      if (res.isConfirmed && typeof openDxfUploadModal === 'function') {
-        openDxfUploadModal();
-      }
-    });
-    return;
-  }
-
   const fileInput = document.getElementById('excel-file-input');
   if (fileInput) fileInput.click();
 }
@@ -979,64 +934,51 @@ async function submitBulkPreviewData() {
     return;
   }
 
-  // Validasi: Wajib ada boundary DXF
-  if (typeof hasValidLocalBoundaries === 'function' && !hasValidLocalBoundaries()) {
+  // Validasi 1: Setiap baris wajib memiliki nama lokasi
+  const emptyLokasiIdx = bulkPreviewRows.findIndex(r => !String(r.lokasi || '').trim());
+  if (emptyLokasiIdx !== -1) {
     Swal.fire({
       icon: 'warning',
-      title: 'DXF Belum Diunggah!',
-      text: 'Anda wajib mengunggah file DXF boundary peledakan sebelum menyimpan data bulk plan.',
-      confirmButtonText: 'Unggah DXF Sekarang',
-      showCancelButton: true
-    }).then(res => {
-      if (res.isConfirmed && typeof openDxfUploadModal === 'function') {
-        closeBulkPreviewModal();
-        openDxfUploadModal();
-      }
+      title: 'Lokasi Belum Terisi',
+      text: `Baris #${emptyLokasiIdx + 1} belum memiliki nama lokasi peledakan. Kolom Lokasi wajib terisi untuk setiap baris!`
     });
     return;
   }
 
-  // Validasi 1: Semua baris wajib memilih boundary DXF
-  const unmappedRowIdx = bulkPreviewRows.findIndex(r => !r.lokasi || !r.geometry);
-  if (unmappedRowIdx !== -1) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Boundary Belum Terpilih',
-      text: `Baris #${unmappedRowIdx + 1} belum memiliki pilihan boundary DXF. Semua baris plan wajib memilih boundary spasial sebelum disimpan!`
-    });
-    return;
-  }
-
-  // Validasi 2: 1:1 Alokasi Boundary di antara baris-baris bulk preview (tidak boleh ada duplikasi boundary)
+  // Validasi 2: 1:1 Alokasi Boundary di antara baris-baris yang memilih geometry DXF
   const bulkSeen = new Map();
   for (let i = 0; i < bulkPreviewRows.length; i++) {
-    const name = String(bulkPreviewRows[i].lokasi || '').trim().toLowerCase();
-    if (bulkSeen.has(name)) {
-      const prevIdx = bulkSeen.get(name);
-      Swal.fire({
-        icon: 'warning',
-        title: 'Duplikasi Alokasi Boundary',
-        text: `Boundary "${bulkPreviewRows[i].lokasi}" dipilih pada Baris #${prevIdx + 1} dan Baris #${i + 1}. Setiap boundary hanya dapat dialokasikan ke 1 plan peledakan (1:1 allocation)!`
-      });
-      return;
+    if (bulkPreviewRows[i].geometry) {
+      const name = String(bulkPreviewRows[i].lokasi || '').trim().toLowerCase();
+      if (bulkSeen.has(name)) {
+        const prevIdx = bulkSeen.get(name);
+        Swal.fire({
+          icon: 'warning',
+          title: 'Duplikasi Alokasi Boundary',
+          text: `Boundary "${bulkPreviewRows[i].lokasi}" dipilih pada Baris #${prevIdx + 1} dan Baris #${i + 1}. Setiap boundary spasial hanya dapat dialokasikan ke 1 plan peledakan!`
+        });
+        return;
+      }
+      bulkSeen.set(name, i);
     }
-    bulkSeen.set(name, i);
   }
 
   // Validasi 3: 1:1 Alokasi Boundary terhadap plan yang sudah tersimpan di database untuk tanggal tersebut
   if (typeof getAllocatedBoundaryNames === 'function') {
     for (let i = 0; i < bulkPreviewRows.length; i++) {
-      const r = bulkPreviewRows[i];
-      const rDate = (typeof normalizeDateToYYYYMMDD === 'function') ? normalizeDateToYYYYMMDD(r.tanggal) : String(r.tanggal || '').slice(0, 10);
-      const allocated = getAllocatedBoundaryNames(rDate);
-      const name = String(r.lokasi || '').trim().toLowerCase();
-      if (allocated.has(name)) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Boundary Sudah Terpakai di Database',
-          text: `Boundary "${r.lokasi}" pada Baris #${i + 1} sudah dialokasikan ke plan lain pada tanggal ${rDate} di database. Harap alokasikan boundary yang belum terpakai!`
-        });
-        return;
+      if (bulkPreviewRows[i].geometry) {
+        const r = bulkPreviewRows[i];
+        const rDate = (typeof normalizeDateToYYYYMMDD === 'function') ? normalizeDateToYYYYMMDD(r.tanggal) : String(r.tanggal || '').slice(0, 10);
+        const allocated = getAllocatedBoundaryNames(rDate);
+        const name = String(r.lokasi || '').trim().toLowerCase();
+        if (allocated.has(name)) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Boundary Sudah Terpakai di Database',
+            text: `Boundary "${r.lokasi}" pada Baris #${i + 1} sudah dialokasikan ke plan lain pada tanggal ${rDate} di database. Harap alokasikan boundary yang belum terpakai!`
+          });
+          return;
+        }
       }
     }
   }
