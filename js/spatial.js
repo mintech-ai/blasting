@@ -1086,10 +1086,10 @@ function updateBoundaryUIState() {
           </div>
           <div>
             <span class="font-extrabold tracking-wide uppercase text-[10px] text-sky-800 block">
-              DXF BELUM DIUNGGAH (OPSIONAL / BISA MENYUSUL)
+              DXF BELUM DIUNGGAH
             </span>
             <span class="font-bold text-slate-800">
-              Anda tetap dapat mengisi & menyimpan rencana peledakan. File DXF dapat diunggah sebelum, sesudah, atau kapan saja.
+              File DXF dapat diunggah sebelum, sesudah, atau kapan saja.
             </span>
           </div>
         </div>
