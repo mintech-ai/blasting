@@ -114,7 +114,7 @@
                 INDONESIA</span>
               <span
                 class="bg-emerald-50 text-emerald-700 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 font-bold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> WITA ONLINE
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ONLINE
               </span>
             </div>
             <h1 class="text-sm font-extrabold text-slate-900 tracking-tight" id="app-portal-title">
@@ -192,7 +192,7 @@
     <!-- ==================== VIEW 1: DASHBOARD ==================== -->
     <div id="view-dashboard" class="flex-1 h-full min-h-0 flex flex-col lg:flex-row gap-2 sm:gap-3 overflow-hidden">
 
-      <!-- EXECUTIVE SUMMARY STAT CARDS (4 INFORMASI BESAR: SIS, BUMA, DAHANA, MNK-KMB) -->
+      <!-- EXECUTIVE SUMMARY STAT CARDS (4 INFORMASI UTAMA: SIS, BUMA, DAHANA, MNK-KMB) -->
       <div id="dashboard-summary-container"
         class="flex-1 w-full h-full overflow-y-auto custom-scrollbar p-1.5 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 content-start transition-all">
         <!-- Card 1: PT SIS (Kontraktor) -->
@@ -1005,7 +1005,7 @@
           </div>
           <div>
             <span class="text-[10px] font-black tracking-widest text-red-600 uppercase">SPATIAL TRANSFORM & BOUNDARIES</span>
-            <h3 class="text-base font-extrabold text-slate-900 leading-tight">Unggah & Namai Boundary Peledakan (DXF)</h3>
+            <h3 class="text-base font-extrabold text-slate-900 leading-tight">Unggah & Beri Nama Boundary Peledakan (DXF)</h3>
           </div>
         </div>
         <button type="button" onclick="closeDxfUploadModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition">
@@ -1021,7 +1021,7 @@
             <i class="ph-bold ph-cloud-arrow-up text-3xl"></i>
           </div>
           <h4 class="text-sm font-extrabold text-slate-900">Pilih atau Drag & Drop File DXF</h4>
-          <p class="text-xs text-slate-500 mt-1">Sistem otomatis mendeteksi garis boundary peledakan, mereproyeksi dari koordinat Tutupan ke WGS84, dan men-generate zona radius peledakan.</p>
+          <p class="text-xs text-slate-500 mt-1">Sistem otomatis mendeteksi garis boundary peledakan dan mereproyeksi dari koordinat Tutupan ke WGS84.</p>
           <div class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl shadow-md glow-red flex items-center gap-1.5">
             <i class="ph-bold ph-file-plus"></i> Browse File .DXF
           </div>
@@ -1029,7 +1029,7 @@
         </div>
         <div class="mt-4 text-[11px] text-slate-400 font-mono flex items-center gap-2">
           <i class="ph-bold ph-info text-blue-500"></i>
-          <span>Format didukung: AutoCAD DXF (R12 - 2018). Sistem otomatis mengambil layer boundary peledakan.</span>
+          <span>Format didukung: AutoCAD DXF. Mengambil layer boundary peledakan.</span>
         </div>
       </div>
 
@@ -1038,7 +1038,7 @@
         <div class="flex items-center justify-between pb-3 shrink-0">
           <div>
             <span class="text-xs font-bold text-slate-800" id="dxf-preview-filename">File DXF</span>
-            <p class="text-[11px] text-slate-500">Ketikkan nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
+            <p class="text-[11px] text-slate-500">Beri nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
           </div>
           <button type="button" onclick="document.getElementById('dxf-file-input').click()"
             class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition flex items-center gap-1">
@@ -1066,7 +1066,7 @@
                     <th class="p-2 text-center w-10">No</th>
                     <th class="p-2 w-24">Handle</th>
                     <th class="p-2">Nama Boundary <span class="text-red-600">*</span></th>
-                    <th class="p-2 w-52">Tautkan ke Plan (Nyusul/Revisi)</th>
+                    <th class="p-2 w-52">Tautkan ke Plan (Revisi)</th>
                     <th class="p-2 text-center w-14">Peta</th>
                   </tr>
                 </thead>
@@ -1092,7 +1092,7 @@
             <button type="button" id="btn-save-dxf-boundaries" onclick="confirmSaveDxfBoundaries()"
               class="px-5 py-2 bg-red-600 text-white font-extrabold rounded-xl text-xs shadow-md glow-red transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
               disabled>
-              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan & Terapkan Boundary
+              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan Boundary
             </button>
           </div>
         </div>
@@ -1121,7 +1121,7 @@
       <div class="flex items-center justify-between py-3">
         <button onclick="addBulkPreviewRow()"
           class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1">
-          <i class="ph-bold ph-plus"></i> Tambah Baris Manual
+          <i class="ph-bold ph-plus"></i> Tambah Baris
         </button>
         <span class="text-xs text-slate-500 font-medium" id="bulk-row-count-tag">0 Baris</span>
       </div>
@@ -1202,7 +1202,7 @@
           <div class="flex items-center gap-2">
             <button type="button" id="btn-modal-clear-supplier" onclick="handleClearSupplierClaim()"
               class="px-3 py-2 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold rounded-xl border border-amber-200 hidden items-center gap-1.5 text-xs transition">
-              <i class="ph-bold ph-x-circle"></i> Lepas Slot Supplier
+              <i class="ph-bold ph-x-circle"></i> Hapus Supplier
             </button>
             <button type="button" id="btn-modal-delete-plan" onclick="handleDeletePlanFromModal()"
               class="px-3 py-2 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white font-bold rounded-xl border border-rose-200 hidden items-center gap-1.5 text-xs transition">
@@ -1263,7 +1263,7 @@
           </div>
 
           <div class="md:col-span-2 bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 space-y-2">
-            <label class="block font-extrabold text-amber-950">Unit MMU / MMT Ready (Klik untuk Toggle Unit):</label>
+            <label class="block font-extrabold text-amber-950">Unit MMU / MMT Ready :</label>
             <div id="edit-sup-mmu-chips" class="flex flex-wrap gap-1.5"></div>
             <input type="text" id="edit_sup_mmu_list" readonly required
               class="w-full bg-white border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-900 text-xs">
@@ -1394,7 +1394,7 @@
             </button>
             <button type="submit" id="btn-save-edit-supplier"
               class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl shadow-md glow-amber transition flex items-center gap-1.5">
-              <i class="ph-bold ph-check"></i> Simpan Perubahan Kesiapan
+              <i class="ph-bold ph-check"></i> Simpan Perubahan
             </button>
           </div>
         </div>
