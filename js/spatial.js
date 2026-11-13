@@ -1086,7 +1086,7 @@ function updateBoundaryUIState() {
           </div>
           <div>
             <span class="font-extrabold tracking-wide uppercase text-[10px] text-sky-800 block">
-              DXF BELUM DIUNGGAH
+              DXF BELUM DIUNGGAH 
             </span>
             <span class="font-bold text-slate-800">
               File DXF dapat diunggah sebelum, sesudah, atau kapan saja.
@@ -1130,7 +1130,7 @@ function updateBoundaryUIState() {
         toggleLokasiInputMode(false);
       }
     } else {
-      selectLokasi.innerHTML = '<option value="" disabled selected>Belum ada DXF aktif, silakan ketik manual...</option>';
+      selectLokasi.innerHTML = '<option value="" disabled selected>Belum ada DXF aktif</option>';
       selectLokasi.disabled = true;
       // Otomatis aktifkan mode manual jika belum ada DXF
       toggleLokasiInputMode(true);
