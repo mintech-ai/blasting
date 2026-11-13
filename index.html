@@ -953,10 +953,10 @@
   <div id="modal-dxf-flow"
     class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5">
     <div
-      class="clean-card w-full max-w-6xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-slate-200 h-[88vh] max-h-[720px] min-h-[580px] flex flex-col bg-white">
+      class="clean-card w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col bg-white overflow-hidden h-[90vh] max-h-[720px] min-h-[480px]">
       
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 shrink-0">
+      <!-- Modal Header (Always Visible at Top) -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0 bg-white">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-md glow-red">
             <i class="ph-bold ph-polygon text-2xl"></i>
@@ -972,7 +972,7 @@
       </div>
 
       <!-- Step 1: Upload Box -->
-      <div id="dxf-step-upload" class="p-6 sm:p-10 flex flex-col items-center justify-center text-center">
+      <div id="dxf-step-upload" class="p-6 sm:p-10 flex-1 flex flex-col items-center justify-center text-center overflow-y-auto">
         <div class="max-w-md w-full border-2 border-dashed border-red-300 hover:border-red-500 rounded-2xl p-8 bg-red-50/40 transition cursor-pointer flex flex-col items-center group"
           onclick="document.getElementById('dxf-file-input').click()">
           <div class="w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-3 group-hover:scale-110 transition shadow-inner">
@@ -992,8 +992,8 @@
       </div>
 
       <!-- Step 2: Interactive Preview & Naming Table -->
-      <div id="dxf-step-preview" class="hidden flex-1 min-h-0 flex flex-col overflow-hidden pt-4">
-        <div class="flex items-center justify-between pb-3 shrink-0">
+      <div id="dxf-step-preview" class="hidden flex-1 min-h-0 flex flex-col overflow-hidden px-5 py-3">
+        <div class="flex items-center justify-between pb-2 shrink-0">
           <div>
             <span class="text-xs font-bold text-slate-800" id="dxf-preview-filename">File DXF</span>
             <p class="text-[11px] text-slate-500">Ketikkan nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
@@ -1005,18 +1005,18 @@
         </div>
 
         <!-- Split View: Left Map Preview, Right Table -->
-        <div class="flex-1 min-h-[380px] grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden my-1">
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden my-1">
           
           <!-- Mini Leaflet Map Preview -->
-          <div class="lg:col-span-5 h-[360px] lg:h-full min-h-[340px] rounded-xl overflow-hidden border border-slate-200 shadow-inner relative flex flex-col">
-            <div id="dxfPreviewMapContainer" class="w-full h-full min-h-[340px]"></div>
+          <div class="lg:col-span-5 h-64 lg:h-full min-h-[220px] rounded-xl overflow-hidden border border-slate-200 shadow-inner relative flex flex-col">
+            <div id="dxfPreviewMapContainer" class="w-full h-full min-h-[220px]"></div>
             <div class="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md border border-slate-200 text-[10px] font-bold text-slate-700 shadow-xs">
               Klik boundary di peta untuk menamai
             </div>
           </div>
 
           <!-- Naming Form Table -->
-          <div class="lg:col-span-7 flex flex-col h-[360px] lg:h-full min-h-[340px] overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
+          <div class="lg:col-span-7 flex flex-col h-64 lg:h-full min-h-[220px] overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
             <div class="flex-1 overflow-auto custom-scrollbar">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-100 uppercase font-black text-[10px] tracking-wider text-slate-700 sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
@@ -1024,7 +1024,7 @@
                     <th class="p-2 text-center w-10">No</th>
                     <th class="p-2 w-24">Handle</th>
                     <th class="p-2">Nama Boundary <span class="text-red-600">*</span></th>
-                    <th class="p-2 w-52">Tautkan ke Rencana Blasting</th>
+                    <th class="p-2 w-48">Tautkan ke Plan (Opsional)</th>
                     <th class="p-2 text-center w-14">Peta</th>
                   </tr>
                 </thead>
@@ -1036,25 +1036,24 @@
           </div>
 
         </div>
+      </div>
 
-        <!-- Modal Footer -->
-        <div class="flex flex-col sm:flex-row items-center justify-between pt-4 mt-3 border-t border-slate-200 gap-3 shrink-0">
-          <span class="text-xs font-bold text-slate-600 font-mono" id="dxf-named-count-tag">
-            0 Boundary Telah Dinamai
-          </span>
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button type="button" onclick="closeDxfUploadModal()"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
-              Batal
-            </button>
-            <button type="button" id="btn-save-dxf-boundaries" onclick="confirmSaveDxfBoundaries()"
-              class="px-5 py-2 bg-red-600 text-white font-extrabold rounded-xl text-xs shadow-md glow-red transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
-              disabled>
-              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan & Terapkan Boundary
-            </button>
-          </div>
+      <!-- Modal Footer (ALWAYS VISIBLE & PINNED AT BOTTOM) -->
+      <div id="dxf-modal-footer" class="hidden px-5 py-3.5 border-t border-slate-200 bg-white shrink-0 flex items-center justify-between gap-3">
+        <span class="text-xs font-bold text-slate-600 font-mono" id="dxf-named-count-tag">
+          0 Boundary Telah Dinamai
+        </span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeDxfUploadModal()"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+            Batal
+          </button>
+          <button type="button" id="btn-save-dxf-boundaries" onclick="confirmSaveDxfBoundaries()"
+            class="px-5 py-2.5 bg-red-600 text-white font-extrabold rounded-xl text-xs shadow-md glow-red transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+            disabled>
+            <i class="ph-bold ph-floppy-disk text-base"></i> Simpan & Terapkan Boundary
+          </button>
         </div>
-
       </div>
 
     </div>

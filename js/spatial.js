@@ -474,7 +474,8 @@ let previewPolygonsLayer = null;
 let previewBuffersLayer = null;
 let tempParsedBoundaries = [];
 let tempParsedContractor = 'PT SIS';
-let targetLinkPlanUuid = null; // Disimpan saat user klik '+DXF' langsung dari baris tabel plan
+let tempParsedFileName = '';
+let targetLinkPlanUuid = null;
 
 function openDxfUploadModal() {
   const modal = document.getElementById('modal-dxf-flow');
@@ -482,6 +483,8 @@ function openDxfUploadModal() {
 
   document.getElementById('dxf-step-upload').classList.remove('hidden');
   document.getElementById('dxf-step-preview').classList.add('hidden');
+  const footer = document.getElementById('dxf-modal-footer');
+  if (footer) footer.classList.add('hidden');
   const fileInput = document.getElementById('dxf-file-input');
   if (fileInput) fileInput.value = '';
 
@@ -504,6 +507,8 @@ function closeDxfUploadModal() {
     modal.classList.remove('flex');
     modal.classList.add('hidden');
   }
+  const footer = document.getElementById('dxf-modal-footer');
+  if (footer) footer.classList.add('hidden');
   if (previewMapInstance) {
     previewMapInstance.remove();
     previewMapInstance = null;
@@ -549,6 +554,7 @@ function processDxfFileObject(file) {
 
       tempParsedBoundaries = res.boundaries;
       tempParsedContractor = res.detectedContractor;
+      tempParsedFileName = file.name;
 
       hideGlobalLoading();
       renderDxfPreviewStep(file.name, res.detectedContractor);
@@ -570,21 +576,13 @@ function processDxfFileObject(file) {
 }
 
 /**
- * Menampilkan Step 2: Preview Peta & Input Penamaan Boundary (Plus Fitur Tautkan ke Plan Nyusul / Revisi)
+ * Menampilkan Step 2: Preview Peta & Input Penamaan Boundary DXF
  */
 function renderDxfPreviewStep(fileName, contractorName) {
   document.getElementById('dxf-step-upload').classList.add('hidden');
   document.getElementById('dxf-step-preview').classList.remove('hidden');
-
-  const activeDate = document.getElementById('input_tanggal')?.value || (typeof getWitaDateString === 'function' ? getWitaDateString() : '');
-  
-  // Ambil daftar plan yang sudah ada di database untuk tanggal ini
-  const existingPlansForDate = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData))
-    ? rawGlobalPlanData.filter(p => {
-        const d = (typeof normalizeDateToYYYYMMDD === 'function') ? normalizeDateToYYYYMMDD(p.tanggal) : String(p.tanggal || '').slice(0, 10);
-        return d === activeDate;
-      })
-    : [];
+  const footer = document.getElementById('dxf-modal-footer');
+  if (footer) footer.classList.remove('hidden');
 
   const titleEl = document.getElementById('dxf-preview-filename');
   if (titleEl) {
@@ -595,41 +593,31 @@ function renderDxfPreviewStep(fileName, contractorName) {
           ${escapeXmlAttr(contractorName)}
         </span>
         <span class="text-xs text-slate-500 font-bold">(${tempParsedBoundaries.length} Boundary Terdeteksi)</span>
-        ${existingPlansForDate.length > 0 ? `<span class="text-[10px] bg-amber-50 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">Terdeteksi ${existingPlansForDate.length} Plan di Database (${activeDate})</span>` : ''}
       </div>
     `;
   }
 
-  // Auto-Match cerdas: jika ada boundary yang namanya atau indexnya cocok dengan plan, atau ada targetLinkPlanUuid
-  tempParsedBoundaries.forEach((b, idx) => {
-    if (targetLinkPlanUuid && idx === 0) {
-      b.linkedPlanUuid = targetLinkPlanUuid;
-      const targetPlan = existingPlansForDate.find(p => String(p.uuid || p.id) === String(targetLinkPlanUuid));
-      if (targetPlan && !b.name) {
-        b.name = targetPlan.lokasi || '';
-      }
-    }
+  // Ambil data rencana peledakan aktif untuk tanggal dan mitra kerja yang bersangkutan
+  const activeDate = document.getElementById('input_tanggal')?.value || (typeof getWitaDateString === 'function' ? getWitaDateString() : '');
+  const allPlans = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
+  const existingPlansForDate = allPlans.filter(p => {
+    const pDate = p.tanggal || '';
+    const dateMatch = !activeDate || pDate === activeDate;
+    const contMatch = normalizeContractorStandard(p.kontraktor) === normalizeContractorStandard(contractorName);
+    return dateMatch && contMatch;
   });
 
-  // Render Tabel Form Penamaan & Penautan Plan
+  // Render Tabel Form Penamaan Boundary & Opsi Tautan ke Plan
   const tbody = document.getElementById('dxf-preview-tbody');
   if (tbody) {
     let html = '';
     tempParsedBoundaries.forEach((b, idx) => {
-      // Opsi select plan eksisting untuk skenario DXF Nyusul atau Revisi
       let planOptions = `<option value="">-- Boundary Baru (Tanpa Tautan) --</option>`;
-      existingPlansForDate.forEach(plan => {
-        const planId = plan.uuid || plan.id || '';
-        const isMatched = (b.linkedPlanUuid && String(b.linkedPlanUuid) === String(planId)) ||
-                          (b.name && String(plan.lokasi || '').trim().toLowerCase() === String(b.name).trim().toLowerCase());
-        
-        if (isMatched && !b.linkedPlanUuid) {
-          b.linkedPlanUuid = planId;
-          if (!b.name) b.name = plan.lokasi || '';
-        }
-
-        const isSelected = (String(b.linkedPlanUuid) === String(planId));
-        planOptions += `<option value="${escapeXmlAttr(planId)}" ${isSelected ? 'selected' : ''}>[${escapeXmlAttr(planId)}] ${escapeXmlAttr(plan.lokasi || 'Tanpa Nama')} (${plan.jumlah_holes || 0} holes)</option>`;
+      existingPlansForDate.forEach(p => {
+        const pId = p.uuid || p.id;
+        const isSelected = String(b.linkedPlanUuid) === String(pId) || String(targetLinkPlanUuid) === String(pId);
+        const hasGeo = !!p.geometry;
+        planOptions += `<option value="${escapeXmlAttr(pId)}" ${isSelected ? 'selected' : ''}>${escapeXmlAttr(p.lokasi || 'Tanpa Nama')} (${escapeXmlAttr(p.prioritas || 'Plan')})${hasGeo ? ' [Ada Geo]' : ''}</option>`;
       });
 
       html += `
@@ -653,13 +641,13 @@ function renderDxfPreviewStep(fileName, contractorName) {
           <td class="p-2">
             <select id="select-dxf-link-${idx}"
               onchange="handleDxfPlanLinkChange(${idx}, this.value)"
-              class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-red-600">
+              class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:border-red-600 truncate">
               ${planOptions}
             </select>
           </td>
           <td class="p-2 text-center">
             <button type="button" onclick="focusPreviewPolygon(${idx})"
-              class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition flex items-center gap-1 mx-auto"
+              class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition flex items-center gap-1 mx-auto"
               title="Zoom ke polygon di peta">
               <i class="ph-bold ph-magnifying-glass-plus"></i> Lihat
             </button>
@@ -678,22 +666,22 @@ function renderDxfPreviewStep(fileName, contractorName) {
 }
 
 function handleDxfPlanLinkChange(index, selectedPlanUuid) {
-  if (tempParsedBoundaries[index]) {
-    tempParsedBoundaries[index].linkedPlanUuid = selectedPlanUuid;
-    // Jika user memilih plan, otomatis isi nama boundary jika masih kosong
-    if (selectedPlanUuid) {
-      const activeDate = document.getElementById('input_tanggal')?.value || '';
-      const source = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
-      const plan = source.find(p => String(p.uuid || p.id) === String(selectedPlanUuid));
-      if (plan && plan.lokasi) {
-        const inputName = document.getElementById(`input-dxf-name-${index}`);
-        if (inputName) {
-          inputName.value = plan.lokasi;
-          tempParsedBoundaries[index].name = plan.lokasi;
-        }
+  if (!tempParsedBoundaries[index]) return;
+  tempParsedBoundaries[index].linkedPlanUuid = selectedPlanUuid || '';
+
+  // Jika nama boundary masih kosong dan user memilih plan yang ada, otomatis isi nama boundary dengan nama lokasi plan tersebut
+  if (selectedPlanUuid) {
+    const allPlans = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
+    const matchedPlan = allPlans.find(p => String(p.uuid || p.id) === String(selectedPlanUuid));
+    if (matchedPlan && matchedPlan.lokasi) {
+      const inputEl = document.getElementById(`input-dxf-name-${index}`);
+      if (inputEl && !inputEl.value.trim()) {
+        inputEl.value = matchedPlan.lokasi;
+        tempParsedBoundaries[index].name = matchedPlan.lokasi;
       }
     }
   }
+
   updateDxfSaveButtonState();
 }
 
@@ -824,10 +812,17 @@ function updateDxfSaveButtonState() {
   const namedCount = namedList.length;
 
   if (countTag) {
-    countTag.innerText = `${namedCount} dari ${total} Boundary Telah Dinamai`;
+    if (total === 0) {
+      countTag.innerText = '0 Boundary Terdeteksi';
+    } else if (namedCount === total) {
+      countTag.innerHTML = `<span class="text-emerald-600 font-extrabold flex items-center gap-1"><i class="ph-bold ph-check-circle"></i> Semua Boundary Telah Dinamai (${namedCount}/${total})</span>`;
+    } else {
+      countTag.innerText = `${namedCount} dari ${total} Boundary Telah Dinamai`;
+    }
   }
 
   if (btn) {
+    // Tombol simpan hanya aktif jika SEMUA boundary yang terdeteksi telah diberi nama
     if (namedCount === total && total > 0) {
       btn.disabled = false;
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -868,20 +863,22 @@ function focusPreviewRow(index) {
 }
 
 /**
- * Menyimpan hasil ekstraksi boundary ke localStorage dan men-sinkronisasi ke Plan eksisting jika ditautkan
+ * Menyimpan hasil ekstraksi boundary ke localStorage (Centralized & 24 Jam)
+ * dan men-sinkronisasi ke Plan eksisting jika ada yang ditautkan (opsional)
  */
 async function confirmSaveDxfBoundaries() {
+  const total = tempParsedBoundaries.length;
   const unnamed = tempParsedBoundaries.filter(b => !b.name || b.name.trim().length === 0);
   if (unnamed.length > 0) {
     Swal.fire({
       icon: 'warning',
-      title: 'Nama Belum Lengkap',
-      text: `Masih ada ${unnamed.length} boundary yang belum diberi nama. Harap lengkapi semua nama boundary sebelum menyimpan.`
+      title: 'Nama Boundary Belum Lengkap',
+      text: `Masih ada ${unnamed.length} dari ${total} boundary yang belum diberi nama. Harap lengkapi semua nama boundary sebelum menyimpan.`
     });
     return;
   }
 
-  // Cek duplikasi nama boundary di dalam list upload
+  // Cek duplikasi nama boundary di antara boundary yang dinamai
   const seenNames = new Set();
   for (const b of tempParsedBoundaries) {
     const norm = b.name.trim().toLowerCase();
@@ -889,16 +886,16 @@ async function confirmSaveDxfBoundaries() {
       Swal.fire({
         icon: 'warning',
         title: 'Nama Boundary Duplikat',
-        text: `Nama "${b.name}" digunakan lebih dari 1 kali. Setiap boundary harus memiliki nama unik agar alokasi 1:1 berjalan akurat.`
+        text: `Nama "${b.name}" digunakan lebih dari 1 kali. Setiap boundary harus memiliki nama unik.`
       });
       return;
     }
     seenNames.add(norm);
   }
 
-  const cleanList = tempParsedBoundaries.map(b => ({
-    id: b.id,
-    index: b.index,
+  const cleanList = tempParsedBoundaries.map((b, idx) => ({
+    id: b.id || `bound_${Date.now()}_${idx + 1}`,
+    index: idx + 1,
     name: b.name.trim(),
     handle: b.handle,
     layer: b.layer,
@@ -913,44 +910,41 @@ async function confirmSaveDxfBoundaries() {
   }));
 
   const activeDate = document.getElementById('input_tanggal')?.value || (typeof getWitaDateString === 'function' ? getWitaDateString() : '');
-  const fileName = document.getElementById('dxf-preview-filename')?.innerText || 'boundaries.dxf';
+  const fileName = tempParsedFileName || 'boundaries.dxf';
 
+  // 1. Simpan ke Local Storage (otomatis menimpa file lama jika diunggah < 24 jam)
   saveLocalBoundaries(cleanList, fileName, tempParsedContractor, activeDate);
 
-  // Skenario DXF Nyusul & Revisi: Jika ada boundary yang ditautkan ke plan eksisting, update langsung ke server Google Apps Script!
+  // 2. Jika ada boundary yang ditautkan ke Plan eksisting (opsional), simpan ke database Google Sheets
   const linkedItems = cleanList.filter(b => b.linkedPlanUuid);
-  let updatedCount = 0;
+  let updatedPlansCount = 0;
 
   if (linkedItems.length > 0) {
     showGlobalLoading();
     try {
-      const sourcePlans = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
+      const allPlans = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
       for (const item of linkedItems) {
-        const plan = sourcePlans.find(p => String(p.uuid || p.id) === String(item.linkedPlanUuid));
-        if (plan) {
+        const targetPlan = allPlans.find(p => String(p.uuid || p.id) === String(item.linkedPlanUuid));
+        if (targetPlan) {
           const updatePayload = {
-            ...plan,
-            uuid: plan.uuid || plan.id,
-            id: plan.uuid || plan.id,
-            lokasi: item.name,
+            ...targetPlan,
+            uuid: targetPlan.uuid || targetPlan.id,
             geometry: item.wkt,
             latitude: item.centroid.lat,
             longitude: item.centroid.lng
           };
 
-          const res = await apiCall('savePlan', {
-            data: updatePayload,
-            role: 'ADMIN',
-            company: tempParsedContractor || plan.kontraktor
-          });
-
-          if (res && res.success) {
-            updatedCount++;
+          const res = await apiCall('savePlan', updatePayload);
+          if (res && res.status === 'success') {
+            targetPlan.geometry = item.wkt;
+            targetPlan.latitude = item.centroid.lat;
+            targetPlan.longitude = item.centroid.lng;
+            updatedPlansCount++;
           }
         }
       }
-    } catch (err) {
-      console.warn('Gagal sinkronisasi link boundary ke database:', err);
+    } catch (linkErr) {
+      console.warn('Gagal menautkan sebagian plan eksisting:', linkErr);
     } finally {
       hideGlobalLoading();
     }
@@ -958,9 +952,9 @@ async function confirmSaveDxfBoundaries() {
 
   closeDxfUploadModal();
 
-  let successMsg = `${cleanList.length} boundary peledakan (${tempParsedContractor}) aktif untuk tanggal ${activeDate}.`;
-  if (updatedCount > 0) {
-    successMsg += ` Sebanyak ${updatedCount} rencana peledakan di database telah otomatis diperbarui koordinat poligon & buffernya!`;
+  let successMsg = `${cleanList.length} boundary peledakan (${tempParsedContractor}) berhasil disimpan di penyimpanan lokal dan siap dialokasikan.`;
+  if (updatedPlansCount > 0) {
+    successMsg += ` Sebanyak ${updatedPlansCount} rencana peledakan otomatis diperbarui dengan koordinat spasial di database.`;
   }
 
   Swal.fire({
@@ -971,12 +965,158 @@ async function confirmSaveDxfBoundaries() {
     showConfirmButton: false
   });
 
-  if (updatedCount > 0 && typeof refreshData === 'function') {
-    refreshData(false);
-  } else {
-    updateBoundaryUIState();
+  updateBoundaryUIState();
+  if (typeof renderBulkPreviewTable === 'function') {
+    renderBulkPreviewTable();
+  }
+  if (typeof renderDashboardTable === 'function') {
+    renderDashboardTable();
   }
 }
+
+/**
+ * Alokasikan Boundary DXF dari penyimpanan lokal ke Plan yang sudah masuk database
+ */
+async function openAllocateBoundaryModalForPlan(planId) {
+  const source = (typeof rawGlobalPlanData !== 'undefined' && Array.isArray(rawGlobalPlanData)) ? rawGlobalPlanData : [];
+  const plan = source.find(p => String(p.uuid || p.id) === String(planId));
+  if (!plan) {
+    Swal.fire({ icon: 'error', title: 'Data Tidak Ditemukan', text: 'Rencana peledakan tidak ditemukan.' });
+    return;
+  }
+
+  const localBoundaries = (typeof getValidLocalBoundaries === 'function') ? getValidLocalBoundaries() : [];
+  if (!localBoundaries || localBoundaries.length === 0) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Belum Ada Boundary Tersimpan',
+      html: `
+        <p class="text-xs text-slate-600 mb-2">Tidak ada boundary DXF yang tersimpan di penyimpanan lokal perangkat Anda.</p>
+        <p class="text-xs text-slate-500">Silakan unggah file DXF terlebih dahulu melalui formulir rencana peledakan.</p>
+      `,
+      confirmButtonText: '<i class="ph-bold ph-upload-simple"></i> Unggah DXF Sekarang',
+      showCancelButton: true,
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#dc2626'
+    }).then(res => {
+      if (res.isConfirmed) {
+        openDxfUploadModal();
+      }
+    });
+    return;
+  }
+
+  let optionsHtml = `<option value="">-- Pilih Boundary DXF Tersimpan --</option>`;
+  localBoundaries.forEach(b => {
+    const isCurrent = (plan.geometry && plan.geometry === b.wkt) ||
+                      (plan.lokasi && String(plan.lokasi).trim().toLowerCase() === String(b.name).trim().toLowerCase());
+    optionsHtml += `<option value="${escapeXmlAttr(b.name)}" ${isCurrent ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index} - ${b.vertexCount} titik)</option>`;
+  });
+  if (plan.geometry) {
+    optionsHtml += `<option value="__CLEAR__" class="text-red-600 font-bold">-- Hapus Alokasi Boundary --</option>`;
+  }
+
+  const result = await Swal.fire({
+    title: '<div class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 justify-center"><i class="ph-bold ph-polygon text-red-600"></i> Alokasikan Boundary Peledakan</div>',
+    html: `
+      <div class="text-left text-xs space-y-3 pt-2">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700">
+          <div class="font-extrabold text-slate-900 text-sm">${escapeXmlAttr(plan.lokasi || 'Tanpa Nama Lokasi')}</div>
+          <div class="text-[11px] text-slate-500 font-mono mt-0.5">Kontraktor: <b>${escapeXmlAttr(plan.kontraktor)}</b> | Tanggal: <b>${escapeXmlAttr(plan.tanggal)}</b></div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pilih Boundary dari File DXF Tersimpan:</label>
+          <select id="swal_select_boundary" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600">
+            ${optionsHtml}
+          </select>
+        </div>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: '<i class="ph-bold ph-check"></i> Simpan ke Database',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#dc2626',
+    focusConfirm: false,
+    preConfirm: () => {
+      const el = document.getElementById('swal_select_boundary');
+      return el ? el.value : '';
+    }
+  });
+
+  if (!result.isConfirmed) return;
+
+  const chosenVal = result.value;
+  if (!chosenVal) {
+    Swal.fire({ icon: 'warning', title: 'Pilih Boundary', text: 'Silakan pilih boundary yang ingin dialokasikan ke rencana ini.' });
+    return;
+  }
+
+  let newGeom = '';
+  let newLat = '';
+  let newLng = '';
+  let boundLabel = '';
+
+  if (chosenVal === '__CLEAR__') {
+    newGeom = '';
+    newLat = '';
+    newLng = '';
+    boundLabel = 'Alokasi boundary dihapus';
+  } else {
+    const chosenBound = findBoundaryByName(chosenVal);
+    if (!chosenBound) return;
+    newGeom = chosenBound.wkt;
+    newLat = chosenBound.centroid.lat;
+    newLng = chosenBound.centroid.lng;
+    boundLabel = `Boundary "${chosenBound.name}"`;
+  }
+
+  showGlobalLoading();
+  try {
+    const updatePayload = {
+      ...plan,
+      uuid: plan.uuid || plan.id,
+      id: plan.uuid || plan.id,
+      geometry: newGeom,
+      latitude: newLat,
+      longitude: newLng
+    };
+
+    const res = await apiCall('savePlan', {
+      data: updatePayload,
+      role: (typeof currentUser !== 'undefined' && currentUser ? currentUser.role : 'ADMIN'),
+      company: (typeof currentUser !== 'undefined' && currentUser ? currentUser.company : plan.kontraktor)
+    });
+
+    if (res && res.success) {
+      plan.geometry = newGeom;
+      plan.latitude = newLat;
+      plan.longitude = newLng;
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Alokasi Berhasil Disimpan!',
+        text: `${boundLabel} berhasil diperbarui di database spreadsheet.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      if (typeof renderDashboardTable === 'function') renderDashboardTable();
+      if (typeof initOrUpdateMap === 'function') initOrUpdateMap();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan ke Database',
+        text: res ? res.message : 'Terjadi kesalahan server saat menyimpan boundary.'
+      });
+    }
+  } catch (err) {
+    console.error('Error allocating boundary to plan:', err);
+    Swal.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: err.message });
+  } finally {
+    hideGlobalLoading();
+  }
+}
+window.openAllocateBoundaryModalForPlan = openAllocateBoundaryModalForPlan;
 
 // ==================== 7. INTEGRASI WORKFLOW FORM & TOGGLE MODE LOKASI ====================
 
