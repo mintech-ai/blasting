@@ -90,7 +90,7 @@
 
         <button type="submit" id="btn-login-submit"
           class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl transition shadow-lg glow-red text-sm flex items-center justify-center gap-2 mt-4">
-          <i class="ph-bold ph-sign-in text-lg"></i> MASUK
+          <i class="ph-bold ph-sign-in text-lg"></i> MASUK PORTAL
         </button>
       </form>
 
@@ -114,7 +114,7 @@
                 INDONESIA</span>
               <span
                 class="bg-emerald-50 text-emerald-700 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 font-bold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ONLINE
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> WITA ONLINE
               </span>
             </div>
             <h1 class="text-sm font-extrabold text-slate-900 tracking-tight" id="app-portal-title">
@@ -175,7 +175,7 @@
           <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
           <span id="active-role-badge"
             class="bg-red-100 text-red-800 text-[10px] px-2 py-0.5 font-bold rounded uppercase">-</span>
-          <button onclick="confirmLogout()" title="Keluar"
+          <button onclick="confirmLogout()" title="Keluar Portal"
             class="ml-1 text-slate-400 hover:text-red-600 transition flex items-center gap-1 text-xs font-bold">
             <i class="ph-bold ph-sign-out text-sm"></i> Keluar
           </button>
@@ -192,7 +192,7 @@
     <!-- ==================== VIEW 1: DASHBOARD ==================== -->
     <div id="view-dashboard" class="flex-1 h-full min-h-0 flex flex-col lg:flex-row gap-2 sm:gap-3 overflow-hidden">
 
-      <!-- EXECUTIVE SUMMARY STAT CARDS (4 INFORMASI UTAMA: SIS, BUMA, DAHANA, MNK-KMB) -->
+      <!-- EXECUTIVE SUMMARY STAT CARDS (4 INFORMASI BESAR: SIS, BUMA, DAHANA, MNK-KMB) -->
       <div id="dashboard-summary-container"
         class="flex-1 w-full h-full overflow-y-auto custom-scrollbar p-1.5 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 content-start transition-all">
         <!-- Card 1: PT SIS (Kontraktor) -->
@@ -553,35 +553,9 @@
               <div class="flex items-center justify-between mb-1.5">
                 <label class="block font-bold text-slate-700">1. Lokasi Blasting <span
                     class="text-red-600">*</span></label>
-                <div class="flex items-center gap-1.5">
-                  <button type="button" id="btn-toggle-lokasi-mode" onclick="toggleLokasiInputMode()"
-                    class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-lg border border-slate-300 transition flex items-center gap-1">
-                    <i class="ph-bold ph-pencil-simple"></i> <span id="label-toggle-lokasi-mode">Ketik Manual</span>
-                  </button>
-                  <button type="button" onclick="openDxfUploadModal()" class="text-[10px] font-bold text-red-600 hover:underline flex items-center gap-1">
-                    <i class="ph-bold ph-upload-simple"></i> Upload DXF
-                  </button>
-                </div>
               </div>
-
-              <!-- Pilihan A: Dropdown dari Boundary DXF -->
-              <div id="container-lokasi-select">
-                <select id="input_lokasi_select" onchange="handleBoundarySelectChange(this.value)"
-                  class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition cursor-pointer">
-                  <option value="" disabled selected>-- Pilih Lokasi dari Boundary DXF --</option>
-                </select>
-              </div>
-
-              <!-- Pilihan B: Input Manual jika belum ada DXF atau lokasi baru -->
-              <div id="container-lokasi-manual" class="hidden">
-                <input type="text" id="input_lokasi_manual" placeholder="Ketik Nama Lokasi Blasting (mis: PIT 1 WEST, STACK 2)..."
-                  oninput="handleManualLokasiInput(this.value)"
-                  class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition">
-              </div>
-
-              <input type="hidden" id="input_lokasi" required>
-              <input type="hidden" id="input_geometry">
-              <div id="selected-boundary-info-badge" class="mt-1.5 text-xs hidden flex items-center justify-between bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"></div>
+              <input type="text" id="input_lokasi" required placeholder="Ketik Nama Lokasi Blasting (mis: PIT 1 WEST, STACK 2)..."
+                class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition text-xs">
             </div>
 
           <div>
@@ -694,64 +668,48 @@
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
           </div>
 
-          <!-- 15. Need MMU / MMT -->
+          <!-- 15. Alokasi Supplier -->
           <div class="md:col-span-2 bg-amber-50/60 p-4 rounded-xl border border-amber-200">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
-              <label class="block font-bold text-amber-950 flex items-center gap-1.5">
-                <i class="ph-bold ph-truck text-amber-700 text-base"></i>
-                <span>15. Need MMU / MMT (Alokasi Unit MMU/MMT Per Plan)</span>
-              </label>
-              <div class="flex items-center gap-2">
-                <span id="display-plan-need-mmu-dth"
-                  class="font-mono font-black text-xs text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
-                  Total DTH: 0.00 Ton
-                </span>
-              </div>
-            </div>
-            <p class="text-[11px] text-slate-500 mb-2">
-              Klik unit MMU/MMT di bawah ini untuk memilih. Unit yang sudah dialokasikan ke plan lain pada tanggal yang
-              sama otomatis terkunci untuk menghindari duplikasi.
-            </p>
-            <div id="plan-need-mmu-chips" class="flex flex-wrap gap-1.5 mb-2.5">
-              <!-- Chips di-render otomatis via JS -->
-            </div>
-            <div class="flex items-center gap-2">
-              <input type="text" id="input_need_mmu"
-                placeholder="Terpilih: (Pilih chip unit MMU/MMT di atas atau ketik e.g. MMU 23, MMU 19)"
-                onchange="handleManualNeedMmuChange(this.value)"
-                class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 transition text-xs">
-              <input type="hidden" id="input_dth_supplier" value="0">
-              <button type="button" onclick="clearPlanNeedMmuSelection()"
-                class="px-3 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-slate-300 hover:border-rose-300 rounded-xl text-xs font-bold transition flex-shrink-0">
-                Reset Unit
-              </button>
-            </div>
+            <label class="block font-bold text-amber-950 flex items-center gap-1.5 mb-2">
+              <i class="ph-bold ph-truck text-amber-700 text-base"></i>
+              <span>15. Alokasi Supplier</span>
+            </label>
+            <select id="input_supplier"
+              class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition text-xs cursor-pointer">
+              <option value="PT DAHANA">PT DAHANA</option>
+              <option value="PT MNK-KMB">PT MNK-KMB</option>
+            </select>
           </div>
 
-          <!-- 16. Koordinat Lokasi Blasting (Latitude & Longitude) -->
+          <!-- 16. Alokasi Boundary DXF (Opsional) -->
           <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
               <label class="block font-bold text-slate-800 flex items-center gap-1.5">
-                <i class="ph-bold ph-map-pin text-red-600 text-base"></i>
-                <span>16. Koordinat Titik Blasting (Latitude & Longitude)</span>
-                <span class="text-xs font-normal text-slate-500">(Untuk plotting peta harian)</span>
+                <i class="ph-bold ph-polygon text-red-600 text-base"></i>
+                <span>16. Alokasi Boundary DXF</span>
+                <span class="text-xs font-normal text-slate-500">(Opsional - koordinat & buffer terisi otomatis)</span>
               </label>
-              <button type="button" onclick="openMapPickerModal('input_latitude', 'input_longitude')"
+              <button type="button" onclick="openDxfUploadModal()"
                 class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl border border-red-200 flex items-center gap-1.5 text-xs transition shadow-2xs self-start sm:self-auto">
-                <i class="ph-bold ph-map-trifold text-sm"></i> Pilih di Peta (Map Picker)
+                <i class="ph-bold ph-upload-simple"></i> Upload DXF
               </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <span class="text-xs font-bold text-slate-600 block mb-1">Latitude (Lintang)</span>
-                <input type="number" step="any" id="input_latitude" placeholder="Contoh: -2.154321"
-                  class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 transition text-xs">
+            <select id="input_boundary_select" onchange="handleBoundarySelectChange(this.value)"
+              class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 transition text-xs cursor-pointer">
+              <option value="">-- Pilih Boundary dari File DXF (Opsional) --</option>
+            </select>
+            <input type="hidden" id="input_geometry" value="">
+            <input type="hidden" id="input_latitude" value="">
+            <input type="hidden" id="input_longitude" value="">
+            <div id="selected-boundary-info-badge" class="mt-2 text-xs hidden flex items-center justify-between bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200"></div>
+
+            <!-- Interactive Visual Preview Map for Field 16 -->
+            <div id="field16-map-wrapper" class="mt-3 hidden rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-white">
+              <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
+                <span class="flex items-center gap-1.5"><i class="ph-bold ph-map-pin text-red-600"></i> Visualisasi Area & Radius Peledakan</span>
+                <span id="field16-map-contractor-tag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600"></span>
               </div>
-              <div>
-                <span class="text-xs font-bold text-slate-600 block mb-1">Longitude (Bujur)</span>
-                <input type="number" step="any" id="input_longitude" placeholder="Contoh: 115.654321"
-                  class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-slate-800 font-mono font-bold focus:outline-none focus:border-red-600 transition text-xs">
-              </div>
+              <div id="field16-map-container" class="w-full h-56 relative bg-slate-100"></div>
             </div>
           </div>
 
@@ -995,7 +953,7 @@
   <div id="modal-dxf-flow"
     class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5">
     <div
-      class="clean-card w-full max-w-6xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[94vh] flex flex-col bg-white">
+      class="clean-card w-full max-w-6xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-slate-200 h-[88vh] max-h-[720px] min-h-[580px] flex flex-col bg-white">
       
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 shrink-0">
@@ -1005,7 +963,7 @@
           </div>
           <div>
             <span class="text-[10px] font-black tracking-widest text-red-600 uppercase">SPATIAL TRANSFORM & BOUNDARIES</span>
-            <h3 class="text-base font-extrabold text-slate-900 leading-tight">Unggah & Beri Nama Boundary Peledakan (DXF)</h3>
+            <h3 class="text-base font-extrabold text-slate-900 leading-tight">Unggah & Namai Boundary Peledakan (DXF)</h3>
           </div>
         </div>
         <button type="button" onclick="closeDxfUploadModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition">
@@ -1021,7 +979,7 @@
             <i class="ph-bold ph-cloud-arrow-up text-3xl"></i>
           </div>
           <h4 class="text-sm font-extrabold text-slate-900">Pilih atau Drag & Drop File DXF</h4>
-          <p class="text-xs text-slate-500 mt-1">Sistem otomatis mendeteksi garis boundary peledakan dan mereproyeksi dari koordinat Tutupan ke WGS84.</p>
+          <p class="text-xs text-slate-500 mt-1">Unggah file DXF boundary untuk menampilkan area dan radius peledakan pada peta.</p>
           <div class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl shadow-md glow-red flex items-center gap-1.5">
             <i class="ph-bold ph-file-plus"></i> Browse File .DXF
           </div>
@@ -1029,7 +987,7 @@
         </div>
         <div class="mt-4 text-[11px] text-slate-400 font-mono flex items-center gap-2">
           <i class="ph-bold ph-info text-blue-500"></i>
-          <span>Format didukung: AutoCAD DXF. Mengambil layer boundary peledakan.</span>
+          <span>Format didukung: AutoCAD DXF (R12 - 2018). Sistem otomatis mengambil layer boundary peledakan.</span>
         </div>
       </div>
 
@@ -1038,7 +996,7 @@
         <div class="flex items-center justify-between pb-3 shrink-0">
           <div>
             <span class="text-xs font-bold text-slate-800" id="dxf-preview-filename">File DXF</span>
-            <p class="text-[11px] text-slate-500">Beri nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
+            <p class="text-[11px] text-slate-500">Ketikkan nama lokasi blasting untuk masing-masing boundary di bawah ini.</p>
           </div>
           <button type="button" onclick="document.getElementById('dxf-file-input').click()"
             class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition flex items-center gap-1">
@@ -1047,18 +1005,18 @@
         </div>
 
         <!-- Split View: Left Map Preview, Right Table -->
-        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+        <div class="flex-1 min-h-[380px] grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden my-1">
           
           <!-- Mini Leaflet Map Preview -->
-          <div class="lg:col-span-5 h-48 lg:h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
-            <div id="dxfPreviewMapContainer" class="w-full h-full"></div>
-            <div class="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md border border-slate-200 text-[10px] font-bold text-slate-700">
+          <div class="lg:col-span-5 h-[360px] lg:h-full min-h-[340px] rounded-xl overflow-hidden border border-slate-200 shadow-inner relative flex flex-col">
+            <div id="dxfPreviewMapContainer" class="w-full h-full min-h-[340px]"></div>
+            <div class="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md border border-slate-200 text-[10px] font-bold text-slate-700 shadow-xs">
               Klik boundary di peta untuk menamai
             </div>
           </div>
 
           <!-- Naming Form Table -->
-          <div class="lg:col-span-7 flex flex-col min-h-0 overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
+          <div class="lg:col-span-7 flex flex-col h-[360px] lg:h-full min-h-[340px] overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
             <div class="flex-1 overflow-auto custom-scrollbar">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-100 uppercase font-black text-[10px] tracking-wider text-slate-700 sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
@@ -1066,7 +1024,7 @@
                     <th class="p-2 text-center w-10">No</th>
                     <th class="p-2 w-24">Handle</th>
                     <th class="p-2">Nama Boundary <span class="text-red-600">*</span></th>
-                    <th class="p-2 w-52">Tautkan ke Plan (Revisi)</th>
+                    <th class="p-2 w-52">Tautkan ke Rencana Blasting</th>
                     <th class="p-2 text-center w-14">Peta</th>
                   </tr>
                 </thead>
@@ -1092,7 +1050,7 @@
             <button type="button" id="btn-save-dxf-boundaries" onclick="confirmSaveDxfBoundaries()"
               class="px-5 py-2 bg-red-600 text-white font-extrabold rounded-xl text-xs shadow-md glow-red transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
               disabled>
-              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan Boundary
+              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan & Terapkan Boundary
             </button>
           </div>
         </div>
@@ -1121,7 +1079,7 @@
       <div class="flex items-center justify-between py-3">
         <button onclick="addBulkPreviewRow()"
           class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 flex items-center gap-1">
-          <i class="ph-bold ph-plus"></i> Tambah Baris
+          <i class="ph-bold ph-plus"></i> Tambah Baris Manual
         </button>
         <span class="text-xs text-slate-500 font-medium" id="bulk-row-count-tag">0 Baris</span>
       </div>
@@ -1148,9 +1106,8 @@
               <th class="p-2 border">Geometri</th>
               <th class="p-2 border bg-red-50 text-red-900">Pengawas Kont.</th>
               <th class="p-2 border">Remark</th>
-              <th class="p-2 border bg-amber-50 text-amber-900">Need MMU/MMT</th>
-              <th class="p-2 border bg-cyan-50 text-cyan-900">Latitude</th>
-              <th class="p-2 border bg-cyan-50 text-cyan-900">Longitude</th>
+              <th class="p-2 border bg-amber-50 text-amber-900">Supplier</th>
+              <th class="p-2 border bg-emerald-50 text-emerald-950 min-w-[210px]">Pilih Boundary DXF (Opsional)</th>
               <th class="p-2 border text-center">Aksi</th>
             </tr>
           </thead>
@@ -1190,7 +1147,7 @@
         </button>
       </div>
 
-      <form id="form-edit-plan" onsubmit="handleEditPlanSubmit(event)" class="space-y-4 text-xs">
+      <form id="form-edit-plan" onsubmit="handleEditPlanSubmit(event)" novalidate class="space-y-4 text-xs">
         <input type="hidden" id="edit_uuid">
 
         <!-- Fields Container rendered dynamically based on user role -->
@@ -1202,7 +1159,7 @@
           <div class="flex items-center gap-2">
             <button type="button" id="btn-modal-clear-supplier" onclick="handleClearSupplierClaim()"
               class="px-3 py-2 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold rounded-xl border border-amber-200 hidden items-center gap-1.5 text-xs transition">
-              <i class="ph-bold ph-x-circle"></i> Hapus Supplier
+              <i class="ph-bold ph-x-circle"></i> Lepas Slot Supplier
             </button>
             <button type="button" id="btn-modal-delete-plan" onclick="handleDeletePlanFromModal()"
               class="px-3 py-2 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white font-bold rounded-xl border border-rose-200 hidden items-center gap-1.5 text-xs transition">
@@ -1263,7 +1220,7 @@
           </div>
 
           <div class="md:col-span-2 bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 space-y-2">
-            <label class="block font-extrabold text-amber-950">Unit MMU / MMT Ready :</label>
+            <label class="block font-extrabold text-amber-950">Unit MMU / MMT Ready (Klik untuk Toggle Unit):</label>
             <div id="edit-sup-mmu-chips" class="flex flex-wrap gap-1.5"></div>
             <input type="text" id="edit_sup_mmu_list" readonly required
               class="w-full bg-white border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-900 text-xs">
@@ -1394,7 +1351,7 @@
             </button>
             <button type="submit" id="btn-save-edit-supplier"
               class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl shadow-md glow-amber transition flex items-center gap-1.5">
-              <i class="ph-bold ph-check"></i> Simpan Perubahan
+              <i class="ph-bold ph-check"></i> Simpan Perubahan Kesiapan
             </button>
           </div>
         </div>

@@ -234,7 +234,7 @@ function parseDxfBlastingBoundaries(fileContent, fileName = 'boundaries.dxf', fo
   }
 
   if (!dxfData || !dxfData.entities || dxfData.entities.length === 0) {
-    throw new Error('Tidak ditemukan boundaries dalam file DXF ini.');
+    throw new Error('Tidak ditemukan entitas gambar dalam file DXF ini.');
   }
 
   // 1. Tentukan Kontraktor Mitra Kerja
@@ -796,9 +796,16 @@ function initDxfPreviewMap() {
     previewMapInstance.fitBounds(previewPolygonsLayer.getBounds(), { padding: [30, 30], maxZoom: 16 });
   }
 
-  setTimeout(() => {
-    if (previewMapInstance) previewMapInstance.invalidateSize();
-  }, 200);
+  [100, 250, 500].forEach(ms => {
+    setTimeout(() => {
+      if (previewMapInstance) {
+        previewMapInstance.invalidateSize();
+        if (previewPolygonsLayer && previewPolygonsLayer.getLayers().length > 0) {
+          previewMapInstance.fitBounds(previewPolygonsLayer.getBounds(), { padding: [30, 30], maxZoom: 16 });
+        }
+      }
+    }, ms);
+  });
 }
 
 function handleDxfNameInput(index, value) {
@@ -1054,7 +1061,7 @@ function updateBoundaryUIState() {
   const meta = getLocalBoundaryMetadata();
   const contractorName = meta ? meta.kontraktor : getActiveContractor();
 
-  // Update Status Banner (Hijau jika ada DXF, Biru/Slate informatif jika belum ada DXF)
+  // Update Status Banner
   if (statusBanner) {
     if (hasBoundaries) {
       statusBanner.className = 'mb-5 p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/90 text-emerald-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs';
@@ -1074,42 +1081,41 @@ function updateBoundaryUIState() {
         </div>
         <button type="button" onclick="openDxfUploadModal()"
           class="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg border border-emerald-300 text-xs transition flex items-center gap-1.5 self-start sm:self-auto shadow-2xs cursor-pointer">
-          <i class="ph-bold ph-pencil-simple"></i> Upload Ulang / Revisi DXF
+          <i class="ph-bold ph-pencil-simple"></i> Kelola File DXF
         </button>
       `;
     } else {
-      statusBanner.className = 'mb-5 p-3.5 rounded-xl border border-sky-200 bg-sky-50/80 text-sky-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs';
+      statusBanner.className = 'mb-5 p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs';
       statusBanner.innerHTML = `
         <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+          <div class="w-7 h-7 rounded-lg bg-slate-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
             <i class="ph-bold ph-info"></i>
           </div>
           <div>
-            <span class="font-extrabold tracking-wide uppercase text-[10px] text-sky-800 block">
-              DXF BELUM DIUNGGAH 
+            <span class="font-extrabold tracking-wide uppercase text-[10px] text-slate-700 block">
+              FILE DXF BELUM DIUNGGAH
             </span>
-            <span class="font-bold text-slate-800">
-              File DXF dapat diunggah sebelum, sesudah, atau kapan saja.
+            <span class="font-bold text-slate-700">
+              Unggah file DXF boundary untuk menampilkan area dan radius peledakan pada peta.
             </span>
           </div>
         </div>
         <button type="button" onclick="openDxfUploadModal()"
-          class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 self-start sm:self-auto shadow-2xs cursor-pointer">
+          class="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 self-start sm:self-auto shadow-2xs cursor-pointer">
           <i class="ph-bold ph-upload-simple"></i> Upload File DXF (.dxf)
         </button>
       `;
     }
   }
 
-  // Update Dropdown Lokasi jika ada boundary
-  if (selectLokasi) {
+  // Update Dropdown Boundary pada Form Kontraktor (Field 16)
+  const selectBoundary = document.getElementById('input_boundary_select') || document.getElementById('input_lokasi_select');
+  if (selectBoundary) {
     if (hasBoundaries) {
       const allocatedNames = getAllocatedBoundaryNames(targetDate, (typeof currentEditingItem !== 'undefined' && currentEditingItem) ? currentEditingItem.uuid : null);
-      const currentValue = selectLokasi.value;
+      const currentValue = selectBoundary.value;
 
-      let optHtml = '<option value="" disabled selected>-- Pilih Lokasi dari Boundary DXF --</option>';
-      let availableCount = 0;
-
+      let optHtml = '<option value="">-- Pilih Boundary dari File DXF (Opsional) --</option>';
       boundaries.forEach(b => {
         const isAllocated = allocatedNames.has(String(b.name || '').trim().toLowerCase());
         const isCurrentlySelected = currentValue && (String(currentValue).trim().toLowerCase() === String(b.name).trim().toLowerCase());
@@ -1117,37 +1123,151 @@ function updateBoundaryUIState() {
         if (isAllocated && !isCurrentlySelected) {
           optHtml += `<option value="${escapeXmlAttr(b.name)}" disabled class="text-slate-400 bg-slate-100 italic">[TERPAKAI] ${escapeXmlAttr(b.name)} (#${b.index})</option>`;
         } else {
-          availableCount++;
-          optHtml += `<option value="${escapeXmlAttr(b.name)}" ${isCurrentlySelected ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index} - ${b.vertexCount} pts)</option>`;
+          optHtml += `<option value="${escapeXmlAttr(b.name)}" ${isCurrentlySelected ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index} - ${b.vertexCount} titik)</option>`;
         }
       });
 
-      selectLokasi.innerHTML = optHtml;
-      selectLokasi.disabled = false;
-
-      // Jika belum di mode manual, gunakan select
-      if (!isManualLokasiMode) {
-        toggleLokasiInputMode(false);
-      }
+      selectBoundary.innerHTML = optHtml;
+      selectBoundary.disabled = false;
     } else {
-      selectLokasi.innerHTML = '<option value="" disabled selected>Belum ada DXF aktif</option>';
-      selectLokasi.disabled = true;
-      // Otomatis aktifkan mode manual jika belum ada DXF
-      toggleLokasiInputMode(true);
+      selectBoundary.innerHTML = '<option value="">-- Belum ada file DXF yang diunggah (Opsional) --</option>';
+      selectBoundary.disabled = false;
     }
   }
 }
 
+let field16MapInstance = null;
+let field16LayerGroup = null;
+
+function renderField16PreviewMap(bound) {
+  const wrapper = document.getElementById('field16-map-wrapper');
+  const container = document.getElementById('field16-map-container');
+  const tag = document.getElementById('field16-map-contractor-tag');
+  if (!wrapper || !container) return;
+
+  wrapper.classList.remove('hidden');
+
+  const contractor = bound.kontraktor || (typeof currentUser !== 'undefined' && currentUser && currentUser.company) || 'SIS';
+  const bufferConfigs = getContractorBufferConfig(contractor);
+
+  if (tag) {
+    const bufferLabels = bufferConfigs.map(c => c.dist + 'm').join(', ');
+    tag.innerText = `${contractor} (Radius: ${bufferLabels})`;
+  }
+
+  if (!field16MapInstance) {
+    field16MapInstance = L.map('field16-map-container', {
+      zoomControl: true,
+      attributionControl: false
+    });
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    }).addTo(field16MapInstance);
+    field16LayerGroup = L.featureGroup().addTo(field16MapInstance);
+  }
+
+  if (field16LayerGroup) {
+    field16LayerGroup.clearLayers();
+  }
+
+  // Tambahkan Buffer Lingkaran / Poligon Radius Aman
+  if (typeof turf !== 'undefined' && Array.isArray(bound.coords) && bound.coords.length > 2) {
+    try {
+      const ring = [...bound.coords];
+      if (ring[0][0] !== ring[ring.length - 1][0] || ring[0][1] !== ring[ring.length - 1][1]) {
+        ring.push([ring[0][0], ring[0][1]]);
+      }
+      const geojsonPoly = {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [ring] }
+      };
+
+      bufferConfigs.forEach(cfg => {
+        const buf = turf.buffer(geojsonPoly, cfg.dist, { units: 'meters' });
+        if (buf && buf.geometry && buf.geometry.coordinates) {
+          const coordsArray = buf.geometry.type === 'MultiPolygon'
+            ? buf.geometry.coordinates[0][0]
+            : buf.geometry.coordinates[0];
+
+          if (Array.isArray(coordsArray) && coordsArray.length > 0) {
+            const bufLatLngs = coordsArray.map(([bLon, bLat]) => [bLat, bLon]);
+            const bufPoly = L.polygon(bufLatLngs, {
+              color: cfg.color,
+              weight: 1.5,
+              dashArray: cfg.dash || null,
+              opacity: 0.85,
+              fillColor: cfg.color,
+              fillOpacity: cfg.fillOpacity || 0.1,
+              interactive: true
+            });
+
+            bufPoly.bindTooltip(`
+              <span class="font-sans text-[10px] font-bold text-slate-800">
+                ${cfg.label} (${cfg.dist}m)
+              </span>
+            `, { sticky: true });
+
+            field16LayerGroup.addLayer(bufPoly);
+          }
+        }
+      });
+    } catch (bufErr) {
+      console.warn('Field 16 buffer error:', bufErr);
+    }
+  }
+
+  // Tambahkan Poligon Boundary
+  const latlngs = bound.coords.map(([lon, lat]) => [lat, lon]);
+  const boundaryPoly = L.polygon(latlngs, {
+    color: '#dc2626',
+    weight: 2.5,
+    opacity: 0.95,
+    fillColor: '#ef4444',
+    fillOpacity: 0.35
+  });
+
+  boundaryPoly.bindTooltip(`
+    <div class="font-sans text-xs font-black text-red-600">
+      ${escapeXmlAttr(bound.name)} (#${bound.index})
+    </div>
+  `, { direction: 'center', permanent: true, className: 'bg-white/95 px-1.5 py-0.5 rounded shadow text-xs font-black border border-red-500' });
+
+  field16LayerGroup.addLayer(boundaryPoly);
+
+  if (field16LayerGroup.getLayers().length > 0) {
+    field16MapInstance.fitBounds(field16LayerGroup.getBounds(), { padding: [25, 25], maxZoom: 17 });
+  }
+
+  [100, 250, 500].forEach(ms => {
+    setTimeout(() => {
+      if (field16MapInstance) {
+        field16MapInstance.invalidateSize();
+        if (field16LayerGroup && field16LayerGroup.getLayers().length > 0) {
+          field16MapInstance.fitBounds(field16LayerGroup.getBounds(), { padding: [25, 25], maxZoom: 17 });
+        }
+      }
+    }, ms);
+  });
+}
+window.renderField16PreviewMap = renderField16PreviewMap;
+
+function clearField16PreviewMap() {
+  const wrapper = document.getElementById('field16-map-wrapper');
+  if (wrapper) wrapper.classList.add('hidden');
+  if (field16LayerGroup) field16LayerGroup.clearLayers();
+}
+window.clearField16PreviewMap = clearField16PreviewMap;
+
 function handleBoundarySelectChange(selectedName) {
   const bound = findBoundaryByName(selectedName);
-  const inputHiddenLokasi = document.getElementById('input_lokasi');
   const inputGeometry = document.getElementById('input_geometry');
   const inputLat = document.getElementById('input_latitude');
   const inputLng = document.getElementById('input_longitude');
   const badgeInfo = document.getElementById('selected-boundary-info-badge');
 
   if (bound) {
-    if (inputHiddenLokasi) inputHiddenLokasi.value = bound.name;
     if (inputGeometry) inputGeometry.value = bound.wkt;
     if (inputLat) inputLat.value = bound.centroid.lat;
     if (inputLng) inputLng.value = bound.centroid.lng;
@@ -1157,15 +1277,18 @@ function handleBoundarySelectChange(selectedName) {
       badgeInfo.innerHTML = `
         <span class="text-emerald-700 font-bold flex items-center gap-1">
           <i class="ph-bold ph-check-circle"></i>
-          Polygon Terpilih (#${bound.index}): ${bound.vertexCount} Titik Koordinat (${bound.kontraktor || 'Mitra'})
+          Boundary Terpilih (#${bound.index}): ${bound.vertexCount} Titik Koordinat (${bound.kontraktor || 'Mitra'})
         </span>
-        <span class="text-slate-400 font-mono text-[10px]">Centroid: ${bound.centroid.lat}, ${bound.centroid.lng}</span>
+        <span class="text-slate-500 font-mono text-[10px]">Centroid: ${bound.centroid.lat}, ${bound.centroid.lng}</span>
       `;
     }
+    renderField16PreviewMap(bound);
   } else {
-    if (inputHiddenLokasi) inputHiddenLokasi.value = selectedName || '';
     if (inputGeometry) inputGeometry.value = '';
+    if (inputLat) inputLat.value = '';
+    if (inputLng) inputLng.value = '';
     if (badgeInfo) badgeInfo.classList.add('hidden');
+    clearField16PreviewMap();
   }
 }
 

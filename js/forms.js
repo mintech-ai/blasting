@@ -118,14 +118,14 @@ async function handleKontraktorFormSubmit(event) {
     }
   }
 
+  const supplierVal = (document.getElementById('input_supplier') ? document.getElementById('input_supplier').value : '') || 'PT DAHANA';
   const needMmuInput = document.getElementById('input_need_mmu') ? document.getElementById('input_need_mmu').value.trim() : '';
   const targetDate = document.getElementById('input_tanggal').value;
-  const dthSupCalculated = Number(document.getElementById('input_dth_supplier') ? document.getElementById('input_dth_supplier').value : 0) || calculateMmuTotalDth(needMmuInput);
 
-  // Ambil lokasi dan geometri boundary (Fleksibel: bisa dari DXF atau ketik manual)
-  let lokasiVal = (document.getElementById('input_lokasi')?.value || document.getElementById('input_lokasi_manual')?.value || document.getElementById('input_lokasi_select')?.value || '').trim();
+  // Ambil lokasi (manual) dan alokasi boundary DXF (opsional dari Field 16)
+  let lokasiVal = (document.getElementById('input_lokasi')?.value || '').trim();
   if (!lokasiVal) {
-    Swal.fire({ icon: 'warning', title: 'Pilih / Isi Lokasi', text: 'Nama lokasi blasting wajib diisi (bisa pilih dari DXF atau ketik manual)!' });
+    Swal.fire({ icon: 'warning', title: 'Pilih / Isi Lokasi', text: 'Nama lokasi blasting wajib diisi!' });
     return;
   }
 
@@ -145,11 +145,12 @@ async function handleKontraktorFormSubmit(event) {
   // Jika memilih boundary DXF, validasi 1:1 Alokasi Boundary pada tanggal yang sama
   if (geomVal && typeof getAllocatedBoundaryNames === 'function') {
     const allocated = getAllocatedBoundaryNames(targetDate, (typeof currentEditingItem !== 'undefined' && currentEditingItem) ? currentEditingItem.uuid : null);
-    if (allocated.has(lokasiVal.toLowerCase())) {
+    const chosenBoundaryName = document.getElementById('input_boundary_select')?.value || lokasiVal;
+    if (allocated.has(chosenBoundaryName.toLowerCase())) {
       Swal.fire({
         icon: 'warning',
         title: 'Boundary Sudah Terpakai!',
-        text: `Boundary "${lokasiVal}" sudah dialokasikan ke plan peledakan lain pada tanggal ${targetDate}. Setiap boundary hanya dapat dialokasikan ke 1 plan!`
+        text: `Boundary "${chosenBoundaryName}" sudah dialokasikan ke plan peledakan lain pada tanggal ${targetDate}. Setiap boundary hanya dapat dialokasikan ke 1 plan!`
       });
       return;
     }
@@ -177,9 +178,10 @@ async function handleKontraktorFormSubmit(event) {
     desa: document.getElementById('input_desa').value,
     matrix: document.getElementById('input_matrix').value,
     geometri: document.getElementById('input_geometri').value,
+    supplier: supplierVal,
     unit_mmu: needMmuInput,
     need_mmu: needMmuInput,
-    dth_supplier: dthSupCalculated,
+    dth_supplier: 0,
     latitude: latVal,
     longitude: lngVal,
     geometry: geomVal
@@ -244,6 +246,7 @@ function resetKontraktorForm() {
   if (document.getElementById('input_geometry')) document.getElementById('input_geometry').value = '';
   const badgeInfo = document.getElementById('selected-boundary-info-badge');
   if (badgeInfo) badgeInfo.classList.add('hidden');
+  if (typeof clearField16PreviewMap === 'function') clearField16PreviewMap();
   selectedPlanNeedMmus = [];
   renderPlanNeedMmuChips();
   if (typeof updateBoundaryUIState === 'function') updateBoundaryUIState();
@@ -699,19 +702,30 @@ function handleExcelFileSelect(event) {
         const geometriVal = getValFlexible(row, 'GEOMETRI (B x S)', 'geometribxs', 'geometri');
         const pengawasKontraktorVal = getValFlexible(row, 'NAMA PENGAWAS KONTRAKTOR', 'namapengawaskontraktor', 'pengawas_kontraktor', 'pengawaskontraktor', 'pengawas');
 
-        const prioritasVal = getValFlexible(row, 'PRIORITAS', 'prioritas') || 'Prioritas 1';
+        let supplierVal = getValFlexible(row, 'SUPPLIER', 'supplier', 'mitra_supplier', 'nama_supplier');
+        if (!supplierVal) {
+          const rawNeedMmu = getValFlexible(row, 'NEED MMU/MMT', 'need_mmu_mmt', 'need_mmu', 'mmu');
+          if (rawNeedMmu && (String(rawNeedMmu).toUpperCase().includes('MNK') || String(rawNeedMmu).toUpperCase().includes('KMB'))) {
+            supplierVal = 'PT MNK-KMB';
+          } else {
+            supplierVal = 'PT DAHANA';
+          }
+        } else {
+          supplierVal = (String(supplierVal).toUpperCase().includes('MNK') || String(supplierVal).toUpperCase().includes('KMB')) ? 'PT MNK-KMB' : 'PT DAHANA';
+        }
 
-        const needMmuVal = getValFlexible(row, 'NEED MMU/MMT', 'need_mmu_mmt', 'need_mmu', 'needmmu', 'needmmt', 'mmu') || '';
-        const dthSupVal = calculateMmuTotalDth(needMmuVal);
+        const prioritasVal = getValFlexible(row, 'PRIORITAS', 'prioritas') || 'Prioritas 1';
 
         let latVal = getValFlexible(row, 'LATITUDE', 'latitude', 'lat');
         let longVal = getValFlexible(row, 'LONGITUDE', 'longitude', 'long', 'lng');
         let geomVal = '';
+        let boundNameVal = '';
 
         // Otomatis tautkan dengan boundary DXF jika nama lokasi cocok
         if (typeof findBoundaryByName === 'function') {
           const matchedBound = findBoundaryByName(lokasiVal);
           if (matchedBound) {
+            boundNameVal = matchedBound.name;
             geomVal = matchedBound.wkt;
             latVal = matchedBound.centroid.lat;
             longVal = matchedBound.centroid.lng;
@@ -736,9 +750,11 @@ function handleExcelFileSelect(event) {
           geometri: geometriVal,
           pengawas_kontraktor: pengawasKontraktorVal,
           remark: remarkVal,
-          unit_mmu: needMmuVal,
-          need_mmu: needMmuVal,
-          dth_supplier: dthSupVal,
+          supplier: supplierVal,
+          unit_mmu: '',
+          need_mmu: '',
+          dth_supplier: 0,
+          selectedBoundaryName: boundNameVal,
           latitude: latVal,
           longitude: longVal,
           geometry: geomVal
@@ -790,11 +806,13 @@ function renderBulkPreviewTable() {
 
   let html = '';
   bulkPreviewRows.forEach((row, idx) => {
-    // Bangun opsi select boundary DXF
-    let boundaryOptions = `<option value="" disabled ${!row.lokasi ? 'selected' : ''}>-- Pilih Boundary DXF --</option>`;
+    // Bangun opsi select boundary DXF (Opsional)
+    const activeBound = row.selectedBoundaryName || '';
+    let boundaryOptions = `<option value="" ${!activeBound ? 'selected' : ''}>-- Tanpa Boundary (Opsional) --</option>`;
     validBoundaries.forEach(b => {
-      const isSelected = row.lokasi && (String(row.lokasi).trim().toLowerCase() === String(b.name).trim().toLowerCase());
-      boundaryOptions += `<option value="${escapeXmlAttr(b.name)}" ${isSelected ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index})</option>`;
+      const isSelected = activeBound && (String(activeBound).trim().toLowerCase() === String(b.name).trim().toLowerCase());
+      const vCount = b.vertexCount || (b.coords ? b.coords.length : 0);
+      boundaryOptions += `<option value="${escapeXmlAttr(b.name)}" ${isSelected ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index}${vCount ? ` - ${vCount} titik` : ''})</option>`;
     });
 
     html += `
@@ -802,10 +820,8 @@ function renderBulkPreviewTable() {
         <td class="p-1.5"><input type="date" value="${row.tanggal}" onchange="updateBulkRow(${idx}, 'tanggal', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs font-mono font-bold"></td>
         <td class="p-1.5"><input type="text" value="${row.kontraktor}" onchange="updateBulkRow(${idx}, 'kontraktor', this.value)" class="w-24 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs font-bold"></td>
         <td class="p-1.5">
-          <select onchange="updateBulkRowBoundary(${idx}, this.value)"
-            class="w-40 bg-white border ${row.geometry ? 'border-emerald-400 bg-emerald-50/30' : 'border-red-400 bg-red-50/30'} rounded px-1.5 py-1 text-xs font-bold text-slate-900 cursor-pointer">
-            ${boundaryOptions}
-          </select>
+          <input type="text" value="${escapeXmlAttr(row.lokasi || '')}" onchange="updateBulkRowLokasi(${idx}, this.value)"
+            class="w-36 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs font-bold text-slate-900" placeholder="Lokasi...">
         </td>
         <td class="p-1.5">
           <select onchange="updateBulkRow(${idx}, 'prioritas', this.value)" class="w-24 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
@@ -839,9 +855,18 @@ function renderBulkPreviewTable() {
         <td class="p-1.5"><input type="text" value="${row.geometri}" onchange="updateBulkRow(${idx}, 'geometri', this.value)" class="w-20 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs font-mono"></td>
         <td class="p-1.5 bg-red-50/50"><input type="text" value="${row.pengawas_kontraktor || ''}" onchange="updateBulkRow(${idx}, 'pengawas_kontraktor', this.value)" class="w-32 bg-white border border-red-300 rounded px-1.5 py-1 text-xs font-semibold text-slate-900" placeholder="Pengawas..."></td>
         <td class="p-1.5"><input type="text" value="${row.remark || ''}" onchange="updateBulkRow(${idx}, 'remark', this.value)" class="w-32 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs" placeholder="Remark..."></td>
-        <td class="p-1.5 bg-amber-50/40"><input type="text" value="${row.need_mmu || ''}" onchange="updateBulkRowMmu(${idx}, this.value)" placeholder="MMU 23, MMU 19" class="w-28 bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-amber-950"></td>
-        <td class="p-1.5 bg-cyan-50/30"><input type="number" step="any" value="${row.latitude || ''}" onchange="updateBulkRow(${idx}, 'latitude', this.value)" class="w-24 bg-white border border-cyan-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-slate-800" placeholder="-2.12345"></td>
-        <td class="p-1.5 bg-cyan-50/30"><input type="number" step="any" value="${row.longitude || ''}" onchange="updateBulkRow(${idx}, 'longitude', this.value)" class="w-24 bg-white border border-cyan-300 rounded px-1.5 py-1 text-xs font-mono font-bold text-slate-800" placeholder="115.54321"></td>
+        <td class="p-1.5 bg-amber-50/40">
+          <select onchange="updateBulkRow(${idx}, 'supplier', this.value)" class="w-28 bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-bold text-amber-950">
+            <option value="PT DAHANA" ${String(row.supplier || '').toUpperCase().includes('DAHANA') ? 'selected' : ''}>PT DAHANA</option>
+            <option value="PT MNK-KMB" ${String(row.supplier || '').toUpperCase().includes('MNK') || String(row.supplier || '').toUpperCase().includes('KMB') ? 'selected' : ''}>PT MNK-KMB</option>
+          </select>
+        </td>
+        <td class="p-1.5 bg-emerald-50/40">
+          <select onchange="updateBulkRowBoundarySelect(${idx}, this.value)"
+            class="w-full min-w-[190px] bg-white border border-emerald-300 rounded px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600">
+            ${boundaryOptions}
+          </select>
+        </td>
         <td class="p-1.5 text-center">
           <button onclick="removeBulkRow(${idx})" class="p-1 text-red-600 hover:bg-red-50 rounded" title="Hapus Baris"><i class="ph-bold ph-trash text-base"></i></button>
         </td>
@@ -851,21 +876,58 @@ function renderBulkPreviewTable() {
   tbody.innerHTML = html;
 }
 
-function updateBulkRowBoundary(index, boundaryName) {
-  if (bulkPreviewRows[index] && typeof findBoundaryByName === 'function') {
-    const bound = findBoundaryByName(boundaryName);
-    if (bound) {
-      bulkPreviewRows[index].lokasi = bound.name;
-      bulkPreviewRows[index].geometry = bound.wkt;
-      bulkPreviewRows[index].latitude = bound.centroid.lat;
-      bulkPreviewRows[index].longitude = bound.centroid.lng;
+function updateBulkRowLokasi(index, val) {
+  if (bulkPreviewRows[index]) {
+    const trimmed = String(val || '').trim();
+    bulkPreviewRows[index].lokasi = trimmed;
+    if (typeof findBoundaryByName === 'function') {
+      const bound = findBoundaryByName(trimmed);
+      if (bound) {
+        bulkPreviewRows[index].selectedBoundaryName = bound.name;
+        bulkPreviewRows[index].geometry = bound.wkt;
+        bulkPreviewRows[index].latitude = bound.centroid.lat;
+        bulkPreviewRows[index].longitude = bound.centroid.lng;
+        renderBulkPreviewTable();
+      }
+    }
+  }
+}
+window.updateBulkRowLokasi = updateBulkRowLokasi;
+
+function updateBulkRowBoundarySelect(index, boundaryName) {
+  if (bulkPreviewRows[index]) {
+    const trimmed = String(boundaryName || '').trim();
+    if (trimmed && typeof findBoundaryByName === 'function') {
+      const bound = findBoundaryByName(trimmed);
+      if (bound) {
+        bulkPreviewRows[index].selectedBoundaryName = bound.name;
+        bulkPreviewRows[index].geometry = bound.wkt;
+        bulkPreviewRows[index].latitude = bound.centroid.lat;
+        bulkPreviewRows[index].longitude = bound.centroid.lng;
+        if (!bulkPreviewRows[index].lokasi) {
+          bulkPreviewRows[index].lokasi = bound.name;
+        }
+      } else {
+        bulkPreviewRows[index].selectedBoundaryName = '';
+        bulkPreviewRows[index].geometry = '';
+        bulkPreviewRows[index].latitude = '';
+        bulkPreviewRows[index].longitude = '';
+      }
     } else {
-      bulkPreviewRows[index].lokasi = boundaryName;
+      bulkPreviewRows[index].selectedBoundaryName = '';
       bulkPreviewRows[index].geometry = '';
+      bulkPreviewRows[index].latitude = '';
+      bulkPreviewRows[index].longitude = '';
     }
     renderBulkPreviewTable();
   }
 }
+window.updateBulkRowBoundarySelect = updateBulkRowBoundarySelect;
+
+function updateBulkRowBoundary(index, boundaryName) {
+  updateBulkRowBoundarySelect(index, boundaryName);
+}
+window.updateBulkRowBoundary = updateBulkRowBoundary;
 
 function updateBulkRow(index, field, value) {
   if (bulkPreviewRows[index]) {
@@ -894,13 +956,11 @@ function updateBulkRowNumber(index, field, value) {
 }
 
 function addBulkPreviewRow() {
-  const validBoundaries = (typeof getValidLocalBoundaries === 'function') ? getValidLocalBoundaries() : [];
-  const defaultBound = validBoundaries[0] || null;
-
+  const currentUser = getCurrentUser();
   bulkPreviewRows.push({
     tanggal: getWitaDateString(),
     kontraktor: currentUser ? currentUser.company : 'SIS',
-    lokasi: defaultBound ? defaultBound.name : '',
+    lokasi: '',
     prioritas: 'Prioritas 1',
     today_sleep: 'TODAY',
     inisiasi: 'RF',
@@ -914,11 +974,14 @@ function addBulkPreviewRow() {
     geometri: '8x8',
     pengawas_kontraktor: '',
     remark: '',
+    supplier: 'PT DAHANA',
+    unit_mmu: '',
     need_mmu: '',
     dth_supplier: 0,
-    latitude: defaultBound ? defaultBound.centroid.lat : '',
-    longitude: defaultBound ? defaultBound.centroid.lng : '',
-    geometry: defaultBound ? defaultBound.wkt : ''
+    selectedBoundaryName: '',
+    latitude: '',
+    longitude: '',
+    geometry: ''
   });
   renderBulkPreviewTable();
 }
@@ -933,6 +996,11 @@ async function submitBulkPreviewData() {
     Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Tidak ada data untuk disimpan!' });
     return;
   }
+
+  // Pastikan supplier terisi default jika kosong
+  bulkPreviewRows.forEach(r => {
+    if (!r.supplier) r.supplier = 'PT DAHANA';
+  });
 
   // Validasi 1: Setiap baris wajib memiliki nama lokasi
   const emptyLokasiIdx = bulkPreviewRows.findIndex(r => !String(r.lokasi || '').trim());
@@ -949,13 +1017,14 @@ async function submitBulkPreviewData() {
   const bulkSeen = new Map();
   for (let i = 0; i < bulkPreviewRows.length; i++) {
     if (bulkPreviewRows[i].geometry) {
-      const name = String(bulkPreviewRows[i].lokasi || '').trim().toLowerCase();
+      const boundKey = bulkPreviewRows[i].selectedBoundaryName || bulkPreviewRows[i].lokasi;
+      const name = String(boundKey || '').trim().toLowerCase();
       if (bulkSeen.has(name)) {
         const prevIdx = bulkSeen.get(name);
         Swal.fire({
           icon: 'warning',
           title: 'Duplikasi Alokasi Boundary',
-          text: `Boundary "${bulkPreviewRows[i].lokasi}" dipilih pada Baris #${prevIdx + 1} dan Baris #${i + 1}. Setiap boundary spasial hanya dapat dialokasikan ke 1 plan peledakan!`
+          text: `Boundary "${boundKey}" dipilih pada Baris #${prevIdx + 1} dan Baris #${i + 1}. Setiap boundary spasial hanya dapat dialokasikan ke 1 plan peledakan!`
         });
         return;
       }
@@ -970,12 +1039,13 @@ async function submitBulkPreviewData() {
         const r = bulkPreviewRows[i];
         const rDate = (typeof normalizeDateToYYYYMMDD === 'function') ? normalizeDateToYYYYMMDD(r.tanggal) : String(r.tanggal || '').slice(0, 10);
         const allocated = getAllocatedBoundaryNames(rDate);
-        const name = String(r.lokasi || '').trim().toLowerCase();
+        const boundKey = r.selectedBoundaryName || r.lokasi;
+        const name = String(boundKey || '').trim().toLowerCase();
         if (allocated.has(name)) {
           Swal.fire({
             icon: 'warning',
             title: 'Boundary Sudah Terpakai di Database',
-            text: `Boundary "${r.lokasi}" pada Baris #${i + 1} sudah dialokasikan ke plan lain pada tanggal ${rDate} di database. Harap alokasikan boundary yang belum terpakai!`
+            text: `Boundary "${boundKey}" pada Baris #${i + 1} sudah dialokasikan ke plan lain pada tanggal ${rDate} di database. Harap alokasikan boundary yang belum terpakai!`
           });
           return;
         }

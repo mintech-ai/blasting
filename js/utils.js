@@ -157,11 +157,15 @@ async function requestSecurityPin(actionDescription = 'melanjutkan tindakan ini'
     title: 'Verifikasi PIN Keamanan',
     html: `<p class="text-xs text-slate-500 mb-2">Masukkan PIN otorisasi (4 digit) untuk <b>${actionDescription}</b>:</p>`,
     input: 'password',
-    inputPlaceholder: 'PIN...',
+    inputValue: '',
+    inputPlaceholder: 'PIN',
     inputAttributes: {
       maxlength: '10',
       autocapitalize: 'off',
       autocorrect: 'off',
+      autocomplete: 'new-password',
+      'data-lpignore': 'true',
+      'data-form-type': 'other',
       style: 'text-align: center; letter-spacing: 0.3em; font-size: 1.25rem; font-family: monospace;'
     },
     showCancelButton: true,
@@ -173,6 +177,14 @@ async function requestSecurityPin(actionDescription = 'melanjutkan tindakan ini'
       popup: 'rounded-2xl',
       confirmButton: 'rounded-xl text-xs font-extrabold px-4 py-2.5',
       cancelButton: 'rounded-xl text-xs font-bold px-4 py-2.5'
+    },
+    didOpen: () => {
+      const input = Swal.getInput();
+      if (input) {
+        input.value = '';
+        input.setAttribute('autocomplete', 'new-password');
+        input.focus();
+      }
     },
     preConfirm: (inputPin) => {
       if (!inputPin) {

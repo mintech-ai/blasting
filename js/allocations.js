@@ -56,6 +56,165 @@ function openEditPlanModal(id) {
   }
 }
 
+function renderEditBoundaryOptions(item) {
+  const boundaries = (typeof getValidLocalBoundaries === 'function') ? getValidLocalBoundaries() : [];
+  let opts = '<option value="">-- Tanpa Boundary DXF / Sesuai Database --</option>';
+  const targetDate = item ? normalizeDateToYYYYMMDD(item.tanggal) : '';
+  const allocated = (typeof getAllocatedBoundaryNames === 'function') ? getAllocatedBoundaryNames(targetDate, item ? (item.uuid || item.id) : null) : new Set();
+  
+  boundaries.forEach(b => {
+    const isAllocated = allocated.has(String(b.name || '').trim().toLowerCase());
+    const isCurrent = item && (
+      (item.geometry && item.geometry === b.wkt) ||
+      (String(item.lokasi || '').trim().toLowerCase() === String(b.name || '').trim().toLowerCase())
+    );
+    if (isAllocated && !isCurrent) {
+      opts += `<option value="${escapeXmlAttr(b.name)}" disabled class="text-slate-400 bg-slate-100 italic">[TERPAKAI] ${escapeXmlAttr(b.name)} (#${b.index})</option>`;
+    } else {
+      opts += `<option value="${escapeXmlAttr(b.name)}" ${isCurrent ? 'selected' : ''}>${escapeXmlAttr(b.name)} (#${b.index} - ${b.vertexCount} titik)</option>`;
+    }
+  });
+  return opts;
+}
+
+let editField16MapInstance = null;
+let editField16LayerGroup = null;
+
+function renderEditField16Map(bound, fallbackContractor) {
+  const wrapper = document.getElementById('edit-field16-map-wrapper');
+  const container = document.getElementById('edit-field16-map-container');
+  const tag = document.getElementById('edit-field16-map-contractor-tag');
+  if (!wrapper || !container) return;
+
+  wrapper.classList.remove('hidden');
+
+  const contractor = bound.kontraktor || fallbackContractor || (typeof currentUser !== 'undefined' && currentUser && currentUser.company) || 'SIS';
+  const bufferConfigs = (typeof getContractorBufferConfig === 'function') ? getContractorBufferConfig(contractor) : [];
+
+  if (tag) {
+    const bufferLabels = bufferConfigs.map(c => c.dist + 'm').join(', ');
+    tag.innerText = `${contractor} (Radius: ${bufferLabels})`;
+  }
+
+  if (!editField16MapInstance) {
+    editField16MapInstance = L.map('edit-field16-map-container', {
+      zoomControl: true,
+      attributionControl: false
+    });
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    }).addTo(editField16MapInstance);
+    editField16LayerGroup = L.featureGroup().addTo(editField16MapInstance);
+  }
+
+  if (editField16LayerGroup) {
+    editField16LayerGroup.clearLayers();
+  }
+
+  if (typeof turf !== 'undefined' && Array.isArray(bound.coords) && bound.coords.length > 2) {
+    try {
+      const ring = [...bound.coords];
+      if (ring[0][0] !== ring[ring.length - 1][0] || ring[0][1] !== ring[ring.length - 1][1]) {
+        ring.push([ring[0][0], ring[0][1]]);
+      }
+      const geojsonPoly = {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [ring] }
+      };
+
+      bufferConfigs.forEach(cfg => {
+        const buf = turf.buffer(geojsonPoly, cfg.dist, { units: 'meters' });
+        if (buf && buf.geometry && buf.geometry.coordinates) {
+          const coordsArray = buf.geometry.type === 'MultiPolygon'
+            ? buf.geometry.coordinates[0][0]
+            : buf.geometry.coordinates[0];
+
+          if (Array.isArray(coordsArray) && coordsArray.length > 0) {
+            const bufLatLngs = coordsArray.map(([bLon, bLat]) => [bLat, bLon]);
+            const bufPoly = L.polygon(bufLatLngs, {
+              color: cfg.color,
+              weight: 1.5,
+              dashArray: cfg.dash || null,
+              opacity: 0.85,
+              fillColor: cfg.color,
+              fillOpacity: cfg.fillOpacity || 0.1,
+              interactive: true
+            });
+            bufPoly.bindTooltip(`
+              <span class="font-sans text-[10px] font-bold text-slate-800">
+                ${cfg.label} (${cfg.dist}m)
+              </span>
+            `, { sticky: true });
+            editField16LayerGroup.addLayer(bufPoly);
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('Edit Field 16 buffer error:', err);
+    }
+  }
+
+  const latlngs = bound.coords.map(([lon, lat]) => [lat, lon]);
+  const boundaryPoly = L.polygon(latlngs, {
+    color: '#dc2626',
+    weight: 2.5,
+    opacity: 0.95,
+    fillColor: '#ef4444',
+    fillOpacity: 0.35
+  });
+
+  boundaryPoly.bindTooltip(`
+    <div class="font-sans text-xs font-black text-red-600">
+      ${escapeXmlAttr(bound.name)} (#${bound.index})
+    </div>
+  `, { direction: 'center', permanent: true, className: 'bg-white/95 px-1.5 py-0.5 rounded shadow text-xs font-black border border-red-500' });
+
+  editField16LayerGroup.addLayer(boundaryPoly);
+
+  if (editField16LayerGroup.getLayers().length > 0) {
+    editField16MapInstance.fitBounds(editField16LayerGroup.getBounds(), { padding: [20, 20], maxZoom: 17 });
+  }
+
+  [100, 250, 500].forEach(ms => {
+    setTimeout(() => {
+      if (editField16MapInstance) {
+        editField16MapInstance.invalidateSize();
+        if (editField16LayerGroup && editField16LayerGroup.getLayers().length > 0) {
+          editField16MapInstance.fitBounds(editField16LayerGroup.getBounds(), { padding: [20, 20], maxZoom: 17 });
+        }
+      }
+    }, ms);
+  });
+}
+
+function clearEditField16Map() {
+  const wrapper = document.getElementById('edit-field16-map-wrapper');
+  if (wrapper) wrapper.classList.add('hidden');
+  if (editField16LayerGroup) editField16LayerGroup.clearLayers();
+}
+
+function handleEditBoundarySelectChange(boundaryName) {
+  const bound = (typeof findBoundaryByName === 'function') ? findBoundaryByName(boundaryName) : null;
+  const geomInput = document.getElementById('edit_geometry');
+  const latInput = document.getElementById('edit_latitude');
+  const lngInput = document.getElementById('edit_longitude');
+
+  if (bound) {
+    if (geomInput) geomInput.value = bound.wkt;
+    if (latInput) latInput.value = bound.centroid.lat;
+    if (lngInput) lngInput.value = bound.centroid.lng;
+    const kontEl = document.getElementById('edit_kontraktor');
+    const kontVal = kontEl ? kontEl.value : '';
+    renderEditField16Map(bound, kontVal);
+  } else {
+    if (geomInput) geomInput.value = '';
+    clearEditField16Map();
+  }
+}
+window.handleEditBoundarySelectChange = handleEditBoundarySelectChange;
+
 function renderEditModalFields(item) {
   const container = document.getElementById('edit-fields-container');
   if (!container) return;
@@ -78,7 +237,7 @@ function renderEditModalFields(item) {
           ${isUserOwner() ? `
           <div class="md:col-span-2">
             <label class="block font-bold text-slate-700 mb-1">Kontraktor Mitra Kerja</label>
-            <select id="edit_kontraktor" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
+            <select id="edit_kontraktor" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
               <option value="PT SIS" ${String(item.kontraktor || '').toUpperCase().includes('SIS') || !String(item.kontraktor || '').toUpperCase().includes('BUMA') ? 'selected' : ''}>PT SIS</option>
               <option value="PT BUMA" ${String(item.kontraktor || '').toUpperCase().includes('BUMA') ? 'selected' : ''}>PT BUMA</option>
             </select>
@@ -86,12 +245,12 @@ function renderEditModalFields(item) {
           ` : ''}
           <div>
             <label class="block font-bold text-slate-700 mb-1">Lokasi Blasting</label>
-            <input type="text" id="edit_lokasi" value="${item.lokasi || ''}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
+            <input type="text" id="edit_lokasi" value="${item.lokasi || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Prioritas</label>
-            <select id="edit_prioritas" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
+            <select id="edit_prioritas" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
               <option value="Prioritas 1" ${item.prioritas === 'Prioritas 1' ? 'selected' : ''}>Prioritas 1</option>
               <option value="Prioritas 2" ${item.prioritas === 'Prioritas 2' ? 'selected' : ''}>Prioritas 2</option>
             </select>
@@ -99,7 +258,7 @@ function renderEditModalFields(item) {
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Status Today/Sleep</label>
-            <select id="edit_today_sleep" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
+            <select id="edit_today_sleep" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
               <option value="TODAY" ${item.today_sleep === 'TODAY' ? 'selected' : ''}>TODAY</option>
               <option value="SLEEP" ${item.today_sleep === 'SLEEP' ? 'selected' : ''}>SLEEP</option>
               <option value="TIE UP" ${item.today_sleep === 'TIE UP' ? 'selected' : ''}>TIE UP</option>
@@ -111,7 +270,7 @@ function renderEditModalFields(item) {
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Inisiasi</label>
-            <select id="edit_inisiasi" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
+            <select id="edit_inisiasi" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
               <option value="RF" ${item.inisiasi === 'RF' ? 'selected' : ''}>RF</option>
               <option value="LIL" ${item.inisiasi === 'LIL' ? 'selected' : ''}>LIL</option>
             </select>
@@ -119,22 +278,22 @@ function renderEditModalFields(item) {
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Jam Masuk</label>
-            <input type="time" id="edit_jam_masuk" value="${formatExcelTime(item.jam_masuk || item.kondisi_jam_masuk)}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
+            <input type="time" id="edit_jam_masuk" value="${formatExcelTime(item.jam_masuk || item.kondisi_jam_masuk)}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Pengawas Kontraktor</label>
-            <input type="text" id="edit_pengawas_kontraktor" value="${item.pengawas_kontraktor || ''}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
+            <input type="text" id="edit_pengawas_kontraktor" value="${item.pengawas_kontraktor || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Jumlah Holes</label>
-            <input type="number" id="edit_jumlah_holes" value="${item.jumlah_holes || 0}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
+            <input type="number" id="edit_jumlah_holes" value="${item.jumlah_holes || 0}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Isian (Kg/Hole)</label>
-            <input type="number" id="edit_isian_kg" step="0.1" value="${item.isian_kg || 0}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-red-700">
+            <input type="number" id="edit_isian_kg" step="0.1" value="${item.isian_kg || 0}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-red-700">
           </div>
 
           <div>
@@ -144,26 +303,26 @@ function renderEditModalFields(item) {
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Matrix Isian</label>
-            <input type="text" id="edit_matrix" value="${item.matrix || ''}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
+            <input type="text" id="edit_matrix" value="${item.matrix || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">Geometri</label>
-            <input type="text" id="edit_geometri" value="${item.geometri || ''}" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
+            <input type="text" id="edit_geometri" value="${item.geometri || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1 flex items-center gap-1">
               <i class="ph-bold ph-signpost text-emerald-600"></i> Akses Masuk Lokasi
             </label>
-            <input type="text" id="edit_akses" value="${item.akses || ''}" placeholder="misal: Jl Hauling KM 12, Pintu 3..." required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
+            <input type="text" id="edit_akses" value="${item.akses || ''}" placeholder="misal: Jl Hauling KM 12, Pintu 3..." class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
           </div>
 
           <div>
             <label class="block font-bold text-slate-700 mb-1 flex items-center gap-1">
               <i class="ph-bold ph-warning-circle text-red-600"></i> Desa Terdampak Peledakan
             </label>
-            <input type="text" id="edit_desa" value="${item.desa || ''}" placeholder="misal: Desa Bata, Desa Bilas..." required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
+            <input type="text" id="edit_desa" value="${item.desa || ''}" placeholder="misal: Desa Bata, Desa Bilas..." class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
           </div>
 
           <div>
@@ -171,41 +330,41 @@ function renderEditModalFields(item) {
             <input type="text" id="edit_remark" value="${item.remark || ''}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-medium">
           </div>
 
-          <!-- Need MMU / MMT -->
-          <div class="col-span-1 md:col-span-2 bg-amber-50/50 p-3 rounded-xl border border-amber-200">
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block font-bold text-amber-950 text-xs flex items-center gap-1">
-                <i class="ph-bold ph-truck text-amber-700"></i> Need MMU / MMT (Alokasi Unit)
-              </label>
-              <span id="edit-display-need-mmu-dth" class="font-mono font-bold text-[11px] text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
-                Total DTH: ${(item.dth_supplier ? Number(item.dth_supplier) : calculateMmuTotalDth(item.need_mmu)).toFixed(2)} Ton
-              </span>
-            </div>
-            <input type="text" id="edit_need_mmu" value="${item.need_mmu || ''}"
-              oninput="handleEditNeedMmuInput(this.value)"
-              placeholder="Contoh: MMU 23, MMU 19 (Pisahkan koma jika > 1)" class="w-full bg-white border border-amber-300 rounded-xl p-2.5 font-mono font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600">
-            <input type="hidden" id="edit_dth_supplier" value="${item.dth_supplier || calculateMmuTotalDth(item.need_mmu)}">
+          <!-- Alokasi Supplier (Revisi: Kontraktor langsung memilih supplier) -->
+          <div class="col-span-1 md:col-span-2 bg-amber-50/50 p-3.5 rounded-xl border border-amber-200">
+            <label class="block font-bold text-amber-950 text-xs flex items-center gap-1.5 mb-1.5">
+              <i class="ph-bold ph-truck text-amber-700"></i> Alokasi Supplier
+            </label>
+            <select id="edit_supplier_choice" class="w-full bg-white border border-amber-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600">
+              <option value="PT DAHANA" ${String(item.supplier || '').toUpperCase().includes('DAHANA') ? 'selected' : ''}>PT DAHANA</option>
+              <option value="PT MNK-KMB" ${String(item.supplier || '').toUpperCase().includes('MNK') || String(item.supplier || '').toUpperCase().includes('KMB') ? 'selected' : ''}>PT MNK-KMB</option>
+            </select>
           </div>
 
-          <!-- Koordinat Blasting -->
-          <div class="col-span-1 md:col-span-2 bg-white p-3 rounded-xl border border-slate-300">
+          <!-- 16. Alokasi Boundary DXF (Opsional) -->
+          <div class="col-span-1 md:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-300">
             <div class="flex items-center justify-between mb-2">
               <label class="block font-bold text-slate-800 flex items-center gap-1.5">
-                <i class="ph-bold ph-map-pin text-red-600"></i> Koordinat Lokasi Blasting (Latitude & Longitude)
+                <i class="ph-bold ph-polygon text-red-600"></i> 16. Alokasi Boundary DXF (Opsional)
               </label>
-              <button type="button" onclick="openMapPickerModal('edit_latitude', 'edit_longitude')" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg border border-red-200 flex items-center gap-1 text-[11px] transition shadow-2xs">
-                <i class="ph-bold ph-map-trifold"></i> Pilih di Peta (Map Picker)
+              <button type="button" onclick="openDxfUploadModalForPlan('${item.uuid || item.id}')" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg border border-red-200 flex items-center gap-1 text-[11px] transition shadow-2xs">
+                <i class="ph-bold ph-upload-simple"></i> Upload DXF
               </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <span class="block text-[11px] font-bold text-slate-600 mb-1">Latitude</span>
-                <input type="number" step="any" id="edit_latitude" value="${item.latitude !== undefined ? item.latitude : ''}" placeholder="Contoh: -2.12345" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono font-bold text-slate-800 text-xs focus:bg-white focus:outline-none focus:border-red-600">
+            <select id="edit_boundary_select" onchange="handleEditBoundarySelectChange(this.value)" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-red-600">
+              ${renderEditBoundaryOptions(item)}
+            </select>
+            <input type="hidden" id="edit_geometry" value="${escapeXmlAttr(item.geometry || '')}">
+            <input type="hidden" id="edit_latitude" value="${item.latitude !== undefined ? item.latitude : ''}">
+            <input type="hidden" id="edit_longitude" value="${item.longitude !== undefined ? item.longitude : ''}">
+            
+            <!-- Interactive Visual Preview Map for Edit Modal -->
+            <div id="edit-field16-map-wrapper" class="mt-2.5 hidden rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-white">
+              <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700">
+                <span class="flex items-center gap-1.5"><i class="ph-bold ph-map-pin text-red-600"></i> Visualisasi Area & Radius Peledakan</span>
+                <span id="edit-field16-map-contractor-tag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600"></span>
               </div>
-              <div>
-                <span class="block text-[11px] font-bold text-slate-600 mb-1">Longitude</span>
-                <input type="number" step="any" id="edit_longitude" value="${item.longitude !== undefined ? item.longitude : ''}" placeholder="Contoh: 115.54321" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-mono font-bold text-slate-800 text-xs focus:bg-white focus:outline-none focus:border-red-600">
-              </div>
+              <div id="edit-field16-map-container" class="w-full h-48 relative bg-slate-100"></div>
             </div>
           </div>
         </div>
@@ -250,6 +409,13 @@ function renderEditModalFields(item) {
   }
 
   container.innerHTML = html;
+
+  if (canEditKontraktor) {
+    const editBoundSelect = document.getElementById('edit_boundary_select');
+    if (editBoundSelect && editBoundSelect.value) {
+      handleEditBoundarySelectChange(editBoundSelect.value);
+    }
+  }
 
   if (canEditSupplier) {
     handleEditSupplierChange();
@@ -794,8 +960,9 @@ async function handleEditPlanSubmit(event) {
   event.preventDefault();
 
   const uuid = document.getElementById('edit_uuid').value;
-  const role = currentUser.role.toUpperCase();
-  const userCompany = currentUser.company.toUpperCase();
+  const item = currentEditingItem || globalPlanData.find(x => String(x.uuid || x.id) === String(uuid)) || {};
+  const role = (currentUser && currentUser.role) ? currentUser.role.toUpperCase() : '';
+  const userCompany = (currentUser && currentUser.company) ? currentUser.company.toUpperCase() : '';
 
   const updateData = { uuid: uuid };
   const grab = (id) => document.getElementById(id) ? document.getElementById(id).value : undefined;
@@ -827,9 +994,32 @@ async function handleEditPlanSubmit(event) {
     updateData.matrix = grab('edit_matrix');
     updateData.geometri = grab('edit_geometri');
 
-    // Pertahankan / sinkronkan boundary spasial
-    updateData.geometry = item.geometry || '';
-    if (typeof findBoundaryByName === 'function') {
+    // Revisi Image 2: Alokasi Supplier langsung dipilih kontraktor dan tersimpan di kolom supplier
+    if (grab('edit_supplier_choice') !== undefined) {
+      updateData.supplier = grab('edit_supplier_choice');
+    }
+
+    // Revisi Image 4: Alokasi Boundary DXF
+    if (grab('edit_geometry') !== undefined) {
+      updateData.geometry = grab('edit_geometry');
+    } else {
+      updateData.geometry = item.geometry || '';
+    }
+
+    if (grab('edit_latitude') !== undefined && grab('edit_latitude') !== '') {
+      updateData.latitude = grab('edit_latitude');
+    } else if (item.latitude !== undefined) {
+      updateData.latitude = item.latitude;
+    }
+
+    if (grab('edit_longitude') !== undefined && grab('edit_longitude') !== '') {
+      updateData.longitude = grab('edit_longitude');
+    } else if (item.longitude !== undefined) {
+      updateData.longitude = item.longitude;
+    }
+
+    // Fallback pencocokan boundary otomatis berdasarkan nama jika belum ada geometry
+    if (!updateData.geometry && typeof findBoundaryByName === 'function') {
       const bound = findBoundaryByName(updateData.lokasi);
       if (bound) {
         updateData.geometry = bound.wkt;
@@ -844,9 +1034,6 @@ async function handleEditPlanSubmit(event) {
       updateData.need_mmu = editNeedMmuVal;
       updateData.dth_supplier = calculateMmuTotalDth(editNeedMmuVal);
     }
-
-    if (grab('edit_latitude') !== undefined) updateData.latitude = grab('edit_latitude');
-    if (grab('edit_longitude') !== undefined) updateData.longitude = grab('edit_longitude');
   }
 
   // 2. Supplier Fields
@@ -883,7 +1070,7 @@ async function handleEditPlanSubmit(event) {
   const pinOk = await requestSecurityPin('menyimpan perubahan alokasi plan blasting');
   if (!pinOk) return;
 
-  const btn = document.getElementById('btn-save-edit-plan');
+  const btn = document.getElementById('btn-submit-edit-plan') || document.getElementById('btn-save-edit-plan');
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Menyimpan...`;
@@ -893,7 +1080,7 @@ async function handleEditPlanSubmit(event) {
   try {
     const res = await apiCall('savePlan', {
       data: updateData,
-      role: isUserOwner() ? 'ADMIN' : currentUser.role,
+      role: isUserOwner() ? 'ADMIN' : (currentUser ? currentUser.role : 'USER'),
       company: currentUser ? currentUser.company : ''
     });
 

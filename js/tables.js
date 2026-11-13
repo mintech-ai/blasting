@@ -266,18 +266,32 @@ function renderPlanBlastingTable() {
     return;
   }
 
-  // Urutan kontraktor: SIS dulu, baru BUMA, lalu lainnya
+  // Urutan kontraktor: SIS dulu, baru BUMA, lalu lainnya.
+  // Urutan lokasi di dalam tiap kontraktor tetap mempertahankan urutan asli inputan Bulk Excel / spreadsheet.
+  const getRank = (item) => {
+    const k = String(item.kontraktor || '').toUpperCase();
+    if (k.includes('SIS')) return 1;
+    if (k.includes('BUMA')) return 2;
+    return 99;
+  };
+
+  const rawIndexMap = new Map();
+  if (Array.isArray(rawGlobalPlanData)) {
+    rawGlobalPlanData.forEach((item, idx) => {
+      const k = String(item.uuid || item.id || idx);
+      if (!rawIndexMap.has(k)) rawIndexMap.set(k, idx);
+    });
+  }
+
   globalPlanData.sort((a, b) => {
-    const getRank = (item) => {
-      const k = String(item.kontraktor || '').toUpperCase();
-      if (k.includes('SIS')) return 1;
-      if (k.includes('BUMA')) return 2;
-      return 99;
-    };
     const rankA = getRank(a);
     const rankB = getRank(b);
     if (rankA !== rankB) return rankA - rankB;
-    return String(a.kontraktor || '').localeCompare(String(b.kontraktor || ''));
+    const keyA = String(a.uuid || a.id || '');
+    const keyB = String(b.uuid || b.id || '');
+    const idxA = rawIndexMap.has(keyA) ? rawIndexMap.get(keyA) : 0;
+    const idxB = rawIndexMap.has(keyB) ? rawIndexMap.get(keyB) : 0;
+    return idxA - idxB;
   });
 
   let html = '';
@@ -354,8 +368,8 @@ function renderPlanBlastingTable() {
           <div class="flex items-center gap-1.5 flex-wrap">
             <span>${lokasi}</span>
             ${item.geometry
-              ? `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ganti / revisi DXF"><i class="ph-bold ph-polygon"></i> Geo</button>`
-              : `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk mengunggah atau menautkan file DXF menyusul"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
+              ? `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ganti file DXF"><i class="ph-bold ph-polygon"></i> Geo</button>`
+              : `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk mengunggah file DXF"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
             }
           </div>
         </td>
