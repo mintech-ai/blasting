@@ -496,3 +496,43 @@ function parseExcelDate(rawDate) {
   return getWitaDateString();
 }
 
+// ==================== SECURITY & XSS SANITIZATION HELPERS ====================
+
+/**
+ * Mencegah serangan Stored XSS dengan menyandikan entitas HTML khusus.
+ * Aman digunakan untuk teks nama lokasi, desa, pengawas, remark, dsb.
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+
+/**
+ * Sanitasi string identifier (UUID / ID baris) agar hanya memuat karakter alfanumerik aman.
+ * Mencegah breakout pada atribut event handler inline HTML.
+ */
+function sanitizeId(id) {
+  if (!id) return '';
+  return String(id).replace(/[^a-zA-Z0-9_\-\.]/g, '');
+}
+window.sanitizeId = sanitizeId;
+
+/**
+ * Mengambil token autentikasi sesi aktif dari sessionStorage
+ */
+function getAuthToken() {
+  try {
+    return sessionStorage.getItem('blasting_token') || '';
+  } catch (e) {
+    return '';
+  }
+}
+window.getAuthToken = getAuthToken;
+
+

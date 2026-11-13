@@ -298,6 +298,7 @@ function renderPlanBlastingTable() {
   globalPlanData.forEach((item, index) => {
     const rowNo = index + 1;
     const id = item.uuid || item.id || '-';
+    const safeId = sanitizeId(id);
     const kontraktor = cleanCompanyName(item.kontraktor) || '-';
     const lokasi = item.lokasi || '-';
     const prioritas = item.prioritas || '-';
@@ -330,7 +331,7 @@ function renderPlanBlastingTable() {
     let supBadge = '';
     if (sup) {
       const isDahana = sup.toUpperCase().includes('DAHANA');
-      supBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isDahana ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}">${sup}</span>`;
+      supBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isDahana ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}">${escapeHtml(sup)}</span>`;
     } else {
       supBadge = `<span class="text-slate-400 italic text-[10px]">-</span>`;
     }
@@ -338,13 +339,13 @@ function renderPlanBlastingTable() {
     const statusBadge = getStatusBadgeHtml(todaySleep);
 
     const editBtn = canEdit
-      ? `<button onclick="openEditPlanModal('${id}')" class="px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Plan">
+      ? `<button onclick="openEditPlanModal('${safeId}')" class="px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Plan">
            <i class="ph-bold ph-pencil-simple"></i> Edit
          </button>`
       : '';
 
     const deleteBtn = canDelete
-      ? `<button onclick="handleDeletePlan('${id}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Plan">
+      ? `<button onclick="handleDeletePlan('${safeId}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Plan">
            <i class="ph-bold ph-trash"></i> Hapus
          </button>`
       : '';
@@ -361,72 +362,72 @@ function renderPlanBlastingTable() {
     html += `
       <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-[10.5px]">
         <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${rowNo}</td>
-        <td class="px-1.5 py-1 text-center font-mono text-slate-700 text-[10px]">${tgl}</td>
-        <td class="px-1.5 py-1 text-center font-bold text-slate-800">${prioritas}</td>
-        <td class="px-1.5 py-1 font-extrabold text-slate-900">${kontraktor}</td>
+        <td class="px-1.5 py-1 text-center font-mono text-slate-700 text-[10px]">${escapeHtml(tgl)}</td>
+        <td class="px-1.5 py-1 text-center font-bold text-slate-800">${escapeHtml(prioritas)}</td>
+        <td class="px-1.5 py-1 font-extrabold text-slate-900">${escapeHtml(kontraktor)}</td>
         <td class="px-1.5 py-1 font-bold text-slate-800">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span>${lokasi}</span>
+            <span>${escapeHtml(lokasi)}</span>
             ${item.geometry
-              ? `<button type="button" onclick="openAllocateBoundaryModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ubah alokasi"><i class="ph-bold ph-polygon"></i> Geo</button>`
-              : `<button type="button" onclick="openAllocateBoundaryModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk alokasikan dari boundary tersimpan"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
+              ? `<button type="button" onclick="openAllocateBoundaryModalForPlan('${safeId}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ubah alokasi"><i class="ph-bold ph-polygon"></i> Geo</button>`
+              : `<button type="button" onclick="openAllocateBoundaryModalForPlan('${safeId}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk alokasikan dari boundary tersimpan"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
             }
           </div>
         </td>
         <td class="px-1.5 py-1 text-center">${statusBadge}</td>
-        <td class="px-1.5 py-1 text-slate-700">${inisiasi}</td>
-        <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${jamMasuk}</td>
-        <td class="px-1.5 py-1 text-center font-mono text-slate-800">${holes}</td>
-        <td class="px-1.5 py-1 text-center font-mono text-slate-800">${isian}</td>
-        <td class="px-1.5 py-1 font-mono font-black text-emerald-700">${vol} T</td>
+        <td class="px-1.5 py-1 text-slate-700">${escapeHtml(inisiasi)}</td>
+        <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${escapeHtml(jamMasuk)}</td>
+        <td class="px-1.5 py-1 text-center font-mono text-slate-800">${escapeHtml(holes)}</td>
+        <td class="px-1.5 py-1 text-center font-mono text-slate-800">${escapeHtml(isian)}</td>
+        <td class="px-1.5 py-1 font-mono font-black text-emerald-700">${escapeHtml(vol)} T</td>
         <td class="px-1.5 py-1 text-[10px]">
           <div class="flex flex-col leading-tight min-w-[70px]">
-            <span class="font-bold text-slate-800 truncate" title="${matrix}">${matrix}</span>
+            <span class="font-bold text-slate-800 truncate" title="${escapeHtml(matrix)}">${escapeHtml(matrix)}</span>
             <span class="text-[9px] font-mono text-slate-500 truncate flex items-center gap-1 mt-0.5">
               <span class="text-[7.5px] bg-slate-100 text-slate-500 font-bold px-1 py-0.2 rounded border border-slate-200">GEO</span>
-              <span class="truncate" title="${geometri}">${geometri}</span>
+              <span class="truncate" title="${escapeHtml(geometri)}">${escapeHtml(geometri)}</span>
             </span>
           </div>
         </td>
         <td class="px-1.5 py-1 text-[10px]">
           <div class="flex flex-col gap-1 min-w-[95px] max-w-[150px]">
-            <div class="flex items-center gap-1 leading-none" title="Desa Terdampak Ledakan: ${desa}">
+            <div class="flex items-center gap-1 leading-none" title="Desa Terdampak Ledakan: ${escapeHtml(desa)}">
               <span class="text-[7.5px] bg-red-100 text-red-800 font-extrabold px-1 py-0.5 rounded border border-red-200 flex items-center gap-0.5 flex-shrink-0">
                 <i class="ph-bold ph-warning-circle text-[8px] text-red-600"></i> TERDAMPAK
               </span>
-              <span class="font-bold text-slate-900 truncate" title="${desa}">${desa}</span>
+              <span class="font-bold text-slate-900 truncate" title="${escapeHtml(desa)}">${escapeHtml(desa)}</span>
             </div>
-            <div class="flex items-center gap-1 leading-none" title="Akses Masuk ke Lokasi Peledakan: ${akses}">
+            <div class="flex items-center gap-1 leading-none" title="Akses Masuk ke Lokasi Peledakan: ${escapeHtml(akses)}">
               <span class="text-[7.5px] bg-emerald-100 text-emerald-800 font-extrabold px-1 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5 flex-shrink-0">
                 <i class="ph-bold ph-signpost text-[8px] text-emerald-600"></i> AKSES MASUK
               </span>
-              <span class="font-medium text-slate-600 truncate" title="${akses}">${akses}</span>
+              <span class="font-medium text-slate-600 truncate" title="${escapeHtml(akses)}">${escapeHtml(akses)}</span>
             </div>
           </div>
         </td>
-        <td class="px-1.5 py-1 font-semibold text-slate-800">${pengawasKont}</td>
+        <td class="px-1.5 py-1 font-semibold text-slate-800">${escapeHtml(pengawasKont)}</td>
         <td class="px-1.5 py-1 bg-amber-50/40 font-bold border-l border-amber-100">${supBadge}</td>
         <td class="px-1.5 py-1 bg-amber-50/40 text-[10px]">
           <div class="flex flex-col gap-0.5 min-w-[80px]">
             <div class="flex items-center gap-1 text-[9.5px] truncate">
               <span class="px-1 py-0.2 bg-blue-100 text-blue-800 font-extrabold rounded text-[8px] flex-shrink-0 border border-blue-200">Pengawas</span>
-              <span class="truncate font-semibold text-slate-800" title="${cleanSpv}">${cleanSpv}</span>
+              <span class="truncate font-semibold text-slate-800" title="${escapeHtml(cleanSpv)}">${escapeHtml(cleanSpv)}</span>
             </div>
             <div class="flex items-center gap-1 text-[9.5px] truncate">
               <span class="px-1 py-0.2 bg-purple-100 text-purple-800 font-extrabold rounded text-[8px] flex-shrink-0 border border-purple-200">BLS</span>
-              <span class="truncate font-semibold text-slate-800" title="${cleanBlaster}">${cleanBlaster}</span>
+              <span class="truncate font-semibold text-slate-800" title="${escapeHtml(cleanBlaster)}">${escapeHtml(cleanBlaster)}</span>
             </div>
           </div>
         </td>
         <td class="px-1.5 py-1 bg-amber-50/40 text-[10px]">
           <div class="flex flex-col gap-0.5 min-w-[90px]">
-            <div class="flex items-center gap-1 text-[9.5px] text-amber-900 font-mono font-bold truncate" title="${unitMmu}">
+            <div class="flex items-center gap-1 text-[9.5px] text-amber-900 font-mono font-bold truncate" title="${escapeHtml(unitMmu)}">
               <i class="ph-bold ph-truck text-amber-600 text-xs flex-shrink-0"></i>
-              <span class="truncate">${unitMmu}</span>
+              <span class="truncate">${escapeHtml(unitMmu)}</span>
             </div>
-            <div class="flex items-center gap-1 text-[9px] text-slate-600 font-mono truncate" title="${unitBox}">
+            <div class="flex items-center gap-1 text-[9px] text-slate-600 font-mono truncate" title="${escapeHtml(unitBox)}">
               <i class="ph-bold ph-package text-slate-400 text-xs flex-shrink-0"></i>
-              <span class="truncate">${unitBox}</span>
+              <span class="truncate">${escapeHtml(unitBox)}</span>
             </div>
           </div>
         </td>
@@ -473,6 +474,7 @@ function renderKesiapanSupplierTable() {
   globalSupplierData.forEach((item, index) => {
     const rowNo = index + 1;
     const uuid = item.uuid || item.id || '-';
+    const safeUuid = sanitizeId(uuid);
     const tgl = normalizeDateToYYYYMMDD(item.tanggal) || item.tanggal || '-';
     const sup = cleanCompanyName(item.supplier) || '-';
     const mmu = formatMmuReadyList(item.unit_mmu, item.supplier);
@@ -490,13 +492,13 @@ function renderKesiapanSupplierTable() {
     const canDelete = checkCanDeleteSupplier(item);
 
     const editBtn = canEdit
-      ? `<button onclick="openEditSupplierModal('${uuid}')" class="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Kesiapan">
+      ? `<button onclick="openEditSupplierModal('${safeUuid}')" class="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Kesiapan">
            <i class="ph-bold ph-pencil-simple"></i> Edit
          </button>`
       : '';
 
     const deleteBtn = canDelete
-      ? `<button onclick="handleDeleteSupplier('${uuid}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Kesiapan">
+      ? `<button onclick="handleDeleteSupplier('${safeUuid}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Kesiapan">
            <i class="ph-bold ph-trash"></i> Hapus
          </button>`
       : '';
@@ -513,18 +515,18 @@ function renderKesiapanSupplierTable() {
     html += `
       <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-[10.5px]">
         <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${rowNo}</td>
-        <td class="px-1.5 py-1 font-mono text-slate-600 text-[10px]">${tgl}</td>
-        <td class="px-1.5 py-1 font-extrabold text-amber-900">${sup}</td>
-        <td class="px-1.5 py-1 font-mono font-bold text-slate-800">${mmu}</td>
-        <td class="px-1.5 py-1 font-mono font-black text-emerald-700">${dth} T</td>
-        <td class="px-1.5 py-1 font-mono text-slate-800">${box}</td>
-        <td class="px-1.5 py-1 text-[10px] text-slate-700">${devices}</td>
-        <td class="px-1.5 py-1 text-[10px]">${nonel}</td>
-        <td class="px-1.5 py-1 text-[10px] font-semibold text-blue-900">${namaSpv}</td>
-        <td class="px-1.5 py-1 text-center font-mono font-black text-blue-800">${numSpv}</td>
-        <td class="px-1.5 py-1 text-[10px] font-semibold text-purple-900">${namaBlaster}</td>
-        <td class="px-1.5 py-1 text-center font-mono font-black text-purple-800">${numBlaster}</td>
-        <td class="px-1.5 py-1 text-[10px] text-slate-700 italic truncate max-w-[140px]" title="${note}">${note}</td>
+        <td class="px-1.5 py-1 font-mono text-slate-600 text-[10px]">${escapeHtml(tgl)}</td>
+        <td class="px-1.5 py-1 font-extrabold text-amber-900">${escapeHtml(sup)}</td>
+        <td class="px-1.5 py-1 font-mono font-bold text-slate-800">${escapeHtml(mmu)}</td>
+        <td class="px-1.5 py-1 font-mono font-black text-emerald-700">${escapeHtml(dth)} T</td>
+        <td class="px-1.5 py-1 font-mono text-slate-800">${escapeHtml(box)}</td>
+        <td class="px-1.5 py-1 text-[10px] text-slate-700">${escapeHtml(devices)}</td>
+        <td class="px-1.5 py-1 text-[10px]">${escapeHtml(nonel)}</td>
+        <td class="px-1.5 py-1 text-[10px] font-semibold text-blue-900">${escapeHtml(namaSpv)}</td>
+        <td class="px-1.5 py-1 text-center font-mono font-black text-blue-800">${escapeHtml(numSpv)}</td>
+        <td class="px-1.5 py-1 text-[10px] font-semibold text-purple-900">${escapeHtml(namaBlaster)}</td>
+        <td class="px-1.5 py-1 text-center font-mono font-black text-purple-800">${escapeHtml(numBlaster)}</td>
+        <td class="px-1.5 py-1 text-[10px] text-slate-700 italic truncate max-w-[140px]" title="${escapeHtml(note)}">${escapeHtml(note)}</td>
         <td class="px-1.5 py-1 text-center whitespace-nowrap">
           ${actionBtns}
         </td>

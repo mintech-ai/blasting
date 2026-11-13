@@ -6,7 +6,8 @@
 
 async function apiCall(action, payload = {}) {
   const url = SCRIPT_URL;
-  const requestBody = { action, ...payload };
+  const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('blasting_token') || '');
+  const requestBody = { action, token, ...payload };
 
   try {
     const response = await fetch(url, {
@@ -23,9 +24,15 @@ async function apiCall(action, payload = {}) {
 }
 
 async function fetchDashboardData() {
+  const user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+  const token = typeof getAuthToken === 'function' ? getAuthToken() : '';
+  const role = user ? (user.role || 'DASHBOARD') : 'DASHBOARD';
+  const company = user ? (user.company || '') : '';
+
   return await apiCall('getDashboardData', {
-    role: 'DASHBOARD',
-    company: '',
+    token: token,
+    role: role,
+    company: company,
     tanggal: ''
   });
 }
