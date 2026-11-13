@@ -234,7 +234,7 @@ function parseDxfBlastingBoundaries(fileContent, fileName = 'boundaries.dxf', fo
   }
 
   if (!dxfData || !dxfData.entities || dxfData.entities.length === 0) {
-    throw new Error('Tidak ditemukan entitas gambar dalam file DXF ini.');
+    throw new Error('Tidak ditemukan boundaries dalam file DXF ini.');
   }
 
   // 1. Tentukan Kontraktor Mitra Kerja
