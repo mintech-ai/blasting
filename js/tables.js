@@ -368,8 +368,8 @@ function renderPlanBlastingTable() {
           <div class="flex items-center gap-1.5 flex-wrap">
             <span>${lokasi}</span>
             ${item.geometry
-              ? `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ganti file DXF"><i class="ph-bold ph-polygon"></i> Geo</button>`
-              : `<button type="button" onclick="openDxfUploadModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk mengunggah file DXF"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
+              ? `<button type="button" onclick="openAllocateBoundaryModalForPlan('${id}')" class="text-[8px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-emerald-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Boundary Polygon aktif. Klik untuk ubah alokasi"><i class="ph-bold ph-polygon"></i> Geo</button>`
+              : `<button type="button" onclick="openAllocateBoundaryModalForPlan('${id}')" class="text-[8px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5 transition shadow-2xs cursor-pointer" title="Belum ada boundary DXF. Klik untuk alokasikan dari boundary tersimpan"><i class="ph-bold ph-plus-circle"></i> +DXF</button>`
             }
           </div>
         </td>
