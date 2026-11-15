@@ -21,9 +21,6 @@ async function handleLoginSubmit(event) {
   if (res.success && res.user) {
     currentUser = res.user;
     sessionStorage.setItem('blasting_user', JSON.stringify(currentUser));
-    if (res.token) {
-      sessionStorage.setItem('blasting_token', res.token);
-    }
     Swal.fire({
       icon: 'success',
       title: 'Login Berhasil',
@@ -54,7 +51,6 @@ function confirmLogout() {
   }).then((result) => {
     if (result.isConfirmed) {
       sessionStorage.removeItem('blasting_user');
-      sessionStorage.removeItem('blasting_token');
       currentUser = null;
       showLoginScreen();
     }
