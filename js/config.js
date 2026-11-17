@@ -154,9 +154,7 @@ const EXPORT_AVAILABLE_COLUMNS = [
   { id: 'pengawas_sup', label: 'PENGAWAS SUPPLIER', default: true },
   { id: 'blaster', label: 'BLASTER', default: true },
   { id: 'unit_mmu', label: 'UNIT MMU/MMT', default: true },
-  { id: 'unit_box', label: 'MOBIL BOX', default: true },
-  { id: 'coordinates', label: 'KOORDINAT (LAT, LONG)', default: false },
-  { id: 'geometry', label: 'WKT GEOMETRY (POLYGON)', default: false }
+  { id: 'unit_box', label: 'MOBIL BOX', default: true }
 ];
 
 let selectedExportColumnIds = new Set(EXPORT_AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.id));

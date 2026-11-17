@@ -337,9 +337,9 @@ function renderBlastingMapMarkers(searchQuery = '') {
 
         poly.bindTooltip(`
           <div class="font-sans text-xs">
-            <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
-            <span class="font-extrabold text-slate-900">${item.lokasi || 'Boundary Blasting'}</span>
-            <span class="text-slate-500 font-bold">(${item.kontraktor || '-'})</span>
+            <span class="font-mono font-black text-red-600">#${escapeHtml(item.uuid || 'PB')}</span> - 
+            <span class="font-extrabold text-slate-900">${escapeHtml(item.lokasi || 'Boundary Blasting')}</span>
+            <span class="text-slate-500 font-bold">(${escapeHtml(item.kontraktor || '-')})</span>
             <span class="text-red-600 font-bold block text-[10px]">⬡ Area Polygon Peledakan</span>
           </div>
         `, { sticky: true });
@@ -396,8 +396,8 @@ function renderBlastingMapMarkers(searchQuery = '') {
                 const lName = item.lokasi || 'Boundary';
                 bufPoly.bindTooltip(`
                   <div class="font-sans text-[11px] font-bold text-slate-900 leading-tight">
-                    <span class="text-red-700 font-extrabold">${kName}</span> - ${lName}:<br/>
-                    <span class="text-slate-800 font-black">${cfg.label}</span>
+                    <span class="text-red-700 font-extrabold">${escapeHtml(kName)}</span> - ${escapeHtml(lName)}:<br/>
+                    <span class="text-slate-800 font-black">${escapeHtml(cfg.label)}</span>
                   </div>
                 `, { sticky: true });
 
@@ -422,8 +422,8 @@ function renderBlastingMapMarkers(searchQuery = '') {
 
       centerMarker.bindTooltip(`
         <div class="font-sans text-xs">
-          <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
-          <span class="font-extrabold text-slate-900">${item.lokasi || 'Pit Blasting'}</span>
+          <span class="font-mono font-black text-red-600">#${escapeHtml(item.uuid || 'PB')}</span> - 
+          <span class="font-extrabold text-slate-900">${escapeHtml(item.lokasi || 'Pit Blasting')}</span>
         </div>
       `, { direction: 'top', offset: [0, -6] });
 
@@ -444,9 +444,9 @@ function renderBlastingMapMarkers(searchQuery = '') {
 
       marker.bindTooltip(`
         <div class="font-sans text-xs">
-          <span class="font-mono font-black text-red-600">#${item.uuid || 'PB'}</span> - 
-          <span class="font-extrabold text-slate-900">${item.lokasi || 'Pit Blasting'}</span>
-          <span class="text-slate-500 font-bold">(${item.kontraktor || '-'})</span>
+          <span class="font-mono font-black text-red-600">#${escapeHtml(item.uuid || 'PB')}</span> - 
+          <span class="font-extrabold text-slate-900">${escapeHtml(item.lokasi || 'Pit Blasting')}</span>
+          <span class="text-slate-500 font-bold">(${escapeHtml(item.kontraktor || '-')})</span>
         </div>
       `, { direction: 'top', offset: [0, -8] });
 
@@ -487,6 +487,7 @@ function renderBlastingMapMarkers(searchQuery = '') {
 // Generator Kartu Popup Summary Titik Blasting
 function createBlastingPopupHtml(item, lat, lng, markerColor) {
   const uuid = item.uuid || item.id || 'PB';
+  const safeUuid = sanitizeId(uuid);
   const lokasi = item.lokasi || 'Lokasi Belum Ditentukan';
   const kontraktor = cleanCompanyName(item.kontraktor) || '-';
   const pengawasKont = item.pengawas_kontraktor || '-';
@@ -512,25 +513,25 @@ function createBlastingPopupHtml(item, lat, lng, markerColor) {
       <div class="flex items-start justify-between gap-2 border-b border-slate-200 pb-2 mb-2">
         <div>
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-mono font-black text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">#${uuid}</span>
+            <span class="text-[10px] font-mono font-black text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">#${escapeHtml(uuid)}</span>
             ${statusBadgeHtml}
           </div>
-          <h4 class="font-black text-sm text-slate-900 mt-1 leading-snug">${lokasi}</h4>
+          <h4 class="font-black text-sm text-slate-900 mt-1 leading-snug">${escapeHtml(lokasi)}</h4>
         </div>
-        <span class="text-[10px] font-extrabold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap">${prioritas}</span>
+        <span class="text-[10px] font-extrabold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap">${escapeHtml(prioritas)}</span>
       </div>
 
       <!-- Info Tim Kontraktor & Supplier -->
       <div class="grid grid-cols-2 gap-2 mb-2.5">
         <div class="bg-blue-50/70 p-2 rounded-xl border border-blue-200">
           <span class="text-[9px] uppercase font-black text-blue-700 block tracking-wider">Kontraktor</span>
-          <span class="font-black text-slate-900 text-xs">${kontraktor}</span>
-          <span class="text-[10px] text-slate-500 block truncate mt-0.5" title="Pengawas Kontraktor: ${pengawasKont}">Pengawas: ${pengawasKont}</span>
+          <span class="font-black text-slate-900 text-xs">${escapeHtml(kontraktor)}</span>
+          <span class="text-[10px] text-slate-500 block truncate mt-0.5" title="Pengawas Kontraktor: ${escapeHtml(pengawasKont)}">Pengawas: ${escapeHtml(pengawasKont)}</span>
         </div>
         <div class="bg-amber-50/70 p-2 rounded-xl border border-amber-200">
           <span class="text-[9px] uppercase font-black text-amber-800 block tracking-wider">Supplier</span>
-          <span class="font-black text-slate-900 text-xs">${supplier || '<span class="italic text-slate-400 font-normal">Belum Assigned</span>'}</span>
-          <span class="text-[10px] text-slate-500 block truncate mt-0.5" title="Pengawas Supplier: ${pengawasSup}">Pengawas: ${pengawasSup}</span>
+          <span class="font-black text-slate-900 text-xs">${supplier ? escapeHtml(supplier) : '<span class="italic text-slate-400 font-normal">Belum Assigned</span>'}</span>
+          <span class="text-[10px] text-slate-500 block truncate mt-0.5" title="Pengawas Supplier: ${escapeHtml(pengawasSup)}">Pengawas: ${escapeHtml(pengawasSup)}</span>
         </div>
       </div>
 
@@ -538,33 +539,33 @@ function createBlastingPopupHtml(item, lat, lng, markerColor) {
       <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px] mb-3">
         <div class="flex justify-between items-center">
           <span class="text-slate-500">Volume DTH / Isian:</span>
-          <span class="font-mono font-black text-emerald-700">${vol} Ton <span class="text-slate-400 font-normal">(${isian} Kg)</span></span>
+          <span class="font-mono font-black text-emerald-700">${escapeHtml(vol)} Ton <span class="text-slate-400 font-normal">(${escapeHtml(isian)} Kg)</span></span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">Jumlah Lubang:</span>
-          <span class="font-mono font-bold text-slate-800">${holes} Holes <span class="text-slate-400 font-normal">(${geometri})</span></span>
+          <span class="font-mono font-bold text-slate-800">${escapeHtml(holes)} Holes <span class="text-slate-400 font-normal">(${escapeHtml(geometri)})</span></span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">Inisiasi & Jam:</span>
-          <span class="font-mono font-bold text-slate-800">${inisiasi} @ ${jamMasuk}</span>
+          <span class="font-mono font-bold text-slate-800">${escapeHtml(inisiasi)} @ ${escapeHtml(jamMasuk)}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">Matrix Batuan:</span>
-          <span class="font-medium text-slate-700 truncate max-w-[140px]" title="${matrix}">${matrix}</span>
+          <span class="font-medium text-slate-700 truncate max-w-[140px]" title="${escapeHtml(matrix)}">${escapeHtml(matrix)}</span>
         </div>
         <div class="pt-1 border-t border-slate-200/80">
           <span class="text-slate-500 block mb-0.5 font-bold text-[9.5px]">Unit MMU / MMT:</span>
-          <div class="font-mono text-[9.5px] font-bold text-red-700 bg-red-50/80 p-1.5 rounded-lg border border-red-200 break-words leading-snug">${mmu}</div>
+          <div class="font-mono text-[9.5px] font-bold text-red-700 bg-red-50/80 p-1.5 rounded-lg border border-red-200 break-words leading-snug">${escapeHtml(mmu)}</div>
         </div>
       </div>
 
       <!-- Tombol Aksi Cepat -->
       <div class="flex items-center gap-1.5 pt-1">
-        <button type="button" onclick="zoomToAndHighlightRow('${uuid}')"
+        <button type="button" onclick="zoomToAndHighlightRow('${safeUuid}')"
           class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[10.5px] transition flex items-center justify-center gap-1">
           <i class="ph-bold ph-table text-xs"></i> Lihat di Tabel
         </button>
-        <button type="button" onclick="openEditModalFromMap('${uuid}')"
+        <button type="button" onclick="openEditModalFromMap('${safeUuid}')"
           class="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-[10.5px] shadow-sm glow-red transition flex items-center justify-center gap-1">
           <i class="ph-bold ph-pencil-simple text-xs"></i> Alokasi/Edit
         </button>

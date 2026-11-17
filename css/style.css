@@ -77,3 +77,13 @@ body {
   display: flex;
 }
 
+/* Helper Multi-line Clamp (Maksimal 2 baris ke bawah) */
+.clamp-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+
