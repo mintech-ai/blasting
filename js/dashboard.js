@@ -193,10 +193,84 @@ function renderContractorSummaryCard(companyKey, config) {
     return k.includes(companyKey);
   });
 
-  let blastTodayDth = 0;
-  let blastTodayCount = 0;
-  let blastSleepDth = 0;
-  let blastSleepCount = 0;
+  const STATUS_CONFIGS = [
+    {
+      key: 'TODAY',
+      label: 'TODAY',
+      icon: 'ph-sun',
+      bgClass: 'bg-gradient-to-br from-emerald-500/10 via-emerald-50/50 to-teal-50/20',
+      borderClass: 'border-emerald-300/70',
+      borderPill: 'border-emerald-200/80',
+      textLabel: 'text-emerald-800',
+      textValue: 'text-emerald-950',
+      textUnit: 'text-emerald-700'
+    },
+    {
+      key: 'SLEEP',
+      label: 'SLEEP',
+      icon: 'ph-moon-stars',
+      bgClass: 'bg-gradient-to-br from-rose-500/10 via-rose-50/50 to-red-50/20',
+      borderClass: 'border-rose-300/70',
+      borderPill: 'border-rose-200/80',
+      textLabel: 'text-rose-800',
+      textValue: 'text-rose-950',
+      textUnit: 'text-rose-700'
+    },
+    {
+      key: 'TIE UP',
+      label: 'TIE UP',
+      icon: 'ph-link',
+      bgClass: 'bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-orange-50/20',
+      borderClass: 'border-amber-300/70',
+      borderPill: 'border-amber-200/80',
+      textLabel: 'text-amber-800',
+      textValue: 'text-amber-950',
+      textUnit: 'text-amber-700'
+    },
+    {
+      key: 'TIE UP + TODAY',
+      label: 'TIE + TODAY',
+      icon: 'ph-lightning',
+      bgClass: 'bg-gradient-to-br from-blue-500/10 via-blue-50/50 to-indigo-50/20',
+      borderClass: 'border-blue-300/70',
+      borderPill: 'border-blue-200/80',
+      textLabel: 'text-blue-800',
+      textValue: 'text-blue-950',
+      textUnit: 'text-blue-700'
+    },
+    {
+      key: 'TODAY/SLEEP',
+      label: 'TODAY/SLEEP',
+      icon: 'ph-hourglass-medium',
+      bgClass: 'bg-gradient-to-br from-purple-500/10 via-purple-50/50 to-indigo-50/20',
+      borderClass: 'border-purple-300/70',
+      borderPill: 'border-purple-200/80',
+      textLabel: 'text-purple-800',
+      textValue: 'text-purple-950',
+      textUnit: 'text-purple-700'
+    },
+    {
+      key: 'CANCEL/HOLD',
+      label: 'CANCEL/HOLD',
+      icon: 'ph-prohibit',
+      bgClass: 'bg-gradient-to-br from-slate-500/10 via-slate-50/50 to-zinc-50/20',
+      borderClass: 'border-slate-300/70',
+      borderPill: 'border-slate-200/80',
+      textLabel: 'text-slate-700',
+      textValue: 'text-slate-900',
+      textUnit: 'text-slate-600'
+    }
+  ];
+
+  const statusStats = {
+    'TODAY': { dth: 0, count: 0 },
+    'SLEEP': { dth: 0, count: 0 },
+    'TIE UP': { dth: 0, count: 0 },
+    'TIE UP + TODAY': { dth: 0, count: 0 },
+    'TODAY/SLEEP': { dth: 0, count: 0 },
+    'CANCEL/HOLD': { dth: 0, count: 0 }
+  };
+
   let totalAllocatedDth = 0;
   const allocatedUnitMap = new Map();
 
@@ -211,12 +285,12 @@ function renderContractorSummaryCard(companyKey, config) {
     }
 
     const mode = getPlanTodaySleepStatus(p);
-    if (mode === 'SLEEP' || mode === 'TODAY/SLEEP') {
-      blastSleepDth += vol;
-      blastSleepCount += 1;
-    } else if (mode !== 'CANCEL/HOLD') {
-      blastTodayDth += vol;
-      blastTodayCount += 1;
+    if (statusStats[mode]) {
+      statusStats[mode].dth += vol;
+      statusStats[mode].count += 1;
+    } else {
+      statusStats['TODAY'].dth += vol;
+      statusStats['TODAY'].count += 1;
     }
 
     const mmuRaw = getValFlexible(p, 'unit_mmu', 'need_mmu', 'mmu', 'unitmmu', 'needmmu') || p.unit_mmu || p.need_mmu || '';
@@ -271,9 +345,35 @@ function renderContractorSummaryCard(companyKey, config) {
     ? unitBadges.join('')
     : `<span class="text-[8.5px] text-slate-400 italic flex items-center gap-1"><i class="ph-bold ph-info text-[9px]"></i> Belum ada unit dialokasikan</span>`;
 
-  const totalPlanDth = blastTodayDth + blastSleepDth;
+  let totalPlanDth = 0;
+  STATUS_CONFIGS.forEach(cfg => {
+    if (cfg.key !== 'CANCEL/HOLD') {
+      totalPlanDth += statusStats[cfg.key].dth;
+    }
+  });
+
   const totalLocations = plans.length;
   const ratioPercent = totalPlanDth > 0 ? Math.min(100, Math.round((totalAllocatedDth / totalPlanDth) * 100)) : 0;
+
+  const statusBoxesHtml = STATUS_CONFIGS.map(cfg => {
+    const stat = statusStats[cfg.key] || { dth: 0, count: 0 };
+    return `
+      <div class="${cfg.bgClass} border ${cfg.borderClass} rounded-lg p-1 sm:p-1.5 flex flex-col justify-between shadow-2xs min-w-0 transition-all hover:scale-[1.02]">
+        <div class="flex items-center justify-between gap-0.5 leading-none">
+          <span class="text-[7px] sm:text-[7.5px] font-black uppercase tracking-tight ${cfg.textLabel} flex items-center gap-0.5 truncate" title="${cfg.key}">
+            <i class="ph-bold ${cfg.icon} text-[8px] sm:text-[8.5px] flex-shrink-0"></i>
+            <span class="truncate">${cfg.label}</span>
+          </span>
+          <span class="text-[7px] sm:text-[7.5px] font-black ${cfg.textLabel} bg-white/90 px-1 py-0.2 rounded border ${cfg.borderPill} font-mono shadow-2xs flex-shrink-0">
+            ${stat.count} Lok
+          </span>
+        </div>
+        <div class="text-[10px] sm:text-[11px] font-black ${cfg.textValue} font-mono mt-1 leading-none truncate">
+          ${stat.dth.toFixed(2)} <span class="text-[7px] sm:text-[7.5px] font-bold ${cfg.textUnit} font-sans">Ton</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 
   return `
     <div class="clean-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between border ${config.border} shadow-2xs hover:shadow-sm transition-all duration-200 relative overflow-hidden bg-gradient-to-b ${config.cardBg}">
@@ -323,30 +423,8 @@ function renderContractorSummaryCard(companyKey, config) {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-1.5 mb-1 sm:mb-1.5 relative z-1">
-        <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-50/50 to-teal-50/20 border border-emerald-300/70 rounded-lg sm:rounded-xl p-1 sm:p-1.5 flex items-center justify-between shadow-2xs">
-          <div>
-            <span class="text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
-              <i class="ph-bold ph-sun text-emerald-600 text-[10px]"></i> TODAY
-            </span>
-            <div class="text-xs font-black text-emerald-950 font-mono mt-0.5">
-              ${blastTodayDth.toFixed(2)} <span class="text-[8px] font-bold text-emerald-700 font-sans">Ton</span>
-            </div>
-          </div>
-          <span class="text-[8px] sm:text-[8.5px] font-black text-emerald-800 bg-white/90 px-1 py-0.2 rounded border border-emerald-200/80 font-mono shadow-2xs">${blastTodayCount} Lok</span>
-        </div>
-
-        <div class="bg-gradient-to-br from-blue-500/10 via-blue-50/50 to-indigo-50/20 border border-blue-300/70 rounded-lg sm:rounded-xl p-1 sm:p-1.5 flex items-center justify-between shadow-2xs">
-          <div>
-            <span class="text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider text-blue-800 flex items-center gap-1">
-              <i class="ph-bold ph-moon-stars text-blue-600 text-[10px]"></i> SLEEP
-            </span>
-            <div class="text-xs font-black text-blue-950 font-mono mt-0.5">
-              ${blastSleepDth.toFixed(2)} <span class="text-[8px] font-bold text-blue-700 font-sans">Ton</span>
-            </div>
-          </div>
-          <span class="text-[8px] sm:text-[8.5px] font-black text-blue-800 bg-white/90 px-1 py-0.2 rounded border border-blue-200/80 font-mono shadow-2xs">${blastSleepCount} Lok</span>
-        </div>
+      <div class="grid grid-cols-3 gap-1 sm:gap-1.5 mb-1 sm:mb-1.5 relative z-1">
+        ${statusBoxesHtml}
       </div>
 
       <div class="bg-gradient-to-r from-slate-50/90 via-white to-slate-50/90 border border-slate-200/90 rounded-lg sm:rounded-xl p-1.5 space-y-1 shadow-2xs relative z-1">
@@ -550,7 +628,7 @@ function renderSupplierSummaryCard(supKey, config) {
 
 function renderDashboardUI(filterDate) {
   const planBadge = document.getElementById('plan-count-badge');
-  if (planBadge) planBadge.innerText = `${globalPlanData.length} Baris`;
+  if (planBadge) planBadge.innerText = `${ globalPlanData.length } Baris`;
 
   const cardSis = document.getElementById('card-summary-sis');
   const cardBuma = document.getElementById('card-summary-buma');
