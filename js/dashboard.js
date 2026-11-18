@@ -112,6 +112,26 @@ function toggleDashboardTables() {
   applyDashboardTableVisibility();
 }
 
+function toggleDashboardCards() {
+  isDashboardCardsCollapsed = !isDashboardCardsCollapsed;
+  const summaryContainer = document.getElementById('dashboard-summary-container');
+  const icon = document.getElementById('icon-toggle-cards');
+  const label = document.getElementById('label-toggle-cards');
+
+  if (summaryContainer) {
+    if (isDashboardCardsCollapsed) {
+      summaryContainer.classList.add('hidden');
+      if (icon) icon.className = "ph-bold ph-eye";
+      if (label) label.innerText = "Show Cards";
+    } else {
+      summaryContainer.classList.remove('hidden');
+      if (icon) icon.className = "ph-bold ph-eye-slash";
+      if (label) label.innerText = "Hide Cards";
+    }
+  }
+}
+window.toggleDashboardCards = toggleDashboardCards;
+
 function applyDashboardTableVisibility() {
   const tablesContainer = document.getElementById('dashboard-tables-container');
   const summaryContainer = document.getElementById('dashboard-summary-container');
@@ -123,12 +143,18 @@ function applyDashboardTableVisibility() {
 
   if (isDashboardTablesVisible) {
     tablesContainer.classList.remove('hidden');
-    summaryContainer.className = "w-full lg:w-72 xl:w-80 flex flex-col gap-2 flex-shrink-0 h-full overflow-y-auto custom-scrollbar pr-0.5 py-0.5 transition-all";
+    if (isDashboardCardsCollapsed) {
+      summaryContainer.classList.add('hidden');
+    } else {
+      summaryContainer.classList.remove('hidden');
+      summaryContainer.className = "w-full lg:w-72 xl:w-80 flex flex-col gap-2 flex-shrink-0 h-full overflow-y-auto custom-scrollbar pr-0.5 py-0.5 transition-all";
+    }
     if (btnLabel) btnLabel.innerText = "Sembunyikan Tabel";
     if (btnIcon) btnIcon.className = "ph-bold ph-eye-slash text-sm";
     if (btn) btn.className = "px-2.5 sm:px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer";
   } else {
     tablesContainer.classList.add('hidden');
+    summaryContainer.classList.remove('hidden');
     summaryContainer.className = "flex-1 w-full h-full overflow-y-auto custom-scrollbar p-1.5 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 content-start transition-all";
     if (btnLabel) btnLabel.innerText = "Tampilkan Tabel Data";
     if (btnIcon) btnIcon.className = "ph-bold ph-table text-sm";
@@ -355,6 +381,12 @@ function renderContractorSummaryCard(companyKey, config) {
   const totalLocations = plans.length;
   const ratioPercent = totalPlanDth > 0 ? Math.min(100, Math.round((totalAllocatedDth / totalPlanDth) * 100)) : 0;
 
+  const forecastStats = typeof getMonthlyForecastStats === 'function' ? getMonthlyForecastStats() : null;
+  let forecastDthVal = 0;
+  if (forecastStats) {
+    forecastDthVal = (companyKey === 'SIS' ? forecastStats.sisDth : forecastStats.bumaDth) || 0;
+  }
+
   const statusBoxesHtml = STATUS_CONFIGS.map(cfg => {
     const stat = statusStats[cfg.key] || { dth: 0, count: 0 };
     return `
@@ -395,29 +427,37 @@ function renderContractorSummaryCard(companyKey, config) {
         </span>
       </div>
 
-      <div class="my-1 sm:my-1.5 bg-gradient-to-br from-slate-50/95 via-white to-slate-50/85 p-1.5 sm:p-2 rounded-xl border border-slate-200/90 shadow-inner grid grid-cols-3 gap-1.5 items-center relative z-1">
-        <div>
-          <span class="text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider text-slate-400 block truncate">Total Plan DTH</span>
-          <div class="text-sm sm:text-base font-black ${config.textDth} font-mono tracking-tight leading-none mt-0.5 truncate">
-            ${totalPlanDth.toFixed(2)} <span class="text-[8px] sm:text-[8.5px] font-bold text-slate-400 font-sans">Ton</span>
+      <div class="my-1 sm:my-1.5 bg-gradient-to-br from-slate-50/95 via-white to-slate-50/85 p-1.5 rounded-xl border border-slate-200/90 shadow-inner grid grid-cols-4 gap-1 items-center relative z-1">
+        <div class="min-w-0">
+          <span class="text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-tight text-slate-400 block truncate">Total Plan DTH</span>
+          <div class="text-xs sm:text-[13px] font-black ${config.textDth} font-mono tracking-tight leading-none mt-0.5 truncate">
+            ${totalPlanDth.toFixed(2)} <span class="text-[7px] font-bold text-slate-400 font-sans">Ton</span>
           </div>
         </div>
-        <div class="border-x border-slate-200 px-1.5 text-center">
-          <span class="text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider ${config.allocLabelColor} flex items-center justify-center gap-0.5 truncate">
-            <i class="ph-bold ph-check-circle text-[8.5px]"></i> Teralokasi
+        <div class="border-l border-slate-200 pl-1 text-center min-w-0">
+          <span class="text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-tight ${config.allocLabelColor} flex items-center justify-center gap-0.5 truncate">
+            <i class="ph-bold ph-check-circle text-[7.5px]"></i> Teralokasi
           </span>
-          <div class="text-sm sm:text-base font-black ${config.allocValColor} font-mono tracking-tight leading-none mt-0.5 truncate">
-            ${totalAllocatedDth.toFixed(2)} <span class="text-[8px] sm:text-[8.5px] font-bold opacity-75 font-sans">Ton</span>
+          <div class="text-xs sm:text-[13px] font-black ${config.allocValColor} font-mono tracking-tight leading-none mt-0.5 truncate">
+            ${totalAllocatedDth.toFixed(2)} <span class="text-[7px] font-bold opacity-75 font-sans">Ton</span>
           </div>
           <div class="w-full bg-slate-200/90 h-1 rounded-full mt-1 overflow-hidden flex" title="${ratioPercent}% teralokasi">
             <div class="h-full rounded-full ${config.allocBarGradient} transition-all duration-500" style="width: ${ratioPercent}%"></div>
           </div>
         </div>
-        <div class="text-right flex flex-col items-end">
-          <span class="text-[7.5px] sm:text-[8px] font-black text-slate-400 uppercase tracking-wider block">Total Lokasi</span>
+        <div class="border-l border-slate-200 pl-1 text-center min-w-0">
+          <span class="text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-tight text-sky-800 flex items-center justify-center gap-0.5 truncate">
+            <i class="ph-bold ph-clock-counter-clockwise text-[7.5px] text-sky-600"></i> Forecast DTH
+          </span>
+          <div class="text-xs sm:text-[13px] font-black text-sky-950 font-mono tracking-tight leading-none mt-0.5 truncate">
+            ${forecastDthVal.toFixed(2)} <span class="text-[7px] font-bold text-sky-700 font-sans">Ton</span>
+          </div>
+        </div>
+        <div class="border-l border-slate-200 pl-1 text-right flex flex-col items-end min-w-0">
+          <span class="text-[6.5px] sm:text-[7.5px] font-black text-slate-400 uppercase tracking-tight block truncate">Total Lokasi</span>
           <div class="mt-0.5">
-            <span class="inline-flex items-center gap-1 text-[10px] sm:text-[10.5px] font-black text-slate-800 font-mono bg-white px-1.5 py-0.2 rounded-md border border-slate-200 shadow-2xs">
-              <i class="ph-bold ph-map-pin text-rose-500 text-[10px]"></i> ${totalLocations} <span class="text-[8px] font-bold text-slate-400 font-sans">Lok</span>
+            <span class="inline-flex items-center gap-0.5 text-[9px] sm:text-[9.5px] font-black text-slate-800 font-mono bg-white px-1 py-0.2 rounded border border-slate-200 shadow-2xs">
+              <i class="ph-bold ph-map-pin text-rose-500 text-[8.5px]"></i> ${totalLocations} <span class="text-[6.5px] font-bold text-slate-400 font-sans">Lok</span>
             </span>
           </div>
         </div>

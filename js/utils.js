@@ -428,19 +428,19 @@ function getValFlexible(row, ...possibleKeys) {
 
 // Normalisasi Status Peledakan (Mendukung 6 Status)
 function normalizeBlastingStatus(raw) {
-  if (!raw) return 'TODAY';
+  if (!raw) return '';
   const str = String(raw).trim().toUpperCase();
   if (str.includes('CANCEL') || str.includes('CALCEL') || str.includes('HOLD')) return 'CANCEL/HOLD';
   if (str.includes('TIE') && str.includes('TODAY')) return 'TIE UP + TODAY';
   if (str.includes('TIE')) return 'TIE UP';
   if (str.includes('TODAY') && str.includes('SLEEP')) return 'TODAY/SLEEP';
   if (str.includes('SLEEP')) return 'SLEEP';
-  if (str.includes('TODAY')) return 'TODAY';
-  return str;
+  if (str === 'TODAY' || str.startsWith('TODAY')) return 'TODAY';
+  return ''; // DITOLAK jika tidak sesuai dengan pilihan resmi form (misal: 'LOADSHOT')
 }
 
 function getStatusBadgeHtml(status) {
-  const norm = normalizeBlastingStatus(status);
+  const norm = normalizeBlastingStatus(status) || 'TODAY';
   const cfg = BLASTING_STATUS_CONFIG[norm] || {
     label: norm,
     badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
@@ -452,7 +452,8 @@ function getStatusBadgeHtml(status) {
 function getPlanTodaySleepStatus(item) {
   if (!item) return 'TODAY';
   const raw = getValFlexible(item, 'today_sleep', 'today/sleep', 'todaysleep', 'today / sleep', 'status', 'blast_status', 'mode');
-  return normalizeBlastingStatus(raw);
+  const norm = normalizeBlastingStatus(raw);
+  return norm || 'TODAY';
 }
 
 function parseExcelDate(rawDate) {
@@ -534,5 +535,97 @@ function getAuthToken() {
   }
 }
 window.getAuthToken = getAuthToken;
+
+function normalizeMonthString(val) {
+  if (!val) return '';
+  if (val instanceof Date) {
+    return new Date(val).toLocaleDateString('sv-SE', { timeZone: 'Asia/Makassar' }).slice(0, 7);
+  }
+  const s = String(val).trim();
+  if (s.includes('T') || s.includes('GMT') || s.includes('Z')) {
+    const dt = new Date(s);
+    if (!isNaN(dt.getTime())) {
+      return dt.toLocaleDateString('sv-SE', { timeZone: 'Asia/Makassar' }).slice(0, 7);
+    }
+  }
+  const m = s.match(/^(\d{4})[-/](\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2, '0')}`;
+  return s.slice(0, 7);
+}
+window.normalizeMonthString = normalizeMonthString;
+
+/**
+ * Menghitung Monthly Forecast MMU per Kontraktor (PT SIS & PT BUMA)
+ * Rumus: (forecast bulanan kontraktor / total forecast semua kontraktor) * total jumlah dth mmu/mmt ready hari itu
+ */
+function getMonthlyForecastStats(activeDateStr) {
+  const targetDate = activeDateStr || (document.getElementById('global-date-filter')?.value) || getWitaDateString();
+  const targetMonth = targetDate.slice(0, 7); // Format YYYY-MM
+
+  let sisForecast = 0;
+  let bumaForecast = 0;
+
+  if (Array.isArray(globalForecastData) && globalForecastData.length > 0) {
+    // 1. Prioritaskan entry yang cocok dengan bulan aktif
+    globalForecastData.forEach(row => {
+      const rowMonth = normalizeMonthString(row.bulan || row.Bulan);
+      if (rowMonth === targetMonth || !rowMonth) {
+        const comp = String(row.perusahaan || row.Perusahaan || '').toUpperCase();
+        const val = parseFloat(row.forecast || row.forecast_bahan_peledak || row['forecast bahan peledak'] || row.Forecast || 0) || 0;
+        if (comp.includes('SIS')) sisForecast = val;
+        else if (comp.includes('BUMA')) bumaForecast = val;
+      }
+    });
+
+    // 2. Fallback: jika bulan belum ada yang cocok, ambil data terakhir untuk SIS / BUMA
+    if (sisForecast === 0 && bumaForecast === 0) {
+      globalForecastData.forEach(row => {
+        const comp = String(row.perusahaan || row.Perusahaan || '').toUpperCase();
+        const val = parseFloat(row.forecast || row.forecast_bahan_peledak || row['forecast bahan peledak'] || row.Forecast || 0) || 0;
+        if (comp.includes('SIS') && val > 0 && sisForecast === 0) sisForecast = val;
+        else if (comp.includes('BUMA') && val > 0 && bumaForecast === 0) bumaForecast = val;
+      });
+    }
+  }
+
+  const totalForecast = sisForecast + bumaForecast;
+
+  // Hitung total DTH MMU/MMT ready hari ini dari semua supplier (Dahana & MNK)
+  let totalReadyDthToday = 0;
+  if (Array.isArray(globalSupplierData) && globalSupplierData.length > 0) {
+    const supMap = new Map();
+    globalSupplierData.forEach(s => {
+      const name = cleanCompanyName(s.supplier).toUpperCase();
+      supMap.set(name, s);
+    });
+    supMap.forEach(s => {
+      totalReadyDthToday += parseFloat(s.dth_ready || 0) || 0;
+    });
+  }
+
+  const sisRatio = totalForecast > 0 ? (sisForecast / totalForecast) : 0;
+  const bumaRatio = totalForecast > 0 ? (bumaForecast / totalForecast) : 0;
+
+  const sisDth = totalForecast > 0 ? (sisRatio * totalReadyDthToday) : 0;
+  const bumaDth = totalForecast > 0 ? (bumaRatio * totalReadyDthToday) : 0;
+
+  // Update live header badge jika ada di DOM
+  const badgeSis = document.getElementById('header-forecast-sis');
+  const badgeBuma = document.getElementById('header-forecast-buma');
+  if (badgeSis) badgeSis.innerText = `SIS: ${sisDth.toFixed(2)} T`;
+  if (badgeBuma) badgeBuma.innerText = `BUMA: ${bumaDth.toFixed(2)} T`;
+
+  return {
+    targetMonth,
+    sisForecast,
+    bumaForecast,
+    totalForecast,
+    totalReadyDthToday,
+    sisDth,
+    bumaDth
+  };
+}
+window.getMonthlyForecastStats = getMonthlyForecastStats;
+
 
 

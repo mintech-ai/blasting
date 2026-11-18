@@ -599,3 +599,156 @@ window.updateExportPreviewCount = updateExportPreviewCount;
 window.downloadExportExcel = downloadExportExcel;
 window.copyExportToWhatsApp = copyExportToWhatsApp;
 
+/**
+ * Export Plan Blasting Table directly as PNG Image (Full Crisp Snapshot)
+ */
+async function exportPlanBlastingTableImage() {
+  const tableEl = document.getElementById('table-plan-blasting-main') || document.querySelector('#card-table-plan table');
+  if (!tableEl) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Tabel Tidak Ditemukan',
+      text: 'Pastikan tabel Plan Blasting sedang ditampilkan.'
+    });
+    return;
+  }
+
+  if (typeof html2canvas === 'undefined') {
+    Swal.fire({
+      icon: 'error',
+      title: 'Library Belum Siap',
+      text: 'Library html2canvas belum termuat. Periksa koneksi internet Anda.'
+    });
+    return;
+  }
+
+  Swal.fire({
+    title: 'Memproses Gambar...',
+    text: 'Sedang mengekspor tabel Plan Blasting ke format PNG kualitas tinggi...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  let sandbox = null;
+  try {
+    const filterDate = (document.getElementById('global-date-filter') ? document.getElementById('global-date-filter').value : '') || getWitaDateString();
+    const rows = tableEl.querySelectorAll('tbody tr');
+    const rowCount = rows ? rows.length : 0;
+
+    // Buat sandbox offscreen unconstrained agar tabel dapat melebar secara alami tanpa terpotong
+    sandbox = document.createElement('div');
+    sandbox.id = 'export-image-sandbox';
+    sandbox.style.position = 'fixed';
+    sandbox.style.left = '-99999px';
+    sandbox.style.top = '0';
+    sandbox.style.width = 'max-content';
+    sandbox.style.minWidth = '1650px';
+    sandbox.style.background = '#ffffff';
+    sandbox.style.padding = '28px 32px';
+    sandbox.style.boxSizing = 'border-box';
+    sandbox.style.fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    sandbox.style.zIndex = '-9999';
+
+    // Header Laporan
+    const headerEl = document.createElement('div');
+    headerEl.style.display = 'flex';
+    headerEl.style.alignItems = 'center';
+    headerEl.style.justifyContent = 'space-between';
+    headerEl.style.paddingBottom = '16px';
+    headerEl.style.marginBottom = '16px';
+    headerEl.style.borderBottom = '2px solid #e2e8f0';
+    headerEl.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 38px; height: 38px; border-radius: 8px; background: #dc2626; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          🔥
+        </div>
+        <div>
+          <div style="font-size: 16px; font-weight: 900; color: #0f172a; letter-spacing: -0.025em; text-transform: uppercase;">
+            PT ADARO INDONESIA &bull; RENCANA PELEDAKAN (PLAN BLASTING)
+          </div>
+          <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 2px;">
+            Integrated Blasting System &bull; Periode / Tanggal: <span style="font-family: monospace; font-weight: 800; color: #0284c7;">${filterDate}</span> &bull; Total Baris: <span style="font-family: monospace; font-weight: 800; color: #0f172a;">${rowCount} Plan</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span style="display: inline-block; padding: 4px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 9999px; font-size: 10.5px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.05em;">
+          WITA ONLINE REPORT
+        </span>
+      </div>
+    `;
+    sandbox.appendChild(headerEl);
+
+    // Kloning tabel dan hilangkan semua batas lebar / pembatasan CSS pemotong teks
+    const tableClone = tableEl.cloneNode(true);
+    tableClone.style.width = '100%';
+    tableClone.style.minWidth = '1600px';
+    tableClone.style.borderCollapse = 'collapse';
+    tableClone.style.fontSize = '11px';
+    tableClone.style.backgroundColor = '#ffffff';
+
+    // Bersihkan semua class truncate, clamp-2-lines, max-w-* dari semua elemen
+    const allDescendants = tableClone.querySelectorAll('*');
+    allDescendants.forEach(el => {
+      el.classList.remove('truncate');
+      el.classList.remove('clamp-2-lines');
+      el.style.textOverflow = 'clip';
+      el.style.overflow = 'visible';
+      el.style.maxWidth = 'none';
+
+      if (el.tagName === 'TD' || el.tagName === 'TH') {
+        el.style.overflow = 'visible';
+        el.style.maxWidth = 'none';
+        el.style.padding = '8px 10px';
+        el.style.verticalAlign = 'middle';
+      }
+    });
+
+    sandbox.appendChild(tableClone);
+    document.body.appendChild(sandbox);
+
+    // Tunggu sedikit agar render dan font stabil
+    await new Promise(r => setTimeout(r, 200));
+
+    const canvas = await html2canvas(sandbox, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: sandbox.scrollWidth,
+      height: sandbox.scrollHeight,
+      windowWidth: sandbox.scrollWidth + 100
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    downloadLink.download = `Plan_Blasting_${filterDate}.png`;
+    downloadLink.href = imgData;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil Diekspor!',
+      text: `Gambar tabel Plan Blasting (${filterDate}) berhasil diunduh.`,
+      timer: 2200,
+      showConfirmButton: false
+    });
+  } catch (err) {
+    console.error('Error export table image:', err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengekspor Gambar',
+      text: err.message || 'Terjadi kesalahan saat memproses gambar tabel.'
+    });
+  } finally {
+    if (sandbox && sandbox.parentNode) {
+      sandbox.parentNode.removeChild(sandbox);
+    }
+  }
+}
+window.exportPlanBlastingTableImage = exportPlanBlastingTableImage;
+

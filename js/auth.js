@@ -97,6 +97,8 @@ function configureRoleViews() {
   const company = (currentUser.company || '').toUpperCase();
 
   const kForm = document.getElementById('container-kontraktor-form');
+  const kForecast = document.getElementById('container-kontraktor-forecast-form');
+  const subTabSelector = document.getElementById('kontraktor-sub-tab-selector');
   const sForm = document.getElementById('container-supplier-form');
   const navFormBtn = document.getElementById('nav-btn-form');
   const btnTambahPlan = document.getElementById('btn-tambah-plan-container');
@@ -122,22 +124,44 @@ function configureRoleViews() {
     const supSel = document.getElementById('sup_readiness_supplier');
     if (supSel) supSel.disabled = false;
 
+    const fcCompany = document.getElementById('forecast_perusahaan');
+    if (fcCompany) {
+      fcCompany.disabled = false;
+      fcCompany.classList.remove('bg-slate-100', 'cursor-not-allowed');
+    }
+
     switchOwnerForm('plan');
   } else if (role === 'KONTRAKTOR') {
     if (navFormBtn) navFormBtn.classList.remove('hidden');
     if (ownerSelector) ownerSelector.classList.add('hidden');
     if (kontraktorSelectField) kontraktorSelectField.classList.add('hidden');
 
-    if (kForm) kForm.classList.remove('hidden');
+    if (subTabSelector) subTabSelector.classList.remove('hidden');
+    switchKontraktorSubTab('plan');
     if (sForm) sForm.classList.add('hidden');
     if (btnTambahPlan) btnTambahPlan.classList.remove('hidden');
     if (supBtnContainer) supBtnContainer.classList.add('hidden');
+
+    // Auto set company di form forecast dan kunci sesuai akun login kontraktor
+    const fcCompany = document.getElementById('forecast_perusahaan');
+    if (fcCompany) {
+      if (company && company.toUpperCase().includes('BUMA')) {
+        fcCompany.value = 'PT BUMA';
+      } else {
+        fcCompany.value = 'PT SIS';
+      }
+      fcCompany.disabled = true;
+      fcCompany.classList.add('bg-slate-100', 'cursor-not-allowed');
+    }
   } else if (role === 'SUPPLIER') {
     if (navFormBtn) navFormBtn.classList.remove('hidden');
     if (ownerSelector) ownerSelector.classList.add('hidden');
     if (kontraktorSelectField) kontraktorSelectField.classList.add('hidden');
 
+    // Supplier TIDAK MEMILIKI akses ke tab atau form forecast
+    if (subTabSelector) subTabSelector.classList.add('hidden');
     if (kForm) kForm.classList.add('hidden');
+    if (kForecast) kForecast.classList.add('hidden');
     if (sForm) sForm.classList.remove('hidden');
     if (btnTambahPlan) btnTambahPlan.classList.add('hidden');
 
@@ -178,14 +202,70 @@ function configureRoleViews() {
   }
 }
 
+function switchKontraktorSubTab(type) {
+  // Supplier tidak memiliki akses ke tab ataupun form kontraktor / forecast
+  if (currentUser && currentUser.role === 'SUPPLIER') return;
+
+  const kPlan = document.getElementById('container-kontraktor-form');
+  const kForecast = document.getElementById('container-kontraktor-forecast-form');
+  const btnPlan = document.getElementById('btn-subtab-kontraktor-plan');
+  const btnForecast = document.getElementById('btn-subtab-kontraktor-forecast');
+
+  if (type === 'plan') {
+    if (kPlan) kPlan.classList.remove('hidden');
+    if (kForecast) kForecast.classList.add('hidden');
+    if (btnPlan) {
+      btnPlan.className = "flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 bg-red-600 text-white shadow-2xs cursor-pointer";
+    }
+    if (btnForecast) {
+      btnForecast.className = "flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer";
+    }
+  } else {
+    if (kPlan) kPlan.classList.add('hidden');
+    if (kForecast) kForecast.classList.remove('hidden');
+    if (btnForecast) {
+      btnForecast.className = "flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-2xs glow-blue cursor-pointer";
+    }
+    if (btnPlan) {
+      btnPlan.className = "flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer";
+    }
+
+    // Pastikan status lock/unlock perusahaan forecast selalu sinkron
+    const fcCompany = document.getElementById('forecast_perusahaan');
+    if (fcCompany) {
+      if (isUserOwner()) {
+        fcCompany.disabled = false;
+        fcCompany.classList.remove('bg-slate-100', 'cursor-not-allowed');
+      } else if (currentUser && currentUser.role === 'KONTRAKTOR') {
+        const comp = currentUser.company || '';
+        fcCompany.value = comp.toUpperCase().includes('BUMA') ? 'PT BUMA' : 'PT SIS';
+        fcCompany.disabled = true;
+        fcCompany.classList.add('bg-slate-100', 'cursor-not-allowed');
+      }
+    }
+
+    if (typeof updateForecastCalculationPreview === 'function') {
+      try {
+        updateForecastCalculationPreview();
+      } catch (e) {
+        console.warn('Forecast preview warning:', e);
+      }
+    }
+  }
+}
+window.switchKontraktorSubTab = switchKontraktorSubTab;
+
 function switchOwnerForm(type) {
   const kForm = document.getElementById('container-kontraktor-form');
+  const kForecast = document.getElementById('container-kontraktor-forecast-form');
+  const subTabSelector = document.getElementById('kontraktor-sub-tab-selector');
   const sForm = document.getElementById('container-supplier-form');
   const btnPlan = document.getElementById('btn-owner-select-plan');
   const btnSup = document.getElementById('btn-owner-select-supplier');
 
   if (type === 'plan') {
-    if (kForm) kForm.classList.remove('hidden');
+    if (subTabSelector) subTabSelector.classList.remove('hidden');
+    switchKontraktorSubTab('plan');
     if (sForm) sForm.classList.add('hidden');
     if (btnPlan) {
       btnPlan.className = "flex-1 py-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 bg-red-600 text-white shadow-sm";
@@ -194,7 +274,9 @@ function switchOwnerForm(type) {
       btnSup.className = "flex-1 py-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
     }
   } else {
+    if (subTabSelector) subTabSelector.classList.add('hidden');
     if (kForm) kForm.classList.add('hidden');
+    if (kForecast) kForecast.classList.add('hidden');
     if (sForm) sForm.classList.remove('hidden');
     if (btnSup) {
       btnSup.className = "flex-1 py-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 bg-amber-600 text-white shadow-sm glow-amber";

@@ -46,6 +46,11 @@ async function refreshData(showToast = true, useCacheFirst = true) {
         if (parsed && Array.isArray(parsed.planData) && parsed.planData.length > 0) {
           rawGlobalPlanData = parsed.planData;
           rawGlobalSupplierData = parsed.supplierData || [];
+          if (parsed.masterData) {
+            globalMasterData = parsed.masterData;
+            if (typeof applyMasterData === 'function') applyMasterData(parsed.masterData);
+          }
+          if (parsed.forecastData) globalForecastData = parsed.forecastData;
           filterAndRenderDashboard(filterDate);
         }
       }
@@ -66,12 +71,21 @@ async function refreshData(showToast = true, useCacheFirst = true) {
     if (res && res.success) {
       rawGlobalPlanData = res.planData || [];
       rawGlobalSupplierData = res.supplierData || [];
+      if (res.masterData) {
+        globalMasterData = res.masterData;
+        if (typeof applyMasterData === 'function') applyMasterData(res.masterData);
+      }
+      if (res.forecastData) {
+        globalForecastData = res.forecastData;
+      }
 
       // Simpan ke cache untuk percepatan load berikutnya
       try {
         sessionStorage.setItem('blasting_dashboard_cache', JSON.stringify({
           planData: rawGlobalPlanData,
           supplierData: rawGlobalSupplierData,
+          masterData: globalMasterData,
+          forecastData: globalForecastData,
           time: Date.now()
         }));
       } catch (e) { }

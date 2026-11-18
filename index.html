@@ -14,6 +14,7 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -214,16 +215,34 @@
         <!-- TABEL 1: PLAN BLASTING UTAMA -->
         <div id="card-table-plan"
           class="flex-1 flex flex-col clean-card rounded-xl p-2 sm:p-2.5 shadow-sm border border-slate-200 min-h-0 overflow-hidden">
-          <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 flex-shrink-0">
-            <div class="flex items-center gap-2">
+          <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 flex-shrink-0 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-xs font-extrabold text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
                 <i class="ph-bold ph-fire text-red-600"></i> Rencana Peledakan (Plan Blasting)
               </h2>
               <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.2 rounded-full"
                 id="plan-count-badge">0 Baris</span>
+
+              <!-- Monthly Forecast MMU Live Display in Header -->
+              <div id="forecast-dth-header-badge"
+                class="hidden md:flex items-center gap-1.5 text-[10px] font-mono bg-blue-50 text-blue-950 border border-blue-200 px-2 py-0.5 rounded-lg font-bold shadow-2xs">
+                <i class="ph-bold ph-chart-pie-slice text-blue-600"></i>
+                <span class="text-slate-500 uppercase font-sans text-[9px]">Forecast:</span>
+                <span id="header-forecast-sis" class="text-blue-700 font-black">SIS: 0.00 T</span>
+                <span class="text-slate-300">|</span>
+                <span id="header-forecast-buma" class="text-emerald-700 font-black">BUMA: 0.00 T</span>
+              </div>
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Toggle Hide/Show Summary Cards -->
+              <button type="button" onclick="toggleDashboardCards()" id="btn-toggle-dashboard-cards"
+                class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                title="Sembunyikan / Tampilkan Card Ringkasan Eksekutif">
+                <i class="ph-bold ph-eye-slash" id="icon-toggle-cards"></i>
+                <span id="label-toggle-cards">Hide Cards</span>
+              </button>
+
               <button type="button" onclick="openExportModal()"
                 class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs"
                 title="Export Data ke Excel (.xlsx) atau Format WhatsApp">
@@ -237,15 +256,14 @@
           </div>
 
           <!-- Table Wrapper with Internal Scroll -->
-          <div class="flex-1 min-h-0 overflow-auto custom-scrollbar rounded-lg border border-slate-200 mt-1.5">
-            <table class="w-full text-left text-[11px] text-slate-700 border-collapse">
+          <div class="flex-1 min-h-0 overflow-auto custom-scrollbar rounded-lg border border-slate-200 mt-1.5" id="wrapper-table-plan-blasting">
+            <table class="w-full text-left text-[11px] text-slate-700 border-collapse" id="table-plan-blasting-main">
               <thead
                 class="bg-slate-100 text-slate-800 uppercase font-extrabold text-[9.5px] tracking-wider sticky top-0 z-10 border-b border-slate-200 shadow-sm">
                 <tr>
-                  <th class="px-1.5 py-1 text-center bg-slate-100">Aksi</th>
-                  <th class="px-1.5 py-1 text-center bg-slate-100">No</th>
-                  <th class="px-1.5 py-1 bg-slate-100">Tanggal</th>
-                  <th class="px-1.5 py-1 text-center bg-slate-100">Prio</th>
+                  <th class="px-1.5 py-1 text-center bg-slate-100 w-12">Aksi</th>
+                  <th class="px-1.5 py-1 text-center bg-slate-100 w-7">No</th>
+                  <th class="px-1.5 py-1 text-center bg-slate-100 w-10">Prio</th>
                   <th class="px-1.5 py-1 bg-slate-100">Mitra</th>
                   <th class="px-1.5 py-1 bg-slate-100">Lokasi Blasting</th>
                   <th class="px-1.5 py-1 text-center bg-slate-100">Status</th>
@@ -258,13 +276,8 @@
                   <th class="px-1.5 py-1 bg-amber-50 text-amber-900">Blaster / Pengawas</th>
                   <th class="px-1.5 py-1 bg-amber-50 text-amber-900">Unit MMU/Box</th>
                   <th class="px-1.5 py-1 text-center bg-slate-100">Jam Masuk</th>
-                  <th class="px-1.5 py-1 bg-slate-100">Matrix / Geo</th>
-                  <th class="px-1.5 py-1 bg-slate-100" title="Desa Terdampak Ledakan & Akses Masuk ke Area">
-                    <div class="flex flex-col leading-none">
-                      <span>Desa / Akses</span>
-                      <span class="text-[7.5px] text-slate-400 font-semibold normal-case">Terdampak & Masuk</span>
-                    </div>
-                  </th>
+                  <th class="px-1.5 py-1 bg-slate-100">Akses Masuk</th>
+                  <th class="px-1.5 py-1 bg-slate-100 min-w-[120px]">Remarks (Kesiapan / Kendala)</th>
                 </tr>
               </thead>
               <tbody id="tbody-plan-blasting" class="divide-y divide-slate-100 font-medium bg-white">
@@ -482,6 +495,20 @@
         </div>
       </div>
 
+      <!-- KONTRAKTOR FORM SUB-TABS (PLAN & FORECAST) -->
+      <div id="kontraktor-sub-tab-selector" class="max-w-4xl mx-auto mb-4 hidden">
+        <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2">
+          <button type="button" id="btn-subtab-kontraktor-plan" onclick="switchKontraktorSubTab('plan')"
+            class="flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 bg-red-600 text-white shadow-2xs cursor-pointer">
+            <i class="ph-bold ph-file-plus text-sm"></i> 1. Form Request Plan Peledakan
+          </button>
+          <button type="button" id="btn-subtab-kontraktor-forecast" onclick="switchKontraktorSubTab('forecast')"
+            class="flex-1 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer">
+            <i class="ph-bold ph-chart-pie-slice text-sm text-blue-600"></i> 2. Form Forecast Bulanan MMU
+          </button>
+        </div>
+      </div>
+
       <!-- KONTRAKTOR FORM (SIS & BUMA) -->
       <div id="container-kontraktor-form"
         class="clean-card rounded-2xl p-6 shadow-sm border border-slate-200 relative max-w-4xl mx-auto hidden">
@@ -564,8 +591,8 @@
             <select id="input_prioritas" required
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
               <option value="" disabled selected>Pilih Prioritas...</option>
-              <option value="Prioritas 1">Prioritas 1</option>
-              <option value="Prioritas 2">Prioritas 2</option>
+              <option value="P1">P1</option>
+              <option value="P2">P2</option>
             </select>
           </div>
 
@@ -585,13 +612,16 @@
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1.5">4. Inisiasi (RF / LIL) <span
+            <label class="block font-bold text-slate-700 mb-1.5">4. Inisiasi <span
                 class="text-red-600">*</span></label>
             <select id="input_inisiasi" required
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-red-600 focus:bg-white transition">
               <option value="" disabled selected>Pilih Inisiasi...</option>
-              <option value="RF">RF</option>
+              <option value="(-)">(-)</option>
               <option value="LIL">LIL</option>
+              <option value="RF AXXIS">RF AXXIS</option>
+              <option value="RF E*TAR">RF E*TAR</option>
+              <option value="RF HEBS">RF HEBS</option>
             </select>
           </div>
 
@@ -624,8 +654,9 @@
 
           <div>
             <label class="block font-bold text-slate-700 mb-1.5">9. Isian per Hole (Kg/Hole) <span
-                class="text-red-600">*</span></label>
-            <input type="number" id="input_isian_kg" placeholder="Isi Kg per hole..." step="0.1" required
+                class="text-red-600">*</span> <span class="text-[10px] text-slate-400 font-normal">(Bulat tanpa koma)</span></label>
+            <input type="number" id="input_isian_kg" placeholder="Isi Kg bulat tanpa koma..." step="1" min="0" required
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-red-700 font-bold font-mono text-sm focus:outline-none focus:border-red-600 focus:bg-white transition">
           </div>
 
@@ -729,6 +760,58 @@
         </form>
       </div>
 
+      <!-- KONTRAKTOR FORECAST FORM (BULANAN MMU) -->
+      <div id="container-kontraktor-forecast-form"
+        class="clean-card rounded-2xl p-6 shadow-sm border border-blue-200 bg-white relative max-w-4xl mx-auto hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-slate-200 gap-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200" id="forecast-form-badge-company">
+              KONTRAKTOR
+            </span>
+            <h2 class="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
+              <i class="ph-bold ph-chart-pie-slice text-blue-600"></i> Form Forecast Bulanan MMU
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Input perkiraan kebutuhan bahan peledak kontraktor (awal bulan)</p>
+          </div>
+          <span class="text-xs text-slate-500 font-mono font-bold" id="forecast-form-date-today"></span>
+        </div>
+
+        <form id="form-forecast-bulanan-page" onsubmit="handleMonthlyForecastSubmit(event)" class="space-y-5 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5">1. Periode Bulan <span class="text-red-600">*</span></label>
+              <input type="month" id="forecast_bulan" required onchange="updateForecastCalculationPreview()"
+                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-blue-600 focus:bg-white transition text-xs">
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5">2. Perusahaan Kontraktor <span class="text-red-600">*</span></label>
+              <select id="forecast_perusahaan" required onchange="updateForecastCalculationPreview()"
+                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-blue-600 focus:bg-white transition text-xs">
+                <option value="PT SIS">PT SIS</option>
+                <option value="PT BUMA">PT BUMA</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">
+              3. Forecast Bahan Peledak (Ton) <span class="text-red-600">*</span>
+              <span class="text-[10px] text-slate-400 font-normal ml-1">(Input dalam bentuk Ton)</span>
+            </label>
+            <input type="number" step="any" min="1" id="forecast_tonase" required placeholder="Ketik jumlah forecast dalam Ton..."
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-extrabold text-sm focus:outline-none focus:border-blue-600 focus:bg-white transition">
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <button type="submit" id="btn-submit-forecast"
+              class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl transition shadow-md flex items-center gap-1.5 cursor-pointer">
+              <i class="ph-bold ph-floppy-disk text-base"></i> Simpan Forecast Bulanan
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- SUPPLIER FORM (DAHANA & MNK-KMB) -->
       <div id="container-supplier-form"
         class="clean-card rounded-2xl p-6 shadow-sm border border-slate-200 max-w-4xl mx-auto hidden">
@@ -801,13 +884,23 @@
             <input type="hidden" id="sup_readiness_dth" value="0">
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block font-bold text-slate-700 mb-1.5">
-              3. Mobil Box Ready (LV Box / Truck) <span class="text-red-600">*</span>
-            </label>
+          <div class="md:col-span-2 bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2.5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <label class="block font-extrabold text-amber-950">
+                3. Mobil Box Ready (LV Box / Truck) <span class="text-red-600">*</span>
+                <span class="block sm:inline text-[10px] text-amber-700 font-normal sm:ml-1">(Klik chip di bawah untuk toggle pilihan box atau tambah manual)</span>
+              </label>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-bold text-slate-500 mb-1 block">Pilihan Mobil Box Ready:</span>
+              <div id="box-chip-container" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
             <input type="text" id="sup_readiness_lv_box_list"
-              placeholder="Isi daftar Mobil Box (misal: Box 01, Box 02)..." required
-              class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 font-mono font-bold focus:outline-none focus:border-amber-600 focus:bg-white transition">
+              placeholder="Terpilih: -" required
+              onkeydown="handleAutoCommaKeydown(event, this)" onblur="handleAutoCommaBlur(this); if (typeof renderBoxChips === 'function') renderBoxChips();"
+              class="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-xs focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-500 shadow-xs transition">
           </div>
 
           <div id="field-dahana-hebs">
@@ -885,6 +978,7 @@
                 </div>
                 <div class="p-2 bg-slate-50 border-t border-slate-200">
                   <input type="text" id="sup_readiness_spv_extra" oninput="handleExtraManpowerInput()"
+                    onkeydown="handleAutoCommaKeydown(event, this)" onblur="handleAutoCommaBlur(this); handleExtraManpowerInput();"
                     placeholder="+ Tambah Pengawas Lain (pisahkan koma)..."
                     class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-emerald-600">
                 </div>
@@ -910,6 +1004,7 @@
                 </div>
                 <div class="p-2 bg-slate-50 border-t border-slate-200">
                   <input type="text" id="sup_readiness_blaster_extra" oninput="handleExtraManpowerInput()"
+                    onkeydown="handleAutoCommaKeydown(event, this)" onblur="handleAutoCommaBlur(this); handleExtraManpowerInput();"
                     placeholder="+ Tambah Blaster Lain (pisahkan koma)..."
                     class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-emerald-600">
                 </div>
@@ -1553,6 +1648,11 @@
             class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5"
             title="Salin ringkasan siap kirim ke WhatsApp">
             <i class="ph-bold ph-whatsapp-logo text-base"></i> Salin WhatsApp
+          </button>
+          <button type="button" onclick="exportPlanBlastingTableImage()"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs shadow-sm transition flex items-center gap-1.5"
+            title="Export gambar tabel rencana peledakan full">
+            <i class="ph-bold ph-image text-base"></i> Export Gambar Tabel
           </button>
           <button type="button" onclick="downloadExportExcel()"
             class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-md glow-emerald transition flex items-center gap-1.5">

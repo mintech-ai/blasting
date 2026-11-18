@@ -294,6 +294,29 @@ function renderPlanBlastingTable() {
     return idxA - idxB;
   });
 
+  // Update banner Monthly Forecast MMU di header tabel
+  if (typeof getMonthlyForecastStats === 'function') {
+    const fStats = getMonthlyForecastStats();
+    const sisEl = document.getElementById('header-forecast-sis');
+    const bumaEl = document.getElementById('header-forecast-buma');
+    if (sisEl) sisEl.innerText = `SIS: ${fStats.sisDth.toFixed(2)} T`;
+    if (bumaEl) bumaEl.innerText = `BUMA: ${fStats.bumaDth.toFixed(2)} T`;
+  }
+
+  // Revisi 18: MMU multi-lokasi diberi penanda urutan pengerjaan (P1, P2, P3...)
+  const mmuLocationCount = new Map();
+  globalPlanData.forEach(p => {
+    const rawMmu = p.unit_mmu || '';
+    const parsed = parseAllocatedMmuInfo(rawMmu);
+    if (parsed && parsed.items) {
+      parsed.items.forEach(it => {
+        const code = it.code.trim().toUpperCase();
+        mmuLocationCount.set(code, (mmuLocationCount.get(code) || 0) + 1);
+      });
+    }
+  });
+  const mmuCurrentOrder = new Map();
+
   let html = '';
   globalPlanData.forEach((item, index) => {
     const rowNo = index + 1;
@@ -301,27 +324,43 @@ function renderPlanBlastingTable() {
     const safeId = sanitizeId(id);
     const kontraktor = cleanCompanyName(item.kontraktor) || '-';
     const lokasi = item.lokasi || '-';
-    const prioritas = item.prioritas || '-';
+    const rawPrio = String(item.prioritas || 'P1').toUpperCase();
+    const prioritas = rawPrio.includes('2') ? 'P2' : 'P1';
     const todaySleep = getPlanTodaySleepStatus(item);
     const inisiasi = item.inisiasi || '-';
     const jamMasuk = formatExcelTime(item.jam_masuk || item.jam);
-    const tgl = normalizeDateToYYYYMMDD(item.tanggal) || item.tanggal || '-';
     const holes = item.jumlah_holes || item.holes || 0;
-    const isian = item.isian_kg || item.isian || 0;
+    const isian = Math.round(Number(item.isian_kg || item.isian || 0));
     const vol = Number(item.volume_ton || item.volume || 0).toFixed(2);
-    const matrix = item.matrix || '-';
-    const geometri = item.geometri || '-';
-    const desa = item.desa || '-';
     const akses = item.akses || '-';
+    const remark = item.remark || item.kondisi_remark || '-';
     const pengawasKont = item.pengawas_kontraktor || '-';
     const sup = item.supplier ? cleanCompanyName(item.supplier) : '';
-    const unitMmu = item.unit_mmu || '-';
     const unitBox = item.unit_box || '-';
+
+    // Format MMU dengan penanda urutan multi-lokasi (misal: 0.5 MMU 120 P1)
+    let unitMmuDisplay = item.unit_mmu || '-';
+    if (item.unit_mmu && item.unit_mmu !== '-') {
+      const parsedMmu = parseAllocatedMmuInfo(item.unit_mmu);
+      if (parsedMmu && parsedMmu.items && parsedMmu.items.length > 0) {
+        const parts = parsedMmu.items.map(it => {
+          const codeUpper = it.code.trim().toUpperCase();
+          const isMulti = (mmuLocationCount.get(codeUpper) || 0) > 1;
+          if (isMulti) {
+            const nextOrder = (mmuCurrentOrder.get(codeUpper) || 0) + 1;
+            mmuCurrentOrder.set(codeUpper, nextOrder);
+            return `${it.qty} ${it.code} P${nextOrder}`;
+          }
+          return `${it.qty} ${it.code}`;
+        });
+        const totalTonStr = parsedMmu.totalDth > 0 ? ` (${parsedMmu.totalDth.toFixed(2)} Ton)` : '';
+        unitMmuDisplay = `${parts.join(', ')}${totalTonStr}`;
+      }
+    }
 
     const rawSpv = item.pengawas_supplier || item.supervisor || '-';
     const cleanSpv = cleanManpowerString(rawSpv);
 
-    // Revisi 1: Sinkronisasi nama blaster
     const rawBlaster = item.blaster || item.jumlah_blaster || item.nama_blaster || '-';
     const cleanBlaster = cleanManpowerString(rawBlaster);
 
@@ -338,35 +377,36 @@ function renderPlanBlastingTable() {
 
     const statusBadge = getStatusBadgeHtml(todaySleep);
 
+    // Revisi 9: Edit dan Hapus dijadikan atas bawah penempatan tombolnya biar ringkes
+    // Revisi 12: fallback passing index agar tombol edit selalu bisa dibuka
     const editBtn = canEdit
-      ? `<button onclick="openEditPlanModal('${safeId}')" class="px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Plan">
-           <i class="ph-bold ph-pencil-simple"></i> Edit
+      ? `<button onclick="openEditPlanModal('${safeId}', ${index})" class="w-full px-1.5 py-0.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold rounded transition text-[9.5px] flex items-center justify-center gap-0.5 shadow-2xs cursor-pointer" title="Edit Plan">
+           <i class="ph-bold ph-pencil-simple text-[10px]"></i> Edit
          </button>`
       : '';
 
     const deleteBtn = canDelete
-      ? `<button onclick="handleDeletePlan('${safeId}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Plan">
-           <i class="ph-bold ph-trash"></i> Hapus
+      ? `<button onclick="handleDeletePlan('${safeId}')" class="w-full px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[9.5px] flex items-center justify-center gap-0.5 shadow-2xs cursor-pointer" title="Hapus Plan">
+           <i class="ph-bold ph-trash text-[10px]"></i> Hapus
          </button>`
       : '';
 
     let actionBtns = '';
     if (editBtn || deleteBtn) {
-      actionBtns = `<div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div>`;
+      actionBtns = `<div class="flex flex-col items-center justify-center gap-1 w-11 mx-auto">${editBtn}${deleteBtn}</div>`;
     } else {
-      actionBtns = `<button disabled title="Anda tidak memiliki hak akses mengubah/menghapus baris ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded text-[10px] flex items-center gap-0.5 mx-auto cursor-not-allowed border border-slate-100">
+      actionBtns = `<button disabled title="Anda tidak memiliki hak akses mengubah/menghapus baris ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded text-[9.5px] flex items-center justify-center gap-0.5 mx-auto cursor-not-allowed border border-slate-100">
            <i class="ph-bold ph-lock-key"></i> Kunci
          </button>`;
     }
 
     html += `
       <tr id="row-plan-${safeId}" class="hover:bg-slate-50 transition border-b border-slate-100 text-[10.5px]">
-        <td class="px-1.5 py-1 text-center whitespace-nowrap">
+        <td class="px-1 py-1 text-center whitespace-nowrap">
           ${actionBtns}
         </td>
         <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${rowNo}</td>
-        <td class="px-1.5 py-1 text-center font-mono text-slate-700 text-[10px]">${escapeHtml(tgl)}</td>
-        <td class="px-1.5 py-1 text-center font-bold text-slate-800">${escapeHtml(prioritas)}</td>
+        <td class="px-1.5 py-1 text-center font-bold text-slate-800 font-mono">${escapeHtml(prioritas)}</td>
         <td class="px-1.5 py-1 font-extrabold text-slate-900">${escapeHtml(kontraktor)}</td>
         <td class="px-1.5 py-1 font-bold text-slate-800">
           <div class="flex items-center gap-1.5 flex-wrap">
@@ -378,7 +418,7 @@ function renderPlanBlastingTable() {
           </div>
         </td>
         <td class="px-1.5 py-1 text-center">${statusBadge}</td>
-        <td class="px-1.5 py-1 text-slate-700">${escapeHtml(inisiasi)}</td>
+        <td class="px-1.5 py-1 text-slate-700 font-semibold">${escapeHtml(inisiasi)}</td>
         <td class="px-1.5 py-1 text-center font-mono text-slate-800">${escapeHtml(holes)}</td>
         <td class="px-1.5 py-1 text-center font-mono text-slate-800">${escapeHtml(isian)}</td>
         <td class="px-1.5 py-1 font-mono font-black text-emerald-700">${escapeHtml(vol)} T</td>
@@ -398,9 +438,9 @@ function renderPlanBlastingTable() {
         </td>
         <td class="px-1.5 py-1 bg-amber-50/40 text-[10px]">
           <div class="flex flex-col gap-0.5 min-w-[90px] max-w-[190px]">
-            <div class="flex items-start gap-1 text-[9.5px] text-amber-900 font-mono font-bold" title="${escapeHtml(unitMmu)}">
+            <div class="flex items-start gap-1 text-[9.5px] text-amber-900 font-mono font-bold" title="${escapeHtml(unitMmuDisplay)}">
               <i class="ph-bold ph-truck text-amber-600 text-xs flex-shrink-0 mt-0.5"></i>
-              <span class="clamp-2-lines leading-tight whitespace-normal">${escapeHtml(unitMmu)}</span>
+              <span class="clamp-2-lines leading-tight whitespace-normal">${escapeHtml(unitMmuDisplay)}</span>
             </div>
             <div class="flex items-start gap-1 text-[9px] text-slate-600 font-mono" title="${escapeHtml(unitBox)}">
               <i class="ph-bold ph-package text-slate-400 text-xs flex-shrink-0 mt-0.5"></i>
@@ -410,29 +450,10 @@ function renderPlanBlastingTable() {
         </td>
         <td class="px-1.5 py-1 text-center font-mono font-bold text-slate-800">${escapeHtml(jamMasuk)}</td>
         <td class="px-1.5 py-1 text-[10px]">
-          <div class="flex flex-col leading-tight min-w-[70px]">
-            <span class="font-bold text-slate-800 truncate" title="${escapeHtml(matrix)}">${escapeHtml(matrix)}</span>
-            <span class="text-[9px] font-mono text-slate-500 truncate flex items-center gap-1 mt-0.5">
-              <span class="text-[7.5px] bg-slate-100 text-slate-500 font-bold px-1 py-0.2 rounded border border-slate-200">GEO</span>
-              <span class="truncate" title="${escapeHtml(geometri)}">${escapeHtml(geometri)}</span>
-            </span>
-          </div>
+          <span class="font-medium text-slate-700 truncate block max-w-[130px]" title="${escapeHtml(akses)}">${escapeHtml(akses)}</span>
         </td>
-        <td class="px-1.5 py-1 text-[10px]">
-          <div class="flex flex-col gap-1 min-w-[95px] max-w-[150px]">
-            <div class="flex items-center gap-1 leading-none" title="Desa Terdampak Ledakan: ${escapeHtml(desa)}">
-              <span class="text-[7.5px] bg-red-100 text-red-800 font-extrabold px-1 py-0.5 rounded border border-red-200 flex items-center gap-0.5 flex-shrink-0">
-                <i class="ph-bold ph-warning-circle text-[8px] text-red-600"></i> TERDAMPAK
-              </span>
-              <span class="font-bold text-slate-900 truncate" title="${escapeHtml(desa)}">${escapeHtml(desa)}</span>
-            </div>
-            <div class="flex items-center gap-1 leading-none" title="Akses Masuk ke Lokasi Peledakan: ${escapeHtml(akses)}">
-              <span class="text-[7.5px] bg-emerald-100 text-emerald-800 font-extrabold px-1 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5 flex-shrink-0">
-                <i class="ph-bold ph-signpost text-[8px] text-emerald-600"></i> AKSES MASUK
-              </span>
-              <span class="font-medium text-slate-600 truncate" title="${escapeHtml(akses)}">${escapeHtml(akses)}</span>
-            </div>
-          </div>
+        <td class="px-1.5 py-1 text-[10px] text-slate-700 italic max-w-[160px]" title="${escapeHtml(remark)}">
+          <span class="clamp-2-lines leading-tight whitespace-normal">${escapeHtml(remark)}</span>
         </td>
       </tr>
     `;
@@ -480,8 +501,21 @@ function renderKesiapanSupplierTable() {
     const mmu = formatMmuReadyList(item.unit_mmu, item.supplier);
     const dth = Number(item.dth_ready || 0).toFixed(2);
     const box = formatBoxReadyList(item.unit_box);
-    const devices = [item.hebs, item.estar, item.axiss].filter(x => x && x !== '' && x !== '0').join(', ') || '-';
-    const nonel = item.nonel || '-';
+    const formatAccessory = (val, suffix) => {
+      if (!val || val === '-' || val === '0') return '';
+      const s = String(val).trim();
+      if (!s || s === '0' || s === '-') return '';
+      const cleanSuffix = suffix.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const cleanVal = s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      if (cleanVal.includes(cleanSuffix)) return s;
+      return `${s} ${suffix}`;
+    };
+
+    const hebsStr = formatAccessory(item.hebs, 'HEBS');
+    const estarStr = formatAccessory(item.estar, 'E*TAR');
+    const axissStr = formatAccessory(item.axiss, 'AXXIS');
+    const devices = [hebsStr, estarStr, axissStr].filter(Boolean).join(', ') || '-';
+    const nonel = formatAccessory(item.nonel, 'Nonel') || '-';
     const namaSpv = item.nama_spv || '-';
     const numSpv = item.supervisor || 0;
     const namaBlaster = item.nama_blaster || '-';
@@ -492,20 +526,20 @@ function renderKesiapanSupplierTable() {
     const canDelete = checkCanDeleteSupplier(item);
 
     const editBtn = canEdit
-      ? `<button onclick="openEditSupplierModal('${safeUuid}')" class="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Edit Kesiapan">
+      ? `<button onclick="openEditSupplierModal('${safeUuid}')" class="w-full px-1.5 py-0.5 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-800 font-bold rounded transition text-[10px] flex items-center justify-center gap-0.5 shadow-2xs" title="Edit Kesiapan">
            <i class="ph-bold ph-pencil-simple"></i> Edit
          </button>`
       : '';
 
     const deleteBtn = canDelete
-      ? `<button onclick="handleDeleteSupplier('${safeUuid}')" class="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center gap-0.5 shadow-2xs" title="Hapus Kesiapan">
+      ? `<button onclick="handleDeleteSupplier('${safeUuid}')" class="w-full px-1.5 py-0.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 font-bold rounded transition text-[10px] flex items-center justify-center gap-0.5 shadow-2xs" title="Hapus Kesiapan">
            <i class="ph-bold ph-trash"></i> Hapus
          </button>`
       : '';
 
     let actionBtns = '';
     if (editBtn || deleteBtn) {
-      actionBtns = `<div class="flex items-center justify-center gap-1">${editBtn}${deleteBtn}</div>`;
+      actionBtns = `<div class="flex flex-col items-center justify-center gap-1 min-w-[50px]">${editBtn}${deleteBtn}</div>`;
     } else {
       actionBtns = `<button disabled title="Anda tidak memiliki hak akses mengubah/menghapus baris ini" class="px-1.5 py-0.5 bg-slate-50 text-slate-300 font-medium rounded text-[10px] flex items-center gap-0.5 mx-auto cursor-not-allowed border border-slate-100">
            <i class="ph-bold ph-lock-key"></i> Kunci

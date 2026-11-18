@@ -7,8 +7,11 @@
 
 // ==================== EDIT PLAN MODAL LOGIC & ALLOCATION ====================
 
-function openEditPlanModal(id) {
-  const item = globalPlanData.find(x => String(x.uuid || x.id) === String(id));
+function openEditPlanModal(id, fallbackIndex) {
+  let item = globalPlanData.find(x => sanitizeId(x.uuid || x.id) === String(id) || String(x.uuid || x.id).trim() === String(id).trim());
+  if (!item && typeof fallbackIndex === 'number' && globalPlanData[fallbackIndex]) {
+    item = globalPlanData[fallbackIndex];
+  }
   if (!item) {
     Swal.fire({ icon: 'error', title: 'Data Tidak Ditemukan', text: 'ID Plan tidak ditemukan dalam memori' });
     return;
@@ -251,8 +254,8 @@ function renderEditModalFields(item) {
           <div>
             <label class="block font-bold text-slate-700 mb-1">Prioritas</label>
             <select id="edit_prioritas" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
-              <option value="Prioritas 1" ${item.prioritas === 'Prioritas 1' ? 'selected' : ''}>Prioritas 1</option>
-              <option value="Prioritas 2" ${item.prioritas === 'Prioritas 2' ? 'selected' : ''}>Prioritas 2</option>
+              <option value="P1" ${item.prioritas === 'P1' || item.prioritas === 'Prioritas 1' ? 'selected' : ''}>P1</option>
+              <option value="P2" ${item.prioritas === 'P2' || item.prioritas === 'Prioritas 2' ? 'selected' : ''}>P2</option>
             </select>
           </div>
 
@@ -271,8 +274,11 @@ function renderEditModalFields(item) {
           <div>
             <label class="block font-bold text-slate-700 mb-1">Inisiasi</label>
             <select id="edit_inisiasi" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold">
-              <option value="RF" ${item.inisiasi === 'RF' ? 'selected' : ''}>RF</option>
+              <option value="(-)" ${item.inisiasi === '(-)' ? 'selected' : ''}>(-)</option>
               <option value="LIL" ${item.inisiasi === 'LIL' ? 'selected' : ''}>LIL</option>
+              <option value="RF AXXIS" ${item.inisiasi === 'RF AXXIS' ? 'selected' : ''}>RF AXXIS</option>
+              <option value="RF E*TAR" ${item.inisiasi === 'RF E*TAR' ? 'selected' : ''}>RF E*TAR</option>
+              <option value="RF HEBS" ${item.inisiasi === 'RF HEBS' ? 'selected' : ''}>RF HEBS</option>
             </select>
           </div>
 
@@ -292,8 +298,8 @@ function renderEditModalFields(item) {
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Isian (Kg/Hole)</label>
-            <input type="number" id="edit_isian_kg" step="0.1" value="${item.isian_kg || 0}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-red-700">
+            <label class="block font-bold text-slate-700 mb-1">Isian (Kg/Hole) <span class="text-[10px] text-slate-400 font-normal">(Bulat tanpa koma)</span></label>
+            <input type="number" id="edit_isian_kg" step="1" min="0" value="${Math.round(item.isian_kg || 0)}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-red-700">
           </div>
 
           <div>
@@ -676,13 +682,11 @@ function handleEditSupplierChange() {
   if (availableBoxes.length > 0) {
     availableBoxes.forEach(box => {
       const isChecked = existingBoxVal.includes(box);
-      const isAllocatedElsewhere = allocatedOtherBoxes.has(box.toUpperCase()) && !isChecked;
 
       dynamicHtml += `
-        <label class="flex items-center gap-1.5 px-2.5 py-1 ${isChecked ? 'bg-slate-200 border-slate-400' : (isAllocatedElsewhere ? 'bg-amber-50/70 border-amber-200' : 'bg-slate-100 border-slate-300')} border rounded-lg text-xs font-bold text-slate-800 cursor-pointer hover:bg-slate-200">
+        <label class="flex items-center gap-1.5 px-2.5 py-1 ${isChecked ? 'bg-slate-200 border-slate-400 shadow-2xs font-bold' : 'bg-slate-100 border-slate-300'} border rounded-lg text-xs font-semibold text-slate-800 cursor-pointer hover:bg-slate-200 transition">
           <input type="checkbox" name="alloc_box_chk" value="${box}" ${isChecked ? 'checked' : ''} onchange="updateAllocBoxSummary()" class="rounded text-slate-700 focus:ring-0">
           <span>${box}</span>
-          ${isAllocatedElsewhere ? `<span class="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 rounded border border-amber-200">Terpakai</span>` : ''}
         </label>
       `;
     });
@@ -976,7 +980,8 @@ async function handleEditPlanSubmit(event) {
       updateData.kontraktor = grab('edit_kontraktor');
     }
     updateData.lokasi = grab('edit_lokasi');
-    updateData.prioritas = grab('edit_prioritas');
+    const rawEditPrio = (grab('edit_prioritas') || 'P1').toUpperCase();
+    updateData.prioritas = rawEditPrio.includes('2') ? 'P2' : 'P1';
     updateData['today/sleep'] = grab('edit_today_sleep');
     updateData.today_sleep = grab('edit_today_sleep');
     updateData.inisiasi = grab('edit_inisiasi');
@@ -984,7 +989,8 @@ async function handleEditPlanSubmit(event) {
     updateData.remark = grab('edit_remark');
     updateData.pengawas_kontraktor = grab('edit_pengawas_kontraktor');
     updateData.jumlah_holes = h;
-    updateData.isian_kg = i;
+    // Revisi 5: isian kg bulat tanpa angka koma
+    updateData.isian_kg = Math.round(i);
 
     // Revisi 4: Ambil manual Volume (Ton DTH) yang diinput sendiri oleh user
     updateData.volume_ton = parseFloat(grab('edit_volume_ton')) || 0;
@@ -994,9 +1000,21 @@ async function handleEditPlanSubmit(event) {
     updateData.matrix = grab('edit_matrix');
     updateData.geometri = grab('edit_geometri');
 
-    // Revisi Image 2: Alokasi Supplier langsung dipilih kontraktor dan tersimpan di kolom supplier
+    // Revisi 16: Jika kontraktor mengganti alokasi supplier di plan tersebut, kosongkan data alokasi supplier
     if (grab('edit_supplier_choice') !== undefined) {
-      updateData.supplier = grab('edit_supplier_choice');
+      const newSupChoice = grab('edit_supplier_choice');
+      const prevSup = item.supplier || '';
+      updateData.supplier = newSupChoice;
+      if (prevSup && cleanCompanyName(prevSup) !== cleanCompanyName(newSupChoice)) {
+        updateData.unit_mmu = '';
+        updateData.need_mmu = '';
+        updateData.unit_box = '';
+        updateData.pengawas_supplier = '';
+        updateData.pengawas_sup = '';
+        updateData.jumlah_blaster = '';
+        updateData.blaster = '';
+        updateData.dth_supplier = 0;
+      }
     }
 
     // Revisi Image 4: Alokasi Boundary DXF

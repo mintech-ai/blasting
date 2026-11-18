@@ -96,7 +96,8 @@ async function handleKontraktorFormSubmit(event) {
   event.preventDefault();
 
   const holes = Number(document.getElementById('input_holes').value) || 0;
-  const isian = Number(document.getElementById('input_isian_kg').value) || 0;
+  // Revisi 5: isian kg bulat tidak menerima angka koma
+  const isian = Math.round(Number(document.getElementById('input_isian_kg').value) || 0);
   
   // Revisi 4: Ambil manual Volume (Ton DTH) yang diinput sendiri oleh user
   const volTon = parseFloat(document.getElementById('input_volume')?.value) || 0;
@@ -322,7 +323,55 @@ function renderMmuChips() {
 
   container.innerHTML = html;
   updateMmuDisplay();
+  renderBoxChips();
 }
+
+function renderBoxChips() {
+  const supKey = getSelectedSupplierKey();
+  const container = document.getElementById('box-chip-container');
+  if (!container) return;
+
+  const boxPresets = (typeof SUPPLIER_BOX_PRESETS !== 'undefined' && SUPPLIER_BOX_PRESETS[supKey])
+    ? SUPPLIER_BOX_PRESETS[supKey]
+    : (supKey === 'MNK-KMB' ? ['Box 17', 'Box 18', 'Box 19'] : ['Box 10', 'Box 16', 'Box 20', 'Box 40']);
+
+  const inputEl = document.getElementById('sup_readiness_lv_box_list');
+  const currentVal = inputEl ? inputEl.value : '';
+  const currentBoxes = currentVal.split(/[\r\n,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+  let html = '';
+  boxPresets.forEach(box => {
+    const isSelected = currentBoxes.includes(box.toUpperCase());
+    const btnClass = isSelected
+      ? "px-3 py-1.5 rounded-xl text-xs font-mono font-extrabold border transition bg-amber-600 text-white border-amber-600 shadow-sm flex items-center gap-1.5 cursor-pointer"
+      : "px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:border-amber-500 shadow-2xs cursor-pointer";
+
+    html += `
+      <button type="button" onclick="toggleBoxChip('${box}')" id="box-chip-${box.replace(/[^a-zA-Z0-9]/g, '-')}" class="${btnClass}">
+        ${isSelected ? '<i class="ph-bold ph-check text-xs"></i>' : '<i class="ph-bold ph-package text-xs text-amber-600"></i>'}
+        <span>${box}</span>
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleBoxChip(boxName) {
+  const inputEl = document.getElementById('sup_readiness_lv_box_list');
+  if (!inputEl) return;
+  const currentParts = inputEl.value.split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean);
+  const idx = currentParts.findIndex(p => p.toUpperCase() === boxName.toUpperCase());
+  if (idx > -1) {
+    currentParts.splice(idx, 1);
+  } else {
+    currentParts.push(boxName);
+  }
+  inputEl.value = currentParts.join(', ');
+  renderBoxChips();
+}
+window.renderBoxChips = renderBoxChips;
+window.toggleBoxChip = toggleBoxChip;
 
 function toggleMmuChip(code, cap) {
   const idx = selectedMmuChips.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
@@ -383,6 +432,7 @@ function handleSupplierCompanyRosterChange() {
       : `Pengawas dan Blaster ${supKey}`;
   }
   initSupplierManpowerRoster(supKey);
+  renderBoxChips();
 }
 
 function initSupplierManpowerRoster(supKey = 'DAHANA', existingSpvStr = '', existingBlasterStr = '') {
@@ -577,20 +627,28 @@ async function handleSupplierReadinessSubmit(event) {
   event.preventDefault();
 
   const supName = document.getElementById('sup_readiness_supplier').value;
+  const mmuListVal = (selectedMmuChips && selectedMmuChips.length > 0)
+    ? selectedMmuChips.map(c => c.code).join(', ')
+    : (document.getElementById('sup_readiness_mmu_list')?.value.replace(/^Terpilih:\s*/i, '').trim() || document.getElementById('sup_readiness_mmu')?.value || '');
+
+  const calcDthReady = Number(document.getElementById('sup_readiness_dth')?.value)
+    || (selectedMmuChips && selectedMmuChips.reduce((sum, c) => sum + (c.cap || 0), 0))
+    || 0;
+
   const readinessData = {
     tanggal: document.getElementById('sup_readiness_tanggal').value,
     supplier: supName,
-    unit_mmu: document.getElementById('sup_readiness_mmu').value,
-    dth_ready: Number(document.getElementById('sup_readiness_dth').value) || 0,
+    unit_mmu: mmuListVal,
+    dth_ready: calcDthReady,
     unit_box: document.getElementById('sup_readiness_lv_box_list').value,
-    hebs: document.getElementById('sup_readiness_hebs').value,
-    estar: document.getElementById('sup_readiness_estar').value,
-    axiss: document.getElementById('sup_readiness_axiss').value,
-    nonel: document.getElementById('sup_readiness_nonel').value,
-    nama_spv: document.getElementById('sup_readiness_nama_spv').value,
-    supervisor: Number(document.getElementById('sup_readiness_pengawas').value) || 0,
-    nama_blaster: document.getElementById('sup_readiness_nama_blaster').value,
-    blaster: Number(document.getElementById('sup_readiness_blaster').value) || 0,
+    hebs: document.getElementById('sup_readiness_hebs')?.value || '',
+    estar: document.getElementById('sup_readiness_estar')?.value || '',
+    axiss: document.getElementById('sup_readiness_axiss')?.value || '',
+    nonel: document.getElementById('sup_readiness_nonel')?.value || '',
+    nama_spv: document.getElementById('sup_readiness_nama_spv')?.value || '',
+    supervisor: Number(document.getElementById('sup_readiness_pengawas')?.value) || 0,
+    nama_blaster: document.getElementById('sup_readiness_nama_blaster')?.value || '',
+    blaster: Number(document.getElementById('sup_readiness_blaster')?.value) || 0,
     note: document.getElementById('sup_readiness_note') ? document.getElementById('sup_readiness_note').value.trim() : ''
   };
 
@@ -605,9 +663,10 @@ async function handleSupplierReadinessSubmit(event) {
   showGlobalLoading();
 
   try {
+    const userRole = isUserOwner() ? 'ADMIN' : (currentUser ? currentUser.role : 'SUPPLIER');
     const res = await apiCall('saveKesiapan', {
       data: readinessData,
-      role: isUserOwner() ? 'ADMIN' : currentUser.role,
+      role: userRole,
       company: supName
     });
 
@@ -678,12 +737,11 @@ function handleExcelFileSelect(event) {
         const lokasiVal = getValFlexible(row, 'BLASTING AREA', 'blastingarea', 'lokasi', 'area', 'location');
 
         const holesVal = Number(getValFlexible(row, 'TOTAL HOLE', 'totalhole', 'jumlah_holes', 'holes', 'hole') || 0);
-        const isianKgVal = Number(getValFlexible(row, 'ISIAN/ HOLE (KG)', 'isianholekg', 'isian_kg', 'isian/hole', 'isian') || 0);
+        // Revisi 5: isian kg bulat tidak menerima angka koma
+        const isianKgVal = Math.round(Number(getValFlexible(row, 'ISIAN/ HOLE (KG)', 'isianholekg', 'isian_kg', 'isian/hole', 'isian') || 0));
 
-        let volumeTonVal = Number(getValFlexible(row, 'ISIAN DTH (TON)', 'isiandthton', 'volume_ton', 'volume') || 0);
-        if (!volumeTonVal && holesVal && isianKgVal) {
-          volumeTonVal = (holesVal * isianKgVal) / 1000;
-        }
+        // Volume Ton: manual dari Excel jika ada, tidak ada auto calculation
+        const volumeTonVal = Number(getValFlexible(row, 'ISIAN DTH (TON)', 'isiandthton', 'volume_ton', 'volume') || 0);
 
         const matrixVal = getValFlexible(row, 'MATRIX ISIAN', 'matrixisian', 'matrix');
         const remarkVal = getValFlexible(row, 'REMARK / STATUS LAPANGAN', 'remarkstatuslapangan', 'remark', 'statuslapangan');
@@ -692,15 +750,31 @@ function handleExcelFileSelect(event) {
         const jamMasukVal = formatExcelTime(rawJam);
 
         const aksesVal = getValFlexible(row, 'AKSES LOKASI', 'akseslokasi', 'akses');
-        const inisiasiRaw = getValFlexible(row, 'REKOMENDASI INSISIASI', 'rekomendasiinsisiasi', 'rekomendasiinisiasi', 'inisiasi');
-        const inisiasiVal = (inisiasiRaw && String(inisiasiRaw).toUpperCase().includes('LIL')) ? 'LIL' : 'RF';
+        // Revisi 3 & Revisi 5: Pilihan inisiasi (-), LIL, RF AXXIS, RF E*TAR, RF HEBS. Jika invalid DITOLAK jadi kosong
+        const inisiasiRaw = String(getValFlexible(row, 'REKOMENDASI INSISIASI', 'rekomendasiinsisiasi', 'rekomendasiinisiasi', 'inisiasi') || '').trim().toUpperCase();
+        let inisiasiVal = '';
+        if (inisiasiRaw === '(-)' || inisiasiRaw === '-') inisiasiVal = '(-)';
+        else if (inisiasiRaw.includes('LIL')) inisiasiVal = 'LIL';
+        else if (inisiasiRaw.includes('AXXIS')) inisiasiVal = 'RF AXXIS';
+        else if (inisiasiRaw.includes('E*TAR') || inisiasiRaw.includes('ESTAR')) inisiasiVal = 'RF E*TAR';
+        else if (inisiasiRaw.includes('HEBS')) inisiasiVal = 'RF HEBS';
+        else if (inisiasiRaw === 'RF') inisiasiVal = 'RF HEBS';
+        else inisiasiVal = ''; // DITOLAK jika tidak sesuai pilihan form
 
+        // Status: jika invalid (seperti 'loadshot') DITOLAK jadi kosong
         const statusBlastingRaw = getValFlexible(row, 'STATUS BLASTING', 'statusblasting', 'todaysleep', 'status');
         const statusBlastingVal = normalizeBlastingStatus(statusBlastingRaw);
 
         const desaVal = getValFlexible(row, 'DESA TERDEKAT / SEKTOR TERDAMPAK', 'desaterdekatsektorterdampak', 'desa_terdampak', 'desa');
         const geometriVal = getValFlexible(row, 'GEOMETRI (B x S)', 'geometribxs', 'geometri');
-        const pengawasKontraktorVal = getValFlexible(row, 'NAMA PENGAWAS KONTRAKTOR', 'namapengawaskontraktor', 'pengawas_kontraktor', 'pengawaskontraktor', 'pengawas');
+        
+        // Revisi 2: Pengawas Kontraktor diparsing dari berbagai variasi header Excel
+        const pengawasKontraktorVal = getValFlexible(row,
+          'NAMA PENGAWAS KONTRAKTOR', 'PENGAWAS KONTRAKTOR', 'PENGAWAS KONT.', 'PENGAWAS KONT',
+          'PENGAWAS MITRA', 'PENGAWAS', 'NAMA PENGAWAS', 'SPV KONTRAKTOR', 'GL KONTRAKTOR',
+          'pengawas_kontraktor', 'pengawaskontraktor', 'pengawas_kont', 'pengawaskont',
+          'namapengawaskontraktor', 'spv'
+        ) || '';
 
         let supplierVal = getValFlexible(row, 'SUPPLIER', 'supplier', 'mitra_supplier', 'nama_supplier');
         if (!supplierVal) {
@@ -714,7 +788,12 @@ function handleExcelFileSelect(event) {
           supplierVal = (String(supplierVal).toUpperCase().includes('MNK') || String(supplierVal).toUpperCase().includes('KMB')) ? 'PT MNK-KMB' : 'PT DAHANA';
         }
 
-        const prioritasVal = getValFlexible(row, 'PRIORITAS', 'prioritas') || 'Prioritas 1';
+        // Revisi 5: Prioritas P1 & P2. Jika invalid DITOLAK jadi kosong
+        const rawPrio = String(getValFlexible(row, 'PRIORITAS', 'prioritas', 'prio') || '').toUpperCase().trim();
+        let prioritasVal = '';
+        if (rawPrio === 'P1' || rawPrio === '1' || rawPrio === 'PRIORITAS 1') prioritasVal = 'P1';
+        else if (rawPrio === 'P2' || rawPrio === '2' || rawPrio === 'PRIORITAS 2') prioritasVal = 'P2';
+        else prioritasVal = ''; // DITOLAK jika tidak sesuai
 
         let latVal = getValFlexible(row, 'LATITUDE', 'latitude', 'lat');
         let longVal = getValFlexible(row, 'LONGITUDE', 'longitude', 'long', 'lng');
@@ -824,13 +903,15 @@ function renderBulkPreviewTable() {
             class="w-36 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs font-bold text-slate-900" placeholder="Lokasi...">
         </td>
         <td class="p-1.5">
-          <select onchange="updateBulkRow(${idx}, 'prioritas', this.value)" class="w-24 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
-            <option value="Prioritas 1" ${row.prioritas === 'Prioritas 1' ? 'selected' : ''}>Prioritas 1</option>
-            <option value="Prioritas 2" ${row.prioritas === 'Prioritas 2' ? 'selected' : ''}>Prioritas 2</option>
+          <select onchange="updateBulkRow(${idx}, 'prioritas', this.value)" class="w-20 ${!row.prioritas ? 'bg-red-50 border-red-500 text-red-700 font-extrabold' : 'bg-slate-50 border-slate-300 font-bold'} border rounded px-1 py-1 text-xs">
+            <option value="" ${!row.prioritas ? 'selected' : ''}>-- Prio --</option>
+            <option value="P1" ${row.prioritas === 'P1' || row.prioritas === 'Prioritas 1' ? 'selected' : ''}>P1</option>
+            <option value="P2" ${row.prioritas === 'P2' || row.prioritas === 'Prioritas 2' ? 'selected' : ''}>P2</option>
           </select>
         </td>
         <td class="p-1.5">
-          <select onchange="updateBulkRow(${idx}, 'today_sleep', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
+          <select onchange="updateBulkRow(${idx}, 'today_sleep', this.value)" class="w-32 ${!row.today_sleep ? 'bg-red-50 border-red-500 text-red-700 font-extrabold' : 'bg-slate-50 border-slate-300 font-bold'} border rounded px-1 py-1 text-xs">
+            <option value="" ${!row.today_sleep ? 'selected' : ''}>-- Pilih Status --</option>
             <option value="TODAY" ${row.today_sleep === 'TODAY' ? 'selected' : ''}>TODAY</option>
             <option value="SLEEP" ${row.today_sleep === 'SLEEP' ? 'selected' : ''}>SLEEP</option>
             <option value="TIE UP" ${row.today_sleep === 'TIE UP' ? 'selected' : ''}>TIE UP</option>
@@ -840,15 +921,21 @@ function renderBulkPreviewTable() {
           </select>
         </td>
         <td class="p-1.5">
-          <select onchange="updateBulkRow(${idx}, 'inisiasi', this.value)" class="w-16 bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-bold">
-            <option value="RF" ${row.inisiasi === 'RF' ? 'selected' : ''}>RF</option>
+          <select onchange="updateBulkRow(${idx}, 'inisiasi', this.value)" class="w-28 ${!row.inisiasi ? 'bg-red-50 border-red-500 text-red-700 font-extrabold' : 'bg-slate-50 border-slate-300 font-bold'} border rounded px-1 py-1 text-xs">
+            <option value="" ${!row.inisiasi ? 'selected' : ''}>-- Pilih Inisiasi --</option>
+            <option value="(-)" ${row.inisiasi === '(-)' ? 'selected' : ''}>(-)</option>
             <option value="LIL" ${row.inisiasi === 'LIL' ? 'selected' : ''}>LIL</option>
+            <option value="RF AXXIS" ${row.inisiasi === 'RF AXXIS' ? 'selected' : ''}>RF AXXIS</option>
+            <option value="RF E*TAR" ${row.inisiasi === 'RF E*TAR' ? 'selected' : ''}>RF E*TAR</option>
+            <option value="RF HEBS" ${row.inisiasi === 'RF HEBS' ? 'selected' : ''}>RF HEBS</option>
           </select>
         </td>
         <td class="p-1.5"><input type="time" value="${row.jam_masuk}" onchange="updateBulkRow(${idx}, 'jam_masuk', this.value)" class="w-24 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs font-mono"></td>
         <td class="p-1.5"><input type="number" value="${row.jumlah_holes}" onchange="updateBulkRowNumber(${idx}, 'jumlah_holes', this.value)" class="w-16 text-center bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-mono font-bold"></td>
-        <td class="p-1.5"><input type="number" step="0.1" value="${row.isian_kg}" onchange="updateBulkRowNumber(${idx}, 'isian_kg', this.value)" class="w-20 text-center bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-mono text-red-700 font-bold"></td>
-        <td class="p-1.5 text-center font-mono font-black text-emerald-700 text-xs px-2" id="bulk-vol-${idx}">${Number(row.volume_ton || 0).toFixed(2)}</td>
+        <td class="p-1.5"><input type="number" step="1" min="0" value="${Math.round(row.isian_kg || 0)}" onchange="updateBulkRowNumber(${idx}, 'isian_kg', Math.round(Number(this.value)||0))" class="w-20 text-center bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs font-mono text-red-700 font-bold"></td>
+        <td class="p-1.5 text-center">
+          <input type="number" step="0.01" min="0" value="${row.volume_ton !== undefined && row.volume_ton !== null && row.volume_ton !== '' && Number(row.volume_ton) > 0 ? Number(row.volume_ton).toFixed(2) : ''}" onchange="updateBulkRow(${idx}, 'volume_ton', parseFloat(this.value)||0)" class="w-20 text-center bg-white border border-emerald-300 rounded px-1 py-1 text-xs font-mono font-bold text-emerald-700 focus:outline-none focus:border-emerald-600" placeholder="0.00">
+        </td>
         <td class="p-1.5"><input type="text" value="${row.akses}" onchange="updateBulkRow(${idx}, 'akses', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs"></td>
         <td class="p-1.5"><input type="text" value="${row.desa}" onchange="updateBulkRow(${idx}, 'desa', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs"></td>
         <td class="p-1.5"><input type="text" value="${row.matrix}" onchange="updateBulkRow(${idx}, 'matrix', this.value)" class="w-28 bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs"></td>
@@ -932,6 +1019,12 @@ window.updateBulkRowBoundary = updateBulkRowBoundary;
 function updateBulkRow(index, field, value) {
   if (bulkPreviewRows[index]) {
     bulkPreviewRows[index][field] = value;
+    // Pastikan sinkronisasi dua arah untuk today_sleep dan 'today/sleep'
+    if (field === 'today_sleep') {
+      bulkPreviewRows[index]['today/sleep'] = value;
+    } else if (field === 'today/sleep') {
+      bulkPreviewRows[index].today_sleep = value;
+    }
   }
 }
 
@@ -945,13 +1038,6 @@ function updateBulkRowMmu(index, value) {
 function updateBulkRowNumber(index, field, value) {
   if (bulkPreviewRows[index]) {
     bulkPreviewRows[index][field] = Number(value) || 0;
-    const h = Number(bulkPreviewRows[index].jumlah_holes) || 0;
-    const i = Number(bulkPreviewRows[index].isian_kg) || 0;
-    const vol = (h * i) / 1000;
-    bulkPreviewRows[index].volume_ton = vol;
-
-    const volEl = document.getElementById(`bulk-vol-${index}`);
-    if (volEl) volEl.innerText = vol.toFixed(2);
   }
 }
 
@@ -997,9 +1083,14 @@ async function submitBulkPreviewData() {
     return;
   }
 
-  // Pastikan supplier terisi default jika kosong
+  // Pastikan supplier terisi default jika kosong dan status tersinkronisasi
   bulkPreviewRows.forEach(r => {
     if (!r.supplier) r.supplier = 'PT DAHANA';
+    const cleanStatus = (typeof normalizeBlastingStatus === 'function')
+      ? (normalizeBlastingStatus(r.today_sleep || r['today/sleep']) || 'TODAY')
+      : (r.today_sleep || r['today/sleep'] || 'TODAY');
+    r.today_sleep = cleanStatus;
+    r['today/sleep'] = cleanStatus;
   });
 
   // Validasi 1: Setiap baris wajib memiliki nama lokasi
@@ -1009,6 +1100,39 @@ async function submitBulkPreviewData() {
       icon: 'warning',
       title: 'Lokasi Belum Terisi',
       text: `Baris #${emptyLokasiIdx + 1} belum memiliki nama lokasi peledakan. Kolom Lokasi wajib terisi untuk setiap baris!`
+    });
+    return;
+  }
+
+  // Validasi Revisi 5: Status peledakan wajib dipilih
+  const emptyStatusIdx = bulkPreviewRows.findIndex(r => !String(r.today_sleep || r['today/sleep'] || '').trim());
+  if (emptyStatusIdx !== -1) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Status Belum Dipilih',
+      text: `Baris #${emptyStatusIdx + 1} belum memiliki Status peledakan (TODAY, SLEEP, TIE UP, dll). Harap pilih status di tabel preview!`
+    });
+    return;
+  }
+
+  // Validasi Revisi 5: Prioritas wajib dipilih
+  const emptyPrioIdx = bulkPreviewRows.findIndex(r => !String(r.prioritas || '').trim());
+  if (emptyPrioIdx !== -1) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Prioritas Belum Dipilih',
+      text: `Baris #${emptyPrioIdx + 1} belum memiliki Prioritas (P1 atau P2). Harap tentukan prioritas!`
+    });
+    return;
+  }
+
+  // Validasi Revisi 5: Inisiasi wajib dipilih
+  const emptyInisiasiIdx = bulkPreviewRows.findIndex(r => !String(r.inisiasi || '').trim());
+  if (emptyInisiasiIdx !== -1) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Inisiasi Belum Dipilih',
+      text: `Baris #${emptyInisiasiIdx + 1} belum memiliki Rekomendasi Inisiasi. Harap pilih inisiasi!`
     });
     return;
   }
@@ -1085,4 +1209,250 @@ async function submitBulkPreviewData() {
     Swal.fire({ icon: 'error', title: 'Gagal Bulk Import', text: res.message || 'Gagal terhubung ke server.' });
   }
 }
+
+// ==================== AUTO COMMA SEPARATOR LOGIC ====================
+function handleAutoCommaKeydown(event, inputEl) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const val = inputEl.value.trim();
+    if (val && !val.endsWith(',')) {
+      inputEl.value = val + ', ';
+    }
+  }
+}
+
+function handleAutoCommaBlur(inputEl) {
+  if (!inputEl || !inputEl.value) return;
+  const parts = inputEl.value.split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length > 0) {
+    inputEl.value = parts.join(', ');
+  }
+}
+window.handleAutoCommaKeydown = handleAutoCommaKeydown;
+window.handleAutoCommaBlur = handleAutoCommaBlur;
+
+// ==================== MONTHLY FORECAST SUBMIT & LIVE CALCULATION ====================
+function updateForecastCalculationPreview() {
+  const bulanEl = document.getElementById('forecast_bulan');
+  const compEl = document.getElementById('forecast_perusahaan');
+  const tonaseEl = document.getElementById('forecast_tonase');
+  if (!bulanEl || !compEl || !tonaseEl) return;
+
+  const targetMonth = (typeof normalizeMonthString === 'function')
+    ? normalizeMonthString(bulanEl.value)
+    : (bulanEl.value || '').slice(0, 7);
+  const selectedComp = compEl.value || 'PT SIS';
+  const inputTonase = parseFloat(tonaseEl.value) || 0;
+
+  let sisTonase = 0;
+  let bumaTonase = 0;
+
+  if (Array.isArray(globalForecastData)) {
+    globalForecastData.forEach(f => {
+      const fMonth = (typeof normalizeMonthString === 'function')
+        ? normalizeMonthString(f.bulan)
+        : String(f.bulan || '').slice(0, 7);
+      if (fMonth === targetMonth || (!fMonth && targetMonth)) {
+        const c = String(f.perusahaan || '').toUpperCase();
+        const val = parseFloat(f.forecast) || 0;
+        if (c.includes('SIS')) sisTonase = val;
+        else if (c.includes('BUMA')) bumaTonase = val;
+      }
+    });
+  }
+
+  // Override tonase untuk perusahaan yang sedang aktif diisi
+  if (selectedComp.toUpperCase().includes('SIS')) {
+    sisTonase = inputTonase;
+  } else if (selectedComp.toUpperCase().includes('BUMA')) {
+    bumaTonase = inputTonase;
+  }
+
+  const totalForecastTon = sisTonase + bumaTonase;
+  const currentCompTon = selectedComp.toUpperCase().includes('SIS') ? sisTonase : bumaTonase;
+  const ratio = totalForecastTon > 0 ? (currentCompTon / totalForecastTon) : 0;
+
+  // Hitung total DTH Ready hari ini dari semua supplier
+  const activeDate = (document.getElementById('global-date-filter') ? document.getElementById('global-date-filter').value : '') || getWitaDateString();
+  let totalReadyDthToday = 0;
+  const supplierList = (typeof globalSupplierData !== 'undefined' && Array.isArray(globalSupplierData))
+    ? globalSupplierData
+    : ((typeof rawGlobalSupplierData !== 'undefined' && Array.isArray(rawGlobalSupplierData)) ? rawGlobalSupplierData : []);
+
+  supplierList.forEach(sup => {
+    const supDate = (typeof normalizeDateToYYYYMMDD === 'function')
+      ? normalizeDateToYYYYMMDD(sup.tanggal)
+      : String(sup.tanggal || '').slice(0, 10);
+    if (supDate === activeDate) {
+      totalReadyDthToday += (parseFloat(sup.dth_ready) || 0);
+    }
+  });
+
+  const resultDth = ratio * totalReadyDthToday;
+
+  const monthLabel = document.getElementById('forecast-preview-month-label');
+  if (monthLabel) monthLabel.innerText = targetMonth;
+
+  const elSis = document.getElementById('preview-val-forecast-sis');
+  if (elSis) elSis.innerText = `${sisTonase.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Ton`;
+
+  const elBuma = document.getElementById('preview-val-forecast-buma');
+  if (elBuma) elBuma.innerText = `${bumaTonase.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Ton`;
+
+  const elReady = document.getElementById('preview-val-ready-dth');
+  if (elReady) elReady.innerText = `${totalReadyDthToday.toFixed(2)} Ton`;
+
+  const elRatio = document.getElementById('preview-val-ratio');
+  if (elRatio) elRatio.innerText = `${(ratio * 100).toFixed(1)}%`;
+
+  const elResult = document.getElementById('preview-val-result-dth');
+  if (elResult) elResult.innerText = `${resultDth.toFixed(2)} Ton`;
+}
+
+function openForecastModal() {
+  if (currentUser && currentUser.role === 'SUPPLIER') return;
+  if (typeof switchOwnerForm === 'function') {
+    switchOwnerForm('kontraktor');
+  }
+  if (typeof switchKontraktorSubTab === 'function') {
+    switchKontraktorSubTab('forecast');
+  }
+  try {
+    updateForecastCalculationPreview();
+  } catch (e) {
+    console.warn('Forecast preview warning:', e);
+  }
+}
+
+function closeForecastModal() {
+  if (typeof switchKontraktorSubTab === 'function') {
+    switchKontraktorSubTab('plan');
+  }
+}
+
+async function handleMonthlyForecastSubmit(event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const bulanEl = document.getElementById('forecast_bulan');
+  const compEl = document.getElementById('forecast_perusahaan');
+  const tonaseEl = document.getElementById('forecast_tonase');
+
+  const bulan = bulanEl ? bulanEl.value : '';
+  let perusahaan = compEl ? compEl.value : '';
+
+  // Kunci perusahaan kontraktor jika login sebagai kontraktor
+  if (currentUser && currentUser.role === 'KONTRAKTOR') {
+    if (currentUser.company && currentUser.company.toUpperCase().includes('BUMA')) {
+      perusahaan = 'PT BUMA';
+    } else {
+      perusahaan = 'PT SIS';
+    }
+    if (compEl) compEl.value = perusahaan;
+  }
+
+  const tonase = tonaseEl ? (parseFloat(tonaseEl.value) || 0) : 0;
+
+  if (!bulan || !perusahaan || tonase <= 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Data Belum Lengkap',
+      text: 'Semua field forecast wajib diisi dengan nilai valid (> 0 Ton)!'
+    });
+    return;
+  }
+
+  const pinOk = await requestSecurityPin(`menyimpan forecast bulanan ${perusahaan} untuk periode ${bulan}`);
+  if (!pinOk) return;
+
+  const btn = document.getElementById('btn-submit-forecast');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Menyimpan...`;
+  }
+  showGlobalLoading();
+
+  try {
+    const userRole = isUserOwner() ? 'ADMIN' : (currentUser ? currentUser.role : 'KONTRAKTOR');
+    const res = await apiCall('saveForecast', {
+      data: {
+        bulan: bulan,
+        perusahaan: perusahaan,
+        forecast: tonase
+      },
+      role: userRole,
+      company: perusahaan
+    });
+
+    if (res && res.success) {
+      // Perbarui globalForecastData di memori secara lokal
+      const normMonth = (typeof normalizeMonthString === 'function') ? normalizeMonthString(bulan) : bulan.slice(0, 7);
+      let found = false;
+      if (!Array.isArray(globalForecastData)) globalForecastData = [];
+      for (let i = 0; i < globalForecastData.length; i++) {
+        const itemMonth = (typeof normalizeMonthString === 'function')
+          ? normalizeMonthString(globalForecastData[i].bulan)
+          : String(globalForecastData[i].bulan || '').slice(0, 7);
+        const itemComp = String(globalForecastData[i].perusahaan || '').toUpperCase();
+        if (itemMonth === normMonth && itemComp === perusahaan.toUpperCase()) {
+          globalForecastData[i].forecast = tonase;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        globalForecastData.push({
+          bulan: bulan,
+          perusahaan: perusahaan,
+          forecast: tonase
+        });
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Forecast Tersimpan!',
+        text: `Forecast bulanan ${perusahaan} (${tonase.toLocaleString('id-ID')} Ton) berhasil disimpan ke sheet forecast.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      // Update UI preview secara aman (tanpa melempar error ke catch block)
+      try {
+        if (typeof updateForecastCalculationPreview === 'function') {
+          updateForecastCalculationPreview();
+        }
+      } catch (ePreview) {
+        console.warn('Forecast preview warning:', ePreview);
+      }
+
+      try {
+        if (typeof filterAndRenderDashboard === 'function') {
+          const activeDate = (document.getElementById('global-date-filter') ? document.getElementById('global-date-filter').value : '') || getWitaDateString();
+          filterAndRenderDashboard(activeDate);
+        }
+      } catch (eDash) {
+        console.warn('Dashboard render warning:', eDash);
+      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan',
+        text: (res && res.message) || 'Gagal menyimpan data forecast'
+      });
+    }
+  } catch (err) {
+    console.error('Error save forecast:', err);
+    Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menghubungi server backend.' });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="ph-bold ph-floppy-disk text-base"></i> Simpan Forecast Bulanan`;
+    }
+    hideGlobalLoading();
+  }
+}
+
+window.openForecastModal = openForecastModal;
+window.closeForecastModal = closeForecastModal;
+window.updateForecastCalculationPreview = updateForecastCalculationPreview;
+window.handleMonthlyForecastSubmit = handleMonthlyForecastSubmit;
+
 

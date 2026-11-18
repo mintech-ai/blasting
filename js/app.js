@@ -21,6 +21,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof initTableSplitResizer === 'function') initTableSplitResizer();
   if (typeof renderPlanNeedMmuChips === 'function') renderPlanNeedMmuChips();
   if (typeof renderMmuChips === 'function') renderMmuChips();
+  if (typeof renderBoxChips === 'function') renderBoxChips();
   if (typeof handleSupplierCompanyRosterChange === 'function') handleSupplierCompanyRosterChange();
   if (typeof updateBoundaryUIState === 'function') updateBoundaryUIState();
 
